@@ -130,7 +130,12 @@ class FrameMetrics:
     est_y: Optional[float] = None
     gt_x: Optional[float] = None        # ground truth screen coords
     gt_y: Optional[float] = None
-    error_px: Optional[float] = None    # Euclidean error
+    # Centroiding/estimation accuracy: |Kalman_estimate − GT_viewport|
+    # Measures how well the Kalman filter tracks the beacon in sensor space.
+    error_px: Optional[float] = None
+    # ISRO R14 boresight alignment error: distance from target to optical axis (320,240).
+    # This is the primary mission-compliance metric. R14 spec requires ≤ 10 px.
+    boresight_px: Optional[float] = None
     confidence: float = 0.0
     locked: bool = False
     proc_ms: float = 0.0                # processing time

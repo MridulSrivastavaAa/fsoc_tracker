@@ -5,6 +5,12 @@ Automated Benchmark Evaluation Suite for ISRO Problem Statement 26169.
 Executes:
 - Benchmark-1: Simulated scenarios across motion models & atmospheric disturbances
 - Benchmark-2: Pre-recorded .mp4 video ingestion & bypass stream tracking
+
+File outputs (mandatory ISRO deliverables):
+  R27 - benchmark_results.json       : full KPI summary
+  R29 - benchmark_2_tracking.csv     : per-frame x,y,confidence,state for video mode
+  R30 - frame_log_<scenario>.csv     : per-frame centroiding error per B1 scenario
+        run_report.txt               : human-readable performance report
 """
 from __future__ import annotations
 from pathlib import Path
@@ -23,15 +29,18 @@ from ..tracking.kalman import KalmanTracker
 from ..tracking.state_machine import TrackingStateMachine
 from ..core.types import FrameMetrics
 from .metrics import MetricsEvaluator, ScenarioKPIs
+from .logger import PerformanceLogger
 
 
 class BenchmarkRunner:
     """
     Automated benchmark harness for FSOC tracker evaluation.
+    All benchmark runs automatically save mandatory ISRO deliverable files to disk.
     """
     def __init__(self, output_dir: str = "benchmark_results") -> None:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.logger = PerformanceLogger(str(self.output_dir))
 
     def run_benchmark_1(self, duration_s: float = 2.0) -> list[ScenarioKPIs]:
         """
@@ -80,6 +89,10 @@ class BenchmarkRunner:
                 reacquisition_times=engine.state_machine.reacquisition_times,
             )
             results.append(kpi)
+
+            # R30 — Write per-frame centroiding error CSV for this scenario
+            log_path = self.logger.write_b1_frame_log(name, engine.metrics_history)
+            print(f"  [LOG] Per-frame CSV saved: {log_path}")
 
         return results
 
@@ -183,12 +196,18 @@ class BenchmarkRunner:
             )
             metrics_history.append(m)
 
-        return MetricsEvaluator.evaluate(
+        kpi = MetricsEvaluator.evaluate(
             scenario_name="B2_Video_Stream_Evaluation",
             history=metrics_history,
             acquisition_time_s=sm.acquisition_time_s,
             reacquisition_times=sm.reacquisition_times,
         )
+
+        # R29 — Write per-frame x, y, confidence, state CSV for Benchmark-2
+        b2_path = self.logger.write_b2_tracking_csv(metrics_history)
+        print(f"  [LOG] Benchmark-2 tracking CSV saved: {b2_path}")
+
+        return kpi
 
     def run_all(self, duration_s: float = 2.0) -> dict[str, list[ScenarioKPIs]]:
         """Run complete suite of Benchmark-1 and Benchmark-2."""
@@ -196,7 +215,17 @@ class BenchmarkRunner:
         b2_result = self.run_benchmark_2(max_frames=int(duration_s * 30))
 
         all_kpis = b1_results + [b2_result]
-        MetricsEvaluator.export_json(all_kpis, str(self.output_dir / "benchmark_results.json"))
+
+        # R27 — Write complete JSON KPI summary
+        json_path = self.logger.write_json_summary(all_kpis)
+        print(f"[LOG] KPI JSON summary saved: {json_path}")
+
+        # Human-readable text report
+        report_path = self.logger.write_text_report(all_kpis)
+        print(f"[LOG] Performance report saved: {report_path}")
+
+        # Also write legacy flat JSON for backwards compat
+        MetricsEvaluator.export_json(all_kpis, str(self.output_dir / "benchmark_results_flat.json"))
 
         return {
             "benchmark_1": b1_results,

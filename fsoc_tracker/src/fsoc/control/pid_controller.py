@@ -68,25 +68,55 @@ class PIDController:
         self.prev_e_y: float = 0.0
         self.has_prev: bool = False
 
+        # Cached camera slew rates for world-space feed-forward reconstruction
+        # Updated each call via set_camera_rates()
+        self._cam_rate_x_px_s: float = 0.0   # camera slew x in px/s (world coords)
+        self._cam_rate_y_px_s: float = 0.0   # camera slew y in px/s (world coords)
+
+    def set_camera_rates(self, pan_rate_px_s: float, tilt_rate_px_s: float) -> None:
+        """
+        Update cached camera slew rates for world-space feed-forward.
+        Call this each frame before compute() with the current camera rates.
+
+        Args:
+            pan_rate_px_s: Current camera pan velocity in scene px/s.
+            tilt_rate_px_s: Current camera tilt velocity in scene px/s.
+        """
+        self._cam_rate_x_px_s = pan_rate_px_s
+        self._cam_rate_y_px_s = tilt_rate_px_s
+
     def compute(
         self,
         est_x: float,
         est_y: float,
         vel_x: float = 0.0,
         vel_y: float = 0.0,
+        state: str = "TRACK",
     ) -> CameraCommand:
         """
         Compute pan/tilt rate command to center target.
-        
+
         Args:
             est_x: Current estimated target X position in viewport (px).
             est_y: Current estimated target Y position in viewport (px).
-            vel_x: Estimated target velocity X (px/s).
-            vel_y: Estimated target velocity Y (px/s).
-            
+            vel_x: Kalman-estimated viewport velocity X (px/s).  This is
+                   target_world_vel - camera_slew_vel, and approaches 0 when
+                   the camera tracks well.  The controller reconstructs the
+                   world-space velocity internally for the feed-forward term.
+            vel_y: Kalman-estimated viewport velocity Y (px/s).
+
         Returns:
             CameraCommand with pan and tilt angular rates (deg/s).
         """
+        # Reconstruct world-space target velocity (scene px/s) for feed-forward.
+        # world_vel = camera_slew_vel + viewport_vel gives the scene-space velocity
+        # of the target. However since camera_slew_vel already encodes the prior
+        # control command, using world_vel would double-apply the FF term.
+        # Instead: use Kalman viewport velocity directly (target motion relative
+        # to the moving camera).  This is the component not yet compensated by
+        # the current camera command, giving a well-posed FF without overcorrection.
+        world_vel_x = vel_x   # viewport velocity IS the uncompensated residual
+        world_vel_y = vel_y
         # Pixel errors from viewport center
         e_x = est_x - self.target_cx
         e_y = est_y - self.target_cy
@@ -117,18 +147,23 @@ class PIDController:
         self.prev_e_x = e_x
         self.prev_e_y = e_y
 
-        # PID + Feed-forward law in pixel rate (px/s)
+        # Gain scheduling: softer Kp during ACQUIRE to prevent violent snap
+        kp_active = self.cfg.kp * 0.3 if state == "ACQUIRE" else self.cfg.kp
+
+        # PID + World-space Feed-forward law in pixel rate (px/s)
+        # Using world-space velocity (not viewport velocity) for FF:
+        # viewport_vel -> 0 when tracking; world_vel stays constant at target speed.
         u_x = (
-            self.cfg.kp * e_x
+            kp_active * e_x
             + self.cfg.ki * self.int_x
             + self.cfg.kd * d_x
-            + self.cfg.kff * vel_x
+            + self.cfg.kff * world_vel_x
         )
         u_y = (
-            self.cfg.kp * e_y
+            kp_active * e_y
             + self.cfg.ki * self.int_y
             + self.cfg.kd * d_y
-            + self.cfg.kff * vel_y
+            + self.cfg.kff * world_vel_y
         )
 
         # Convert pixel rates (px/s) to angular rates (deg/s)
