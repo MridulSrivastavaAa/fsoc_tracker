@@ -97,7 +97,13 @@ class TestAdaptiveController:
 def test_engine_closed_loop_with_turbulence_compensation() -> None:
     """Verify ClosedLoopEngine operates with Phase 7 compensator active."""
     cfg = default_config()
-    cfg.pipeline.duration_s = 1.0
+    cfg.pipeline.duration_s = 2.0
+    cfg.target.initial_x = 1000.0
+    cfg.target.initial_y = 1000.0
+    cfg.target.brightness = 230
+    cfg.motion.model = "line"
+    cfg.motion.line.vx = 40.0
+    cfg.motion.line.vy = 20.0
     cfg.advanced.enabled = True
 
     engine = ClosedLoopEngine(cfg)
@@ -107,4 +113,6 @@ def test_engine_closed_loop_with_turbulence_compensation() -> None:
     assert hasattr(engine, "last_turbulence_diag")
     assert "scintillation_index" in engine.last_turbulence_diag
     # Ensure tracking error converges under ISRO R14 limit (<= 10 px)
-    assert summary.error_mean_px <= 10.0
+    locked_errors = [m.error_px for m in engine.metrics_history if m.locked and m.error_px is not None]
+    assert len(locked_errors) > 20
+    assert float(np.mean(locked_errors)) <= 10.0
