@@ -147,9 +147,23 @@ class FSOCTrackerApp:
         self.plot_canvas = tk.Canvas(plot_card, height=90, bg="#010409", highlightthickness=1, highlightbackground=THEME_BORDER)
         self.plot_canvas.pack(fill=tk.X, pady=4)
 
-        # Right Column: Controls, Disturbances & Telemetry
-        right_col = tk.Frame(body, bg=THEME_BG, width=380)
-        right_col.pack(side=tk.RIGHT, fill=tk.BOTH, padx=(8, 0))
+        # Right Column (Outer Container)
+        right_outer = tk.Frame(body, bg=THEME_BG, width=380)
+        right_outer.pack(side=tk.RIGHT, fill=tk.Y, padx=(8, 0))
+        right_outer.pack_propagate(False)
+
+        # Scrollable Canvas
+        right_canvas = tk.Canvas(right_outer, bg=THEME_BG, highlightthickness=0, width=360)
+        right_scrollbar = ttk.Scrollbar(right_outer, orient="vertical", command=right_canvas.yview)
+        right_col = tk.Frame(right_canvas, bg=THEME_BG)
+
+        right_col.bind("<Configure>", lambda e: right_canvas.configure(scrollregion=right_canvas.bbox("all")))
+        right_canvas.create_window((0, 0), window=right_col, anchor="nw", width=360)
+        right_canvas.configure(yscrollcommand=right_scrollbar.set)
+        
+        right_canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        right_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
 
         # 1. Telemetry Cards Grid
         telemetry_frame = tk.Frame(right_col, bg=THEME_SURFACE, bd=1, relief=tk.SOLID, padx=10, pady=10)

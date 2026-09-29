@@ -125,8 +125,7 @@ class ClosedLoopEngine:
                 # doesn't cheat by using a pristine image in heavy fog/noise
                 disturbed_full_scene = self.disturbances.apply_full_scene(
                     full_frame.image,
-                    frame_idx=frame_idx,
-                    timestamp_s=timestamp_s
+                    dt=self.cfg.pipeline.dt
                 )
                 res = self.wide_search.search_full_scene(disturbed_full_scene)
                 if res:
