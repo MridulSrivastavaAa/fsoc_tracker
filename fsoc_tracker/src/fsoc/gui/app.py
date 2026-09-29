@@ -197,6 +197,19 @@ class FSOCTrackerApp:
         self.btn_reset = tk.Button(btn_box, text="RESET", bg=THEME_SURFACE2, fg=THEME_TEXT, font=("Segoe UI", 9), command=self.reset_system)
         self.btn_reset.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=2)
 
+        # 3D Mission Control Launcher Button
+        self.btn_3d = tk.Button(
+            ctrl_frame,
+            text="🌐 LAUNCH 3D ORBIT MISSION CONTROL",
+            bg="#0f2b38",
+            fg=THEME_CYAN,
+            font=("Segoe UI", 9, "bold"),
+            bd=1,
+            relief=tk.SOLID,
+            command=self._launch_3d,
+        )
+        self.btn_3d.pack(fill=tk.X, pady=(8, 2))
+
         # Mode Selection
         mode_box = tk.Frame(ctrl_frame, bg=THEME_SURFACE)
         mode_box.pack(fill=tk.X, pady=(8, 0))
@@ -435,6 +448,12 @@ class FSOCTrackerApp:
         self.engine = ClosedLoopEngine(self.cfg)
         self._apply_disturbances()
         self.reset_system()
+
+    def _launch_3d(self) -> None:
+        """Launch the Native 3D Earth & Orbit Mission Control Window."""
+        from .app_3d import launch_3d_desktop
+        t = threading.Thread(target=launch_3d_desktop, daemon=True)
+        t.start()
 
     def _apply_disturbances(self, event=None) -> None:
         # Salt & Pepper

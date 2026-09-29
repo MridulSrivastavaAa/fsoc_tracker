@@ -31,6 +31,9 @@ def build():
     # Separator for PyInstaller --add-data (';' on Windows, ':' on Unix)
     sep = ";" if sys.platform == "win32" else ":"
 
+    models_dir = project_root / "models"
+    web_dist_dir = project_root / "web_dist"
+
     cmd = [
         sys.executable,
         "-m",
@@ -40,6 +43,11 @@ def build():
         "--onedir",
         "--windowed",
         f"--add-data={config_dir}{sep}configs",
+        f"--add-data={models_dir}{sep}models",
+        f"--add-data={web_dist_dir}{sep}web_dist",
+        "--hidden-import=webview",
+        "--hidden-import=bottle",
+        "--hidden-import=pythonnet",
         f"--paths={project_root / 'src'}",
         str(main_script),
     ]

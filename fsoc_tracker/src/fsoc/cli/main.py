@@ -107,6 +107,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     # GUI parser
     p_gui = subparsers.add_parser("gui", help="Launch interactive desktop GUI application")
+    p_gui.add_argument(
+        "--mode", "-m", choices=["3d", "2d"], default="3d",
+        help="Desktop GUI mode: 3d (3D Earth & Orbit Visualizer) or 2d (Tactical HUD Workstation)",
+    )
     p_gui.add_argument("--config", "-c", type=str, default=None, help="Path to custom config YAML")
 
     return parser
@@ -122,9 +126,13 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "run":
         return cmd_run(args)
     elif args.command == "gui":
-        from ..gui.app import launch_gui
-        cfg = load_config(args.config) if args.config else default_config()
-        launch_gui(cfg)
+        if getattr(args, "mode", "3d") == "3d":
+            from ..gui.app_3d import launch_3d_desktop
+            launch_3d_desktop()
+        else:
+            from ..gui.app import launch_gui
+            cfg = load_config(args.config) if args.config else default_config()
+            launch_gui(cfg)
         return 0
     else:
         parser.print_help()
