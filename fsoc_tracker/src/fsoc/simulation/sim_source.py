@@ -91,10 +91,19 @@ class SimulatedSource(FrameSource):
         return frame
 
     def reset(self) -> None:
-        """Rewind to frame 0, regenerate background with same seed."""
+        """Rewind to frame 0, regenerate background with same seed, rebuild motion model."""
         self._frame_index = 0
         self._t = 0.0
         self._background = generate_background(self._cfg.scene, seed=self._bg_seed)
+        self._motion = build_motion_model(
+            self._cfg.motion,
+            self._x0,
+            self._y0,
+            self._cfg.scene.width,
+            self._cfg.scene.height,
+            self._dt,
+            seed=self._bg_seed + 1,
+        )
 
     @property
     def fps(self) -> float:

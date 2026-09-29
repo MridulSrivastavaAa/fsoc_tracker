@@ -76,6 +76,7 @@ class ClosedLoopEngine:
 
         # Metrics log
         self.metrics_history: list[FrameMetrics] = []
+        self.last_viewport: Optional[np.ndarray] = None
 
 
     def step(self) -> Optional[FrameMetrics]:
@@ -103,6 +104,7 @@ class ClosedLoopEngine:
             frame_idx=frame_idx,
             timestamp_s=timestamp_s,
         )
+        self.last_viewport = disturbed_img
 
         curr_state = self.state_machine.state
         best_det = None
@@ -119,7 +121,14 @@ class ClosedLoopEngine:
                 self.state_machine.step(True, timestamp_s)
             else:
                 # Wide area search on full scene if available
-                res = self.wide_search.search_full_scene(full_frame.image)
+                # CRITICAL FIX: apply full scene disturbances first so wide search
+                # doesn't cheat by using a pristine image in heavy fog/noise
+                disturbed_full_scene = self.disturbances.apply_full_scene(
+                    full_frame.image,
+                    frame_idx=frame_idx,
+                    timestamp_s=timestamp_s
+                )
+                res = self.wide_search.search_full_scene(disturbed_full_scene)
                 if res:
                     target_pt, conf = res
                     pan, tilt, _ = self.wide_search.compute_camera_pointing(
@@ -158,6 +167,11 @@ class ClosedLoopEngine:
 
             # Closed-loop actuator control
             if self.state_machine.is_locked:
+                # Update controller with current camera slew rates for world-space FF
+                self.controller.set_camera_rates(
+                    pan_rate_px_s=self.camera._pan_rate * self.cfg.camera.px_per_deg_x,
+                    tilt_rate_px_s=self.camera._tilt_rate * self.cfg.camera.px_per_deg_y,
+                )
                 cmd = self.controller.compute(track.x, track.y, track.vx, track.vy)
             elif self.state_machine.state == State.LOST:
                 # Coast control command with velocity damping
@@ -187,6 +201,8 @@ class ClosedLoopEngine:
         gt_screen_x: Optional[float] = None
         gt_screen_y: Optional[float] = None
         error_px: Optional[float] = None
+        # ISRO R14 primary metric: target distance from optical boresight (320, 240)
+        boresight_px: Optional[float] = None
 
         if self.kalman.is_initialized:
             sx, sy = self.camera.viewport_to_screen(track_state.x, track_state.y)
@@ -199,13 +215,25 @@ class ClosedLoopEngine:
             gt_screen_x = gt_pt.x
             gt_screen_y = gt_pt.y
 
-            # Error is measured in viewport coordinates if visible, or full screen
             if vp_frame.ground_truth_viewport:
                 gt_vp = vp_frame.ground_truth_viewport[0]
+
+                # Centroiding accuracy: how well Kalman tracks beacon in sensor space.
+                # This does NOT directly represent R14 compliance — it measures estimator quality.
                 if self.kalman.is_initialized:
                     error_px = float(np.hypot(track_state.x - gt_vp.x, track_state.y - gt_vp.y))
                 else:
-                    error_px = float(np.hypot(320.0 - gt_vp.x, 240.0 - gt_vp.y))
+                    error_px = float(np.hypot(self.cfg.camera.half_w - gt_vp.x,
+                                              self.cfg.camera.half_h - gt_vp.y))
+
+                # ISRO R14 boresight alignment error: distance of actual beacon
+                # from the optical axis (centre of viewport = boresight).
+                # R14 compliance requires this to be ≤ 10 px in steady-state tracking.
+                boresight_px = float(np.hypot(
+                    gt_vp.x - self.cfg.camera.half_w,
+                    gt_vp.y - self.cfg.camera.half_h,
+                ))
+
             elif est_screen_x is not None:
                 error_px = float(np.hypot(est_screen_x - gt_screen_x, est_screen_y - gt_screen_y))
 
@@ -218,6 +246,7 @@ class ClosedLoopEngine:
             gt_x=gt_screen_x,
             gt_y=gt_screen_y,
             error_px=error_px,
+            boresight_px=boresight_px,
             confidence=track_state.confidence,
             locked=self.state_machine.is_locked,
             proc_ms=t_proc_ms,
@@ -298,4 +327,5 @@ class ClosedLoopEngine:
         self.controller.reset()
         self.turbulence_comp.reset()
         self.metrics_history.clear()
+        self.last_viewport = None
 

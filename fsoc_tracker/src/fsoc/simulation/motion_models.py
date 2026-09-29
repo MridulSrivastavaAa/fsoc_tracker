@@ -54,18 +54,24 @@ class LineMotion(MotionModel):
 # ---------------------------------------------------------------------------
 
 class CircleMotion(MotionModel):
-    """Uniform circular motion around the scene centre."""
+    """Uniform circular motion around a configurable centre (default = scene centre)."""
 
-    def __init__(self, cfg: MotionConfig, scene_w: int, scene_h: int) -> None:
+    def __init__(self, cfg: MotionConfig, x0: float, y0: float, scene_w: int, scene_h: int) -> None:
         super().__init__(scene_w, scene_h)
-        self.cx = scene_w / 2.0
-        self.cy = scene_h / 2.0
+        # Orbit centre: use provided x0/y0 if given, else scene centre.
+        # If cfg.circle target has been placed at scene centre (x0=scene_w/2, y0=scene_h/2),
+        # orbit centre = scene centre.  User can supply any centre via target.initial_x/y.
+        self.cx = x0
+        self.cy = y0
         self.R = cfg.circle.radius
         self.omega = math.radians(cfg.circle.omega_deg_per_s)  # rad/s
+        # Phase offset in radians (0 = start right, -pi/2 = start top)
+        self.phase = math.radians(cfg.circle.phase_offset_deg)
 
     def position(self, t: float) -> tuple[float, float]:
-        x = self.cx + self.R * math.cos(self.omega * t)
-        y = self.cy + self.R * math.sin(self.omega * t)
+        angle = self.omega * t + self.phase
+        x = self.cx + self.R * math.cos(angle)
+        y = self.cy + self.R * math.sin(angle)
         return float(x), float(y)
 
 
@@ -229,7 +235,7 @@ def build_motion_model(cfg: MotionConfig,
     if name == "line":
         return LineMotion(cfg, x0, y0, scene_w, scene_h)
     elif name == "circle":
-        return CircleMotion(cfg, scene_w, scene_h)
+        return CircleMotion(cfg, x0, y0, scene_w, scene_h)
     elif name == "figure8":
         return Figure8Motion(cfg, scene_w, scene_h)
     elif name == "random":

@@ -91,7 +91,8 @@ class KalmanTracker:
     ) -> None:
         """Initialize or reset track with a confirmed detection."""
         self.x = np.array([x, y, vx, vy], dtype=np.float64)
-        self.P = np.diag([self.R0, self.R0, 50.0, 50.0]).astype(np.float64)
+        # Higher initial velocity uncertainty so PID doesn't get a huge spike
+        self.P = np.diag([self.R0, self.R0, 500.0, 500.0]).astype(np.float64)
         self.is_initialized = True
         self.is_locked = True
         self.confidence = float(np.clip(confidence, 0.0, 1.0))

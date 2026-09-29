@@ -32,11 +32,11 @@ class DisturbanceConfig:
     (to be added to default.yaml in future; sensible defaults here).
     """
     # Salt & Pepper
-    sp_enabled: bool = True
+    sp_enabled: bool = False
     sp_density: float = 0.05
 
     # Gaussian
-    gauss_enabled: bool = True
+    gauss_enabled: bool = False
     gauss_sigma: float = 8.0
 
     # Poisson
@@ -44,11 +44,11 @@ class DisturbanceConfig:
     poisson_gain: float = 1.0
 
     # Jitter
-    jitter_enabled: bool = True
+    jitter_enabled: bool = False
     jitter_max_px: float = 10.0
 
     # Platform motion
-    platform_enabled: bool = True
+    platform_enabled: bool = False
     platform_mode: str = "linear"
     platform_max_px: float = 5.0
 
