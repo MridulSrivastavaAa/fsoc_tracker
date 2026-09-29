@@ -56,6 +56,12 @@ ENV/
 *.sublime-project
 *.sublime-workspace
 
+# Web & Node dependencies
+web/node_modules/
+node_modules/
+web/dist/
+dist/
+
 # OS Files
 .DS_Store
 Thumbs.db
