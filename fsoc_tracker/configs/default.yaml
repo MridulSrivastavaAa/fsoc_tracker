@@ -1,0 +1,125 @@
+# ============================================================
+# default.yaml  –  All tunable parameters for FSOC Tracker
+# ISRO SIH Problem Statement 26169
+# No magic numbers in code – every parameter lives here.
+# ============================================================
+
+# -------  Virtual Scene  ------------------------------------
+scene:
+  width: 2000          # px
+  height: 2000         # px
+  background: "perlin" # "flat" | "perlin" | "stars"
+  seed: 42             # master reproducibility seed
+
+# -------  Target / Beacon  ----------------------------------
+target:
+  shape: "square"       # "square" | "circle" | "cross"
+  size_px: 10           # default beacon size (5–20 px)
+  brightness: 220       # peak pixel value (0–255)
+  psf_sigma: 1.0        # Gaussian PSF blur; 0 = sharp
+  initial_x: null       # null => random
+  initial_y: null       # null => random
+  speed_px_per_s: 120   # pixels/second (< 80 % of max slew = 800 px/s)
+
+# -------  Motion Model  ------------------------------------
+motion:
+  model: "circle"       # "line" | "circle" | "figure8" | "random"
+                        # | "spiral" | "sinusoidal" | "user"
+  line:
+    vx: 80.0            # px/s
+    vy: 50.0            # px/s
+  circle:
+    radius: 400.0       # px
+    omega_deg_per_s: 18.0  # angular speed
+  figure8:
+    amplitude_x: 400.0
+    amplitude_y: 200.0
+    omega_deg_per_s: 18.0
+  random:
+    max_accel: 20.0     # px/s²
+  spiral:
+    r0: 50.0
+    k: 2.0              # px/s radial expansion
+    omega_deg_per_s: 18.0
+  sinusoidal:
+    vx: 80.0
+    amplitude_y: 300.0
+    omega_deg_per_s: 18.0
+  user:
+    csv_path: "configs/user_trajectory.csv"
+
+# -------  Virtual Camera  -----------------------------------
+camera:
+  res_x: 640            # px
+  res_y: 480            # px
+  fov_x_deg: 4.0        # degrees  =>  scale = 640/4 = 160 px/deg
+  fov_y_deg: 3.0        # degrees  =>  scale = 480/3 = 160 px/deg
+  initial_cx: null      # null => screen centre (1000)
+  initial_cy: null      # null => screen centre (1000)
+  max_pan_deg_per_s: 5.0
+  max_tilt_deg_per_s: 5.0
+  max_accel_deg_per_s2: 30.0
+  latency_frames: 1     # command applied 1 frame later
+
+# -------  Pipeline / Timing  --------------------------------
+pipeline:
+  fps: 30               # simulation step rate (Hz)
+  duration_s: 60.0      # default run duration (seconds)
+  seed: 42
+
+# -------  Vision & Perception Pipeline (Phase 3)  -----------
+vision:
+  preprocess:
+    median_ksize: 3       # 3x3 median filter for S&P noise
+    use_tophat: true      # morphological Top-Hat background suppression
+    tophat_ksize: 21      # structuring element kernel size
+    mad_k: 3.5            # MAD threshold multiplier
+    min_threshold: 25     # absolute minimum binary threshold
+  detector:
+    min_area: 2.0         # minimum blob area (px)
+    max_area: 500.0       # maximum blob area (px)
+    min_intensity: 30.0   # minimum peak intensity
+    max_eccentricity: 0.95 # filter non-compact artifacts
+    subpixel_window: 5    # window size for centroid calculation
+  wide_search:
+    downscale_factor: 4   # 4x downscaling (2000x2000 -> 500x500)
+    coarse_threshold: 40  # coarse detection threshold
+    max_candidates: 5     # max candidates from wide search
+  cnn:
+    model_path: "models/beacon_verifier.onnx"
+    patch_size: 32        # input crop size (32x32)
+    min_confidence: 0.5   # score threshold for valid beacon
+    enabled: true
+
+# -------  Tracking & Kalman Filter (Phase 4)  ----------------
+tracking:
+  q_pos: 1.0              # process noise position covariance
+  q_vel: 2.0              # process noise velocity covariance
+  r_pos: 4.0              # measurement noise covariance
+  gate_dist_px: 60.0      # association gate distance (px)
+  consecutive_acquire_frames: 3  # detections needed to enter TRACK
+  consecutive_lost_frames: 10    # misses before declaring LOST
+  reacquire_timeout_frames: 45   # frames before falling back to SEARCH
+  max_coast_frames: 15    # max frames to coast on Kalman velocity
+
+# -------  Closed-Loop PID Control (Phase 4)  -----------------
+control:
+  kp: 0.8                 # proportional gain
+  ki: 0.05                # integral gain
+  kd: 0.15                # derivative gain
+  kff: 0.9                # velocity feed-forward gain
+  anti_windup_limit: 2.0  # max integral term (deg/s)
+  deadband_px: 0.5        # error deadband (px)
+  target_offset_x: 0.0    # pixel offset from center
+  target_offset_y: 0.0
+
+# -------  Advanced Adaptive Turbulence & Scintillation (Phase 7)
+advanced:
+  enabled: true
+  scintillation_window_frames: 30  # temporal window for sigma_I^2 estimation
+  fade_threshold_ratio: 0.35        # trigger ballistic coasting if I < 35% of mean
+  wander_cutoff_hz: 3.0             # low-pass cutoff to suppress beam wander gimbal jerk
+  adaptive_kalman_gain: 1.5         # scaling factor for dynamic covariance adaptation
+
+
+

@@ -1,0 +1,62 @@
+# =============================================================================
+# ISRO FSOC Tracker - Git Ignore Rules
+# =============================================================================
+
+# Reports (HTML reports generated during phases)
+*REPORT*.html
+PHASE*_REPORT.html
+FINAL_TECHNICAL_REPORT.html
+00_PROJECT_ROADMAP.html
+*.html
+
+# Problem Statement & Raw Reference PDFs
+Problem Statement ID.txt
+26169 (1).pdf
+*.pdf
+
+# Temporary Folders & New folder
+New folder/
+[Nn]ew [Ff]older/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.cache
+
+# Video Assets & Large Benchmark Artifacts
+*.mp4
+*.avi
+*.mov
+*.mkv
+benchmark_results/
+data/
+
+# Environments & IDEs
+.env
+.venv
+env/
+venv/
+ENV/
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
