@@ -56,13 +56,24 @@ class LineMotion(MotionModel):
 class CircleMotion(MotionModel):
     """Uniform circular motion around a configurable centre (default = scene centre)."""
 
-    def __init__(self, cfg: MotionConfig, x0: float, y0: float, scene_w: int, scene_h: int) -> None:
-        super().__init__(scene_w, scene_h)
-        # Orbit centre: use provided x0/y0 if given, else scene centre.
-        # If cfg.circle target has been placed at scene centre (x0=scene_w/2, y0=scene_h/2),
-        # orbit centre = scene centre.  User can supply any centre via target.initial_x/y.
-        self.cx = x0
-        self.cy = y0
+    def __init__(
+        self,
+        cfg: MotionConfig,
+        scene_w_or_x0: float | int,
+        scene_h_or_y0: float | int,
+        scene_w: Optional[int] = None,
+        scene_h: Optional[int] = None,
+    ) -> None:
+        if scene_w is None or scene_h is None:
+            w, h = int(scene_w_or_x0), int(scene_h_or_y0)
+            super().__init__(w, h)
+            self.cx = w / 2.0
+            self.cy = h / 2.0
+        else:
+            super().__init__(scene_w, scene_h)
+            self.cx = float(scene_w_or_x0)
+            self.cy = float(scene_h_or_y0)
+
         self.R = cfg.circle.radius
         self.omega = math.radians(cfg.circle.omega_deg_per_s)  # rad/s
         # Phase offset in radians (0 = start right, -pi/2 = start top)
