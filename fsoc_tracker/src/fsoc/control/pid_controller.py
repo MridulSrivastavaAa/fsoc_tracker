@@ -91,6 +91,7 @@ class PIDController:
         est_y: float,
         vel_x: float = 0.0,
         vel_y: float = 0.0,
+        state: str = "TRACK",
     ) -> CameraCommand:
         """
         Compute pan/tilt rate command to center target.
@@ -146,17 +147,20 @@ class PIDController:
         self.prev_e_x = e_x
         self.prev_e_y = e_y
 
+        # Gain scheduling: softer Kp during ACQUIRE to prevent violent snap
+        kp_active = self.cfg.kp * 0.3 if state == "ACQUIRE" else self.cfg.kp
+
         # PID + World-space Feed-forward law in pixel rate (px/s)
         # Using world-space velocity (not viewport velocity) for FF:
         # viewport_vel -> 0 when tracking; world_vel stays constant at target speed.
         u_x = (
-            self.cfg.kp * e_x
+            kp_active * e_x
             + self.cfg.ki * self.int_x
             + self.cfg.kd * d_x
             + self.cfg.kff * world_vel_x
         )
         u_y = (
-            self.cfg.kp * e_y
+            kp_active * e_y
             + self.cfg.ki * self.int_y
             + self.cfg.kd * d_y
             + self.cfg.kff * world_vel_y

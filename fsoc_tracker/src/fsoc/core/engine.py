@@ -172,10 +172,10 @@ class ClosedLoopEngine:
                     pan_rate_px_s=self.camera._pan_rate * self.cfg.camera.px_per_deg_x,
                     tilt_rate_px_s=self.camera._tilt_rate * self.cfg.camera.px_per_deg_y,
                 )
-                cmd = self.controller.compute(track.x, track.y, track.vx, track.vy)
+                cmd = self.controller.compute(track.x, track.y, track.vx, track.vy, state=self.state_machine.state.value)
             elif self.state_machine.state == State.LOST:
                 # Coast control command with velocity damping
-                cmd = self.controller.compute(track.x, track.y, track.vx * 0.5, track.vy * 0.5)
+                cmd = self.controller.compute(track.x, track.y, track.vx * 0.5, track.vy * 0.5, state=self.state_machine.state.value)
             else:
                 cmd = CameraCommand(0.0, 0.0)
 

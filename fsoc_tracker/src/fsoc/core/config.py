@@ -39,7 +39,7 @@ class LineMotionConfig(BaseModel):
 
 class CircleMotionConfig(BaseModel):
     radius: float = Field(400.0, ge=10.0)
-    omega_deg_per_s: float = 18.0
+    omega_deg_per_s: float = 25.0
     # Phase offset so orbit start position is configurable.
     # Default -90° places beacon at (cx, cy-R) at t=0 i.e. directly above center.
     # Use 0° for right, 90° for below, 180° for left.
