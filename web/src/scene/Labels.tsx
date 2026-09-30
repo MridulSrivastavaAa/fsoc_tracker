@@ -30,8 +30,8 @@ export function SceneLabels() {
   const remoteName = remote === 'leo' ? `LEO · ${alt.toFixed(0)} km` : remote === 'haps' ? 'HAPS' : 'UAV';
   return (
     <div className="scene-labels" aria-hidden>
-      <Tag id={IDS[0]} title="Mobile FSOC terminal" sub="pan/tilt gimbal · optical camera" />
-      <Tag id={IDS[1]} title="Remote terminal" sub={`${remoteName} · optical beacon`} tone="ice" />
+      <Tag id={IDS[0]} title="ISRO Ground Terminal (Bengaluru, KA)" sub="13.03° N, 77.51° E · Optical Gimbal" />
+      <Tag id={IDS[1]} title="FSOC Satellite (Bengaluru Orbit)" sub={`${remoteName} · optical beacon`} tone="ice" />
       <Tag id={IDS[2]} title="Optical link" sub="coarse alignment locked" tone="lock" />
       {SPACE_TAGS.map((t) => (
         <Tag key={t.key} id={`aq-label-${t.key}`} title={t.title} sub={t.sub} tone="dim" />

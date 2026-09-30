@@ -74,33 +74,76 @@ export function TopBar() {
   );
 }
 
-const VIEWS: { v: ViewPreset; label: string }[] = [
-  { v: 'overview', label: 'Overview' },
-  { v: 'terminal', label: 'Terminal' },
-  { v: 'link', label: 'Spacecraft' },
-  { v: 'sensor', label: 'Sensor POV' },
-  { v: 'orbit', label: 'Orbit' },
+const VIEWS: { v: ViewPreset; name: string; key: string; hint: string }[] = [
+  { v: 'overview', name: 'Overview', key: '1', hint: 'Global Stage' },
+  { v: 'terminal', name: 'Terminal', key: '2', hint: 'Ground OGS' },
+  { v: 'link', name: 'Sat 3D', key: '3', hint: 'FSOC Spacecraft' },
+  { v: 'sensor', name: 'POV', key: '4', hint: 'Camera Boresight' },
+  { v: 'orbit', name: 'Orbit', key: '5', hint: 'Track Plane' },
 ];
 
 export function ViewSwitch() {
   const view = useApp((s) => s.view);
   const setView = useApp((s) => s.setView);
+  const activeView = VIEWS.find((x) => x.v === view) ?? { name: 'Free', key: '0', hint: 'Orbit' };
+
   return (
-    <nav className="viewswitch glass">
-      {VIEWS.map((v, i) => (
-        <button key={v.v} className={view === v.v ? 'on' : ''} onClick={() => setView(v.v)}>
-          {v.label}
-          <kbd>{i + 1}</kbd>
+    <div className="viewswitch-card glass compact" aria-label="Camera sightline and viewport control">
+      <div className="vs-card-head">
+        <div className="vs-card-title">
+          <Icon name="crosshair" size={12} />
+          <span>SIGHTLINE PRESETS</span>
+        </div>
+        <div className="vs-active-tag">
+          <span className="vs-live-dot" />
+          <span>{activeView.name.toUpperCase()}</span>
+        </div>
+      </div>
+
+      <div className="vs-card-grid">
+        {VIEWS.map((v) => {
+          const isSel = view === v.v;
+          return (
+            <button
+              key={v.v}
+              className={`vs-card-btn ${isSel ? 'on' : ''}`}
+              onClick={() => setView(v.v)}
+              title={`${v.name} (${v.key}) — ${v.hint}`}
+            >
+              <span className="vs-btn-title">{v.name}</span>
+              <kbd className="vs-kbd">{v.key}</kbd>
+            </button>
+          );
+        })}
+
+        <button
+          className="vs-card-btn vs-reset-btn"
+          onClick={() => {
+            setView('overview');
+            cameraApi.zoom(1);
+          }}
+          title="Reset to default overview angle (R)"
+        >
+          <span className="vs-btn-title">Reset</span>
+          <kbd className="vs-kbd">R</kbd>
         </button>
-      ))}
-      <span className="vs-sep" />
-      <button className="vs-zoom" onClick={() => cameraApi.zoom(1.8)} title="Zoom out (−)" aria-label="Zoom out">
-        <Icon name="minus" size={14} />
-      </button>
-      <button className="vs-zoom" onClick={() => cameraApi.zoom(0.55)} title="Zoom in (+, or the mouse wheel towards the cursor)" aria-label="Zoom in">
-        <Icon name="plus" size={14} />
-      </button>
-    </nav>
+      </div>
+
+      <div className="vs-card-foot">
+        <div className="vs-zoom-controls">
+          <span className="vs-zoom-label">ZOOM</span>
+          <button className="vs-zoom-act" onClick={() => cameraApi.zoom(1.6)} title="Zoom out (−)" aria-label="Zoom out">
+            <Icon name="minus" size={11} />
+          </button>
+          <button className="vs-zoom-act" onClick={() => cameraApi.zoom(0.62)} title="Zoom in (+)" aria-label="Zoom in">
+            <Icon name="plus" size={11} />
+          </button>
+        </div>
+        <div className="vs-hint-text">
+          <span><kbd>1</kbd>–<kbd>5</kbd> VIEW · <kbd>+</kbd>/<kbd>−</kbd> ZOOM</span>
+        </div>
+      </div>
+    </div>
   );
 }
 

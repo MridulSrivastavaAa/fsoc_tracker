@@ -14,20 +14,20 @@ export interface ScenarioPreset {
 export const SCENARIO_PRESETS: ScenarioPreset[] = [
   {
     id: 'open-sky',
-    name: 'Open Sky',
-    summary: 'Clear night sky, LEO remote terminal on a circular residual motion. The reference case.',
+    name: 'Clear Link',
+    summary: 'Optimal conditions: clear atmospheric window with smooth circular LEO motion (Nominal Reference).',
     patch: {},
   },
   {
     id: 'ps-baseline',
-    name: 'PS169 Baseline',
-    summary: 'Problem-statement defaults: 4°×3° FOV only (no wide-field), square 10 px beacon, random start, 5 °/s gimbal.',
+    name: 'PS-169 Std',
+    summary: 'Standard mission benchmark: 4°×3° narrow acquisition FOV, 10 px beacon spot, 5 °/s gimbal.',
     patch: { camera: { wideAcquisition: false }, target: { trajectory: 'linear', speedDegS: 0.5 } },
   },
   {
     id: 'moving-platform',
-    name: 'Moving Platform',
-    summary: 'Terminal on a vehicle: platform motion, 8 Hz vibration and wind torque on the gimbal.',
+    name: 'Mobile Base',
+    summary: 'Vehicular optical terminal: 8 Hz platform vibration, kinematic roll, and aerodynamic wind torque.',
     patch: {
       target: { trajectory: 'figure8', amplitudeDeg: 1.5, periodS: 14 },
       disturbance: { platformMotion: 'circular', platformMotionPx: 12, vibrationPx: 4, vibrationHz: 8, windDegS: 0.25, jitterPx: 3 },
@@ -36,13 +36,13 @@ export const SCENARIO_PRESETS: ScenarioPreset[] = [
   {
     id: 'high-jitter',
     name: 'High Jitter',
-    summary: 'Camera jitter at the PS maximum (±20 px/frame). Shows the physical error floor of a coarse stage.',
+    summary: 'Severe sensor vibration (±20 px/frame) testing the physical stabilization floor of the coarse stage.',
     patch: { disturbance: { jitterPx: 20, vibrationPx: 6, vibrationHz: 12 } },
   },
   {
     id: 'weak-beacon',
-    name: 'Weak Beacon',
-    summary: 'Haze, dim 6 px beacon, strong turbulence and Gaussian σ = 18 noise with 3 % salt & pepper.',
+    name: 'Haze & Dim',
+    summary: 'Low-SNR transmission: heavy haze, 6 px attenuated beacon, strong turbulence, and Gaussian noise.',
     patch: {
       target: { spotSizePx: 6, beaconIntensity: 120, trajectory: 'sinusoidal' },
       disturbance: { atmosphere: 'haze', atmosphereStrength: 0.7, turbulence: 0.6, gaussianNoise: 18, saltPepper: 0.03 },
@@ -50,14 +50,14 @@ export const SCENARIO_PRESETS: ScenarioPreset[] = [
   },
   {
     id: 'fast-target',
-    name: 'Fast Target',
-    summary: 'Random manoeuvring target at 1.5 °/s with a 10 °/s gimbal — tests rate feed-forward.',
+    name: 'Fast Transit',
+    summary: 'High-speed angular motion at 1.5 °/s with 10 °/s gimbal dynamics — stresses Kalman rate feed-forward.',
     patch: { target: { trajectory: 'random', speedDegS: 1.5 }, gimbal: { maxRateDegS: 10, maxAccelDegS2: 60 } },
   },
   {
     id: 'acquisition-challenge',
-    name: 'Acquisition Challenge',
-    summary: 'Beacon starts in a field corner, rain and 30 % dropouts, decoy glint present.',
+    name: 'Corner Lock',
+    summary: 'Offset corner target start with 30 % sensor dropouts, precipitation, and decoy optical reflection.',
     patch: {
       target: { startMode: 'fixed', startUDeg: 5.6, startVDeg: -5.4, trajectory: 'stationary' },
       disturbance: { atmosphere: 'rain', atmosphereStrength: 0.6, dropoutProb: 0.3, decoy: true },
@@ -65,14 +65,14 @@ export const SCENARIO_PRESETS: ScenarioPreset[] = [
   },
   {
     id: 'occlusion',
-    name: 'Occlusion & Reacquisition',
-    summary: 'A passing cloud hides the beacon for 1 s every 6 s on a circular path. Measures re-acquisition time (PS ≤ 1 s).',
+    name: 'Cloud Break',
+    summary: 'Cloud occlusion masking beacon for 1 s every 6 s, evaluating sub-second reacquisition recovery.',
     patch: { target: { trajectory: 'circular', amplitudeDeg: 1.4, periodS: 14 }, disturbance: { occlusionPeriodS: 6, occlusionDurS: 1 } },
   },
   {
     id: 'leo-pass',
-    name: 'LEO Pass',
-    summary: 'Real circular-orbit pass (550 km, 62° max elevation) with 2.5 s ephemeris timing error.',
+    name: 'LEO Orbit',
+    summary: 'True Keplerian orbital overpass at 550 km (62° max elevation) with ephemeris timing bias.',
     patch: { target: { trajectory: 'orbital' } },
   },
 ];

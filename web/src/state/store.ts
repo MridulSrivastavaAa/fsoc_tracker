@@ -91,7 +91,7 @@ export function historySlice(key: SeriesKey, seconds: number): { t: Float32Array
 // ───────────────────────── React-facing store ─────────────────────────
 export type DrawerId = 'scenario' | 'target' | 'disturbance' | 'tracking' | 'experiment' | 'optics' | 'view' | null;
 export type ViewPreset = 'overview' | 'terminal' | 'link' | 'sensor' | 'orbit' | 'free' | 'follow';
-export type FollowKey = 'iss' | 'sat2' | 'sat3';
+export type FollowKey = 'sat3';
 export type Quality = 'low' | 'medium' | 'high';
 export type ThemeId = 'deep-space' | 'laser' | 'aurora' | 'solar' | 'daylight';
 export const THEMES: { id: ThemeId; name: string; note: string; swatch: string[] }[] = [
@@ -259,10 +259,10 @@ export const useApp = create<AppState>((set, get) => {
     engineFps: 0,
     timeScale: 1,
     events: [],
-    drawer: null,
+    drawer: 'scenario',
     view: 'overview',
     viewNonce: 0,
-    followKey: 'iss',
+    followKey: 'sat3',
     quality: (localStorageGet('astraq.quality') as Quality) ?? 'medium',
     theme: initialTheme(),
     themeOpen: false,
@@ -331,7 +331,7 @@ export const useApp = create<AppState>((set, get) => {
       provider?.send({ type: 'replaceConfig', config: cfg });
     },
 
-    setDrawer: (d) => set({ drawer: get().drawer === d ? null : d }),
+    setDrawer: (d) => set({ drawer: d || 'scenario' }),
     setView: (v) => set({ view: v, viewNonce: get().viewNonce + 1 }),
     flyTo: (k) => set({ view: 'follow', followKey: k, viewNonce: get().viewNonce + 1, overlays: { ...get().overlays, space: true } }),
     setQuality: (q) => {

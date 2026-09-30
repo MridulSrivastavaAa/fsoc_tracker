@@ -94,48 +94,67 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
   const paths: Record<string, ReactNode> = {
     scenario: (
       <>
-        <circle cx="12" cy="12" r="8.5" {...p} />
-        <path d="M3.5 12h17M12 3.5c2.6 2.6 2.6 14.4 0 17M12 3.5c-2.6 2.6-2.6 14.4 0 17" {...p} />
+        <circle cx="12" cy="12" r="7.5" {...p} />
+        <ellipse cx="12" cy="12" rx="7.5" ry="3.2" {...p} />
+        <path d="M12 4.5v15" {...p} />
+        <path d="M4.5 12h15" {...p} />
+        <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(-30 12 12)" {...p} strokeDasharray="2 3" />
+        <circle cx="19.5" cy="8.2" r="1.5" fill="currentColor" />
       </>
     ),
     target: (
       <>
-        <circle cx="12" cy="12" r="3" {...p} />
-        <path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4" {...p} />
-        <path d="M5 19c3-6 8-3 14-12" {...p} strokeDasharray="2 2.5" />
+        <circle cx="12" cy="12" r="8" {...p} />
+        <circle cx="12" cy="12" r="4" {...p} />
+        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        <path d="M12 2v3.5M12 18.5v3.5M2 12h3.5M18.5 12h3.5" {...p} />
       </>
     ),
-    disturbance: <path d="M2.5 12c2-5 3.5-5 5 0s3 5 4.5 0 3-5 4.5 0 3 5 5 0" {...p} />,
+    disturbance: (
+      <>
+        <path d="M2.5 8.5c1.8-3 3.6-3 5.4 0s3.6 3 5.4 0 3.6-3 5.4 0 2.8 2 2.8 2" {...p} />
+        <path d="M2.5 15.5c1.5 2 3 2 4.5 0s3-2 4.5 0 3 2 4.5 0 3.5-2 5.5 0" {...p} opacity={0.7} />
+        <path d="M7 3.5l1.5 3M17 17.5l1.5 3" {...p} strokeDasharray="1.5 2" />
+      </>
+    ),
     tracking: (
       <>
-        <rect x="3.5" y="5.5" width="17" height="13" rx="2" {...p} />
-        <path d="M9 12h6M12 9v6" {...p} />
-        <path d="M6.5 8.5h2M15.5 15.5h2" {...p} />
+        <path d="M4 8.5V5a1 1 0 0 1 1-1h3.5M15.5 4H19a1 1 0 0 1 1 1v3.5M20 15.5V19a1 1 0 0 1-1 1h-3.5M8.5 20H5a1 1 0 0 1-1-1v-3.5" {...p} />
+        <circle cx="12" cy="12" r="3.2" {...p} />
+        <path d="M12 7.5v2M12 14.5v2M7.5 12h2M14.5 12h2" {...p} />
       </>
     ),
     experiment: (
       <>
-        <path d="M9 3.5v6l-5 9a1.5 1.5 0 0 0 1.3 2h13.4a1.5 1.5 0 0 0 1.3-2l-5-9v-6" {...p} />
-        <path d="M8 3.5h8M7 15h10" {...p} />
+        <path d="M9 3h6M10 3v5.5L4.5 18a1.5 1.5 0 0 0 1.3 2.5h12.4a1.5 1.5 0 0 0 1.3-2.5L14 8.5V3" {...p} />
+        <path d="M7 14.5h10" {...p} />
+        <circle cx="9.5" cy="17.5" r="1" fill="currentColor" />
+        <circle cx="13.5" cy="16.5" r="1.2" fill="currentColor" />
       </>
     ),
     optics: (
       <>
-        <path d="M3 12h4M17 12h4" {...p} />
-        <path d="M7 6.5v11M17 9v6" {...p} />
-        <path d="M7 6.5 17 9M7 17.5 17 15" {...p} />
+        <circle cx="9" cy="12" r="6" {...p} />
+        <circle cx="9" cy="12" r="2.5" {...p} />
+        <path d="M15 8.5l4-2.5v12l-4-2.5" {...p} />
+        <path d="M9 3v2M9 19v2M3 12h2" {...p} />
+        <path d="M19 12h3" {...p} strokeWidth={2} />
       </>
     ),
     view: (
       <>
-        <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" {...p} />
-        <circle cx="12" cy="12" r="3" {...p} />
+        <path d="M2.5 12C4.5 7.5 8 5 12 5s7.5 2.5 9.5 7c-2 4.5-5.5 7-9.5 7s-7.5-2.5-9.5-7Z" {...p} />
+        <circle cx="12" cy="12" r="3.5" {...p} />
+        <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+        <path d="M12 2v1.5M12 20.5V22M2 12h1.5M20.5 12H22" {...p} opacity={0.5} />
       </>
     ),
     measure: (
       <>
-        <path d="M4 20 20 4" {...p} />
-        <path d="m7 17-2-2M10 14l-1.5-1.5M13 11l-2-2M16 8l-1.5-1.5" {...p} />
+        <path d="M4 20L20 4" {...p} />
+        <path d="M6 18l-2 2M18 6l2-2" {...p} strokeWidth={2} />
+        <path d="M8.5 13.5l-2-2M11.5 10.5l-2-2M14.5 7.5l-2-2" {...p} />
+        <path d="M10 17l-3-3M17 10l-3-3" {...p} opacity={0.6} strokeDasharray="1.5 2" />
       </>
     ),
     analysis: <path d="M3.5 19.5h17M5 16l4-5 4 3 6-8" {...p} />,
@@ -168,8 +187,10 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
     ),
     film: (
       <>
-        <rect x="3.5" y="5" width="17" height="14" rx="2" {...p} />
-        <path d="M3.5 9h17M3.5 15h17M7.5 5v4M12 5v4M16.5 5v4M7.5 15v4M12 15v4M16.5 15v4" {...p} />
+        <rect x="3" y="4.5" width="18" height="15" rx="2.5" {...p} />
+        <path d="M3 9.5h18M3 14.5h18" {...p} />
+        <path d="M7 4.5v5M12 4.5v5M17 4.5v5M7 14.5v5M12 14.5v5M17 14.5v5" {...p} />
+        <path d="M10.5 10.5l3.5 1.5-3.5 1.5z" fill="currentColor" stroke="none" />
       </>
     ),
     report: (

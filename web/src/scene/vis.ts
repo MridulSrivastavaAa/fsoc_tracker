@@ -25,6 +25,7 @@ export const vis = {
   state: 'IDLE' as TrackState,
   stateT: 0,
   lens: new THREE.Vector3(0, 0.0065, 0),
+  lensDir: new THREE.Vector3(0, 0, -1), // world-space beam-forward direction, set each frame by GroundTerminal
   terminalScale: 1,
   satScale: 1,
   camDistTerminal: 1,

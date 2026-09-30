@@ -283,7 +283,7 @@ export const DEFAULT_CONFIG: SimConfig = {
     decoy: false,
   },
   scene: {
-    siteName: 'Bengaluru ground terminal',
+    siteName: 'ISRO Ground Terminal (Bengaluru, Karnataka)',
     siteLatDeg: 13.03,
     siteLonDeg: 77.51,
     losAzDeg: 205,

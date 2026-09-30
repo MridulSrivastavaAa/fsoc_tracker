@@ -17,13 +17,13 @@ import { Icon, Section, Seg, Slider, Toggle, fmt } from './ui';
 import { ThemeList } from './Theme';
 
 const TOOLS: { id: Exclude<DrawerId, null>; icon: string; label: string }[] = [
-  { id: 'scenario', icon: 'scenario', label: 'Scenario & geometry' },
-  { id: 'target', icon: 'target', label: 'Target motion & beacon' },
-  { id: 'disturbance', icon: 'disturbance', label: 'Disturbances & environment' },
-  { id: 'tracking', icon: 'tracking', label: 'Detection · Kalman · PID · gimbal' },
-  { id: 'optics', icon: 'optics', label: 'Camera calibration & link budget' },
-  { id: 'experiment', icon: 'experiment', label: 'Experiments · record · replay · batch' },
-  { id: 'view', icon: 'view', label: 'View, quality & overlays' },
+  { id: 'scenario', icon: 'scenario', label: 'Mission Profile & Orbital Geometry' },
+  { id: 'target', icon: 'target', label: 'Target Kinematics & Beacon' },
+  { id: 'disturbance', icon: 'disturbance', label: 'Atmosphere, Noise & Channel Dynamics' },
+  { id: 'tracking', icon: 'tracking', label: 'Detection, Kalman & Servo Loop' },
+  { id: 'optics', icon: 'optics', label: 'Sensor Calibration & Link Budget' },
+  { id: 'experiment', icon: 'experiment', label: 'Telemetry, Batch & Analysis' },
+  { id: 'view', icon: 'view', label: 'Viewport, Overlays & Graphics' },
 ];
 
 export function ToolRail() {
@@ -58,37 +58,66 @@ function useCfg() {
   return { cfg, patch };
 }
 
+const PRESET_TAGS: Record<string, string> = {
+  'open-sky': 'REF',
+  'ps-baseline': 'PS169',
+  'moving-platform': 'MOTION',
+  'high-jitter': 'JITTER',
+  'weak-beacon': 'HAZE',
+  'fast-target': 'SPEED',
+  'acquisition-challenge': 'ACQ',
+  'occlusion': 'OCCL',
+  'leo-pass': 'ORBIT',
+};
+
 function ScenarioDrawer() {
   const { cfg, patch } = useCfg();
   const replace = useApp((s) => s.replaceConfig);
   const timeScale = useApp((s) => s.timeScale);
   const send = useApp((s) => s.send);
   const sc = cfg.scene;
+  const activePreset = SCENARIO_PRESETS.find((p) => p.id === cfg.scenarioId) || SCENARIO_PRESETS[0];
+
   return (
     <>
-      <Section title="Scenario presets">
-        <div className="preset-list">
+      <Section title="Operational Profiles & Presets">
+        <div className="preset-grid">
           {SCENARIO_PRESETS.map((p) => (
-            <button key={p.id} className={`preset ${cfg.scenarioId === p.id ? 'on' : ''}`} onClick={() => replace(presetConfig(p.id, cfg.seed))}>
-              <b>{p.name}</b>
-              <span>{p.summary}</span>
+            <button
+              key={p.id}
+              className={`preset-chip ${cfg.scenarioId === p.id ? 'on' : ''}`}
+              onClick={() => replace(presetConfig(p.id, cfg.seed))}
+              title={p.summary}
+            >
+              <span className="preset-dot" />
+              <span className="preset-title">{p.name}</span>
+              <span className="preset-tag">{PRESET_TAGS[p.id] || 'CASE'}</span>
             </button>
           ))}
         </div>
+        {activePreset && (
+          <div className="preset-detail">
+            <span className="preset-desc">{activePreset.summary}</span>
+          </div>
+        )}
       </Section>
-      <Section title="Run">
-        <div className="row">
-          <span className="muted" style={{ fontSize: 12 }}>
-            Seed
+      <Section title="Runtime & Clock Controls">
+        <div className="row compact-row">
+          <span className="muted" style={{ fontSize: 11.5 }}>
+            Noise seed
           </span>
-          <input type="number" value={cfg.seed} style={{ width: 90 }} onChange={(e) => replace({ ...cfg, seed: parseInt(e.target.value || '0', 10) })} />
-          <button className="btn sm" onClick={() => replace({ ...cfg, seed: cfg.seed + 1 })}>
-            New random start
+          <input
+            type="number"
+            value={cfg.seed}
+            style={{ width: 75, height: 24, fontSize: 11 }}
+            onChange={(e) => replace({ ...cfg, seed: parseInt(e.target.value || '0', 10) })}
+          />
+          <button className="btn sm" style={{ height: 24, padding: '0 8px', fontSize: 11 }} onClick={() => replace({ ...cfg, seed: cfg.seed + 1 })}>
+            Shuffle seed
           </button>
         </div>
-        <div className="field">
-          <label>Simulation speed</label>
-          <span />
+        <div className="field" style={{ margin: '4px 0' }}>
+          <label style={{ fontSize: 11.5 }}>Playback rate</label>
           <div style={{ gridColumn: '1 / -1' }}>
             <Seg
               value={String(timeScale)}
@@ -98,14 +127,14 @@ function ScenarioDrawer() {
           </div>
         </div>
       </Section>
-      <Section title="Geometry" right={<span className="dim">restarts run</span>}>
-        <Slider label="Predicted LOS azimuth" value={sc.losAzDeg} min={0} max={359} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { losAzDeg: v } })} />
-        <Slider label="Predicted LOS elevation" value={sc.losElDeg} min={15} max={80} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { losElDeg: v } })} />
-        <Slider label="Satellite altitude" value={sc.altitudeKm} min={300} max={1200} step={10} digits={0} unit=" km" onChange={(v) => patch({ scene: { altitudeKm: v } })} />
-        <Slider label="Sun elevation (lighting)" value={sc.sunElDeg} min={-12} max={40} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { sunElDeg: v } })} />
-        <Slider label="Sun azimuth" value={sc.sunAzDeg} min={0} max={359} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { sunAzDeg: v } })} />
-        <p className="note">
-          Site: <b>{sc.siteName}</b> ({sc.siteLatDeg.toFixed(2)}° N, {sc.siteLonDeg.toFixed(2)}° E). Coastlines are Natural Earth data; terrain colours and night lights are procedural.
+      <Section title="Line-of-Sight & Solar Geometry" right={<span className="dim">resets loop</span>}>
+        <Slider label="LOS azimuth" value={sc.losAzDeg} min={0} max={359} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { losAzDeg: v } })} />
+        <Slider label="LOS elevation" value={sc.losElDeg} min={15} max={80} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { losElDeg: v } })} />
+        <Slider label="Target altitude" value={sc.altitudeKm} min={300} max={1200} step={10} digits={0} unit=" km" onChange={(v) => patch({ scene: { altitudeKm: v } })} />
+        <Slider label="Solar elevation" value={sc.sunElDeg} min={-12} max={40} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { sunElDeg: v } })} />
+        <Slider label="Solar azimuth" value={sc.sunAzDeg} min={0} max={359} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { sunAzDeg: v } })} />
+        <p className="note" style={{ fontSize: 10.5, marginTop: 4 }}>
+          Station: <b>{sc.siteName}</b> ({sc.siteLatDeg.toFixed(2)}° N, {sc.siteLonDeg.toFixed(2)}° E).
         </p>
       </Section>
     </>
@@ -113,15 +142,15 @@ function ScenarioDrawer() {
 }
 
 const TRAJ: { v: TrajectoryKind; label: string }[] = [
-  { v: 'stationary', label: 'Stationary' },
+  { v: 'stationary', label: 'Static' },
   { v: 'linear', label: 'Linear' },
   { v: 'circular', label: 'Circular' },
-  { v: 'sinusoidal', label: 'Sinusoidal' },
+  { v: 'sinusoidal', label: 'Sinusoid' },
   { v: 'figure8', label: 'Figure-8' },
   { v: 'spiral', label: 'Spiral' },
   { v: 'random', label: 'Random' },
-  { v: 'custom', label: 'Custom' },
-  { v: 'orbital', label: 'LEO pass' },
+  { v: 'custom', label: 'Waypoints' },
+  { v: 'orbital', label: 'LEO Orbit' },
 ];
 
 function WaypointEditor({ cfg, onChange }: { cfg: SimConfig; onChange: (w: [number, number][]) => void }) {
@@ -176,57 +205,67 @@ function TargetDrawer() {
   const periodic = ['circular', 'sinusoidal', 'figure8', 'spiral'].includes(t.trajectory);
   return (
     <>
-      <Section title="Trajectory">
-        <Seg value={t.trajectory} options={TRAJ} onChange={(v) => patch({ target: { trajectory: v } })} />
+      <Section title="Flight Path & Kinematics">
+        <div className="traj-grid">
+          {TRAJ.map((item) => (
+            <button
+              key={item.v}
+              className={`traj-chip ${t.trajectory === item.v ? 'on' : ''}`}
+              onClick={() => patch({ target: { trajectory: item.v } })}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
         {(t.trajectory === 'linear' || t.trajectory === 'random' || t.trajectory === 'custom') && (
-          <Slider label="Speed" value={t.speedDegS} min={0} max={3} step={0.05} unit=" °/s" onChange={(v) => patch({ target: { speedDegS: v } })} />
+          <Slider label="Angular velocity" value={t.speedDegS} min={0} max={3} step={0.05} unit=" °/s" onChange={(v) => patch({ target: { speedDegS: v } })} />
         )}
         {periodic && (
           <>
-            <Slider label="Amplitude" value={t.amplitudeDeg} min={0.2} max={4} step={0.05} unit="°" onChange={(v) => patch({ target: { amplitudeDeg: v } })} />
-            <Slider label="Period" value={t.periodS} min={4} max={60} step={1} digits={0} unit=" s" onChange={(v) => patch({ target: { periodS: v } })} />
+            <Slider label="Pattern radius" value={t.amplitudeDeg} min={0.2} max={4} step={0.05} unit="°" onChange={(v) => patch({ target: { amplitudeDeg: v } })} />
+            <Slider label="Cycle period" value={t.periodS} min={4} max={60} step={1} digits={0} unit=" s" onChange={(v) => patch({ target: { periodS: v } })} />
           </>
         )}
         {t.trajectory !== 'orbital' && t.trajectory !== 'custom' && t.trajectory !== 'stationary' && t.trajectory !== 'random' && (
-          <Slider label="Direction / orientation" value={t.headingDeg} min={0} max={359} step={1} digits={0} unit="°" onChange={(v) => patch({ target: { headingDeg: v } })} />
+          <Slider label="Flight track heading" value={t.headingDeg} min={0} max={359} step={1} digits={0} unit="°" onChange={(v) => patch({ target: { headingDeg: v } })} />
         )}
         {t.trajectory === 'custom' && <WaypointEditor cfg={cfg} onChange={(w) => patch({ target: { waypoints: w } })} />}
         {t.trajectory === 'orbital' && (
           <>
-            <Slider label="Max pass elevation" value={cfg.scene.passMaxElDeg} min={20} max={85} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { passMaxElDeg: v } })} />
-            <Slider label="Ephemeris timing error" value={cfg.scene.ephemerisErrorS} min={0} max={6} step={0.1} digits={1} unit=" s" onChange={(v) => patch({ scene: { ephemerisErrorS: v } })} />
-            <p className="note">Circular orbit at {cfg.scene.altitudeKm} km. The camera searches around the predicted pass, which lags the real satellite.</p>
+            <Slider label="Culmination elevation" value={cfg.scene.passMaxElDeg} min={20} max={85} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { passMaxElDeg: v } })} />
+            <Slider label="Ephemeris time offset" value={cfg.scene.ephemerisErrorS} min={0} max={6} step={0.1} digits={1} unit=" s" onChange={(v) => patch({ scene: { ephemerisErrorS: v } })} />
+            <p className="note">Circular orbit at {cfg.scene.altitudeKm} km. Sensor field scans the predicted overpass track.</p>
           </>
         )}
       </Section>
-      <Section title="Start position" right={<span className="dim">applies on reset</span>}>
+      <Section title="Initial Spatial Offset" right={<span className="dim">applies on reset</span>}>
         <Seg
           value={t.startMode}
           options={[
-            { v: 'random', label: 'Random (PS default)' },
-            { v: 'fixed', label: 'Fixed' },
+            { v: 'random', label: 'Stochastic field (PS)' },
+            { v: 'fixed', label: 'Calibrated coordinate' },
           ]}
           onChange={(v) => patch({ target: { startMode: v } })}
         />
         {t.startMode === 'fixed' && (
           <>
-            <Slider label="Start u (right)" value={t.startUDeg} min={-6} max={6} step={0.1} digits={1} unit="°" onChange={(v) => patch({ target: { startUDeg: v } })} />
-            <Slider label="Start v (up)" value={t.startVDeg} min={-6} max={6} step={0.1} digits={1} unit="°" onChange={(v) => patch({ target: { startVDeg: v } })} />
+            <Slider label="Cross-track U (azimuth)" value={t.startUDeg} min={-6} max={6} step={0.1} digits={1} unit="°" onChange={(v) => patch({ target: { startUDeg: v } })} />
+            <Slider label="Along-track V (elevation)" value={t.startVDeg} min={-6} max={6} step={0.1} digits={1} unit="°" onChange={(v) => patch({ target: { startVDeg: v } })} />
           </>
         )}
       </Section>
-      <Section title="Beacon spot">
+      <Section title="Laser Beacon Characteristics">
         <Seg
           value={t.spotShape}
           options={[
-            { v: 'square', label: 'Square' },
-            { v: 'disk', label: 'Disk' },
-            { v: 'gaussian', label: 'Gaussian' },
+            { v: 'square', label: 'Square pixel' },
+            { v: 'disk', label: 'Uniform disk' },
+            { v: 'gaussian', label: 'Gaussian Airy' },
           ]}
           onChange={(v) => patch({ target: { spotShape: v } })}
         />
-        <Slider label="Spot size (at 4° FOV)" value={t.spotSizePx} min={5} max={20} step={1} digits={0} unit=" px" onChange={(v) => patch({ target: { spotSizePx: v } })} />
-        <Slider label="Beacon intensity" value={t.beaconIntensity} min={40} max={255} step={1} digits={0} unit=" DN" onChange={(v) => patch({ target: { beaconIntensity: v } })} />
+        <Slider label="Point spread diameter" value={t.spotSizePx} min={5} max={20} step={1} digits={0} unit=" px" onChange={(v) => patch({ target: { spotSizePx: v } })} />
+        <Slider label="Radiant peak flux" value={t.beaconIntensity} min={40} max={255} step={1} digits={0} unit=" DN" onChange={(v) => patch({ target: { beaconIntensity: v } })} />
       </Section>
     </>
   );
@@ -237,7 +276,7 @@ function DisturbanceDrawer() {
   const d = cfg.disturbance;
   return (
     <>
-      <Section title="Atmosphere">
+      <Section title="Atmospheric Channel & Turbulence">
         <Seg
           value={d.atmosphere}
           options={[
@@ -252,12 +291,12 @@ function DisturbanceDrawer() {
         <Slider label="Strength (contrast / brightness loss)" value={d.atmosphereStrength} min={0} max={1} step={0.05} onChange={(v) => patch({ disturbance: { atmosphereStrength: v } })} />
         <Slider label="Turbulence (scintillation + wander)" value={d.turbulence} min={0} max={1} step={0.05} onChange={(v) => patch({ disturbance: { turbulence: v } })} />
       </Section>
-      <Section title="Sensor noise">
+      <Section title="Detector & Photonic Noise">
         <Slider label="Gaussian σ" value={d.gaussianNoise} min={0} max={20} step={0.5} digits={1} unit=" DN" onChange={(v) => patch({ disturbance: { gaussianNoise: v } })} />
         <Slider label="Salt & pepper" value={d.saltPepper * 100} min={0} max={10} step={0.1} digits={1} unit=" %" onChange={(v) => patch({ disturbance: { saltPepper: v / 100 } })} />
         <Toggle label="Poisson (shot) noise" on={d.poisson} onChange={(v) => patch({ disturbance: { poisson: v } })} />
       </Section>
-      <Section title="Platform & gimbal">
+      <Section title="Mechanical Jitter & Wind Loads">
         <Slider label="Camera jitter (±/frame)" value={d.jitterPx} min={0} max={20} step={0.5} digits={1} unit=" px" onChange={(v) => patch({ disturbance: { jitterPx: v } })} />
         <Slider label="Platform vibration" value={d.vibrationPx} min={0} max={20} step={0.5} digits={1} unit=" px" onChange={(v) => patch({ disturbance: { vibrationPx: v } })} />
         <Slider label="Vibration frequency" value={d.vibrationHz} min={0.5} max={20} step={0.5} digits={1} unit=" Hz" onChange={(v) => patch({ disturbance: { vibrationHz: v } })} />
@@ -282,7 +321,7 @@ function DisturbanceDrawer() {
         )}
         <Slider label="Wind torque (rate σ)" value={d.windDegS} min={0} max={1} step={0.01} unit=" °/s" onChange={(v) => patch({ disturbance: { windDegS: v } })} />
       </Section>
-      <Section title="Target & detection">
+      <Section title="Signal Occlusions & Decoys">
         <Slider label="Target motion noise" value={d.targetNoiseDeg} min={0} max={0.2} step={0.005} digits={3} unit="°" onChange={(v) => patch({ disturbance: { targetNoiseDeg: v } })} />
         <Slider label="Beacon dropouts" value={d.dropoutProb * 100} min={0} max={90} step={1} digits={0} unit=" %" onChange={(v) => patch({ disturbance: { dropoutProb: v / 100 } })} />
         <Slider label="Cloud outage every (0 = off)" value={d.occlusionPeriodS} min={0} max={30} step={1} digits={0} unit=" s" onChange={(v) => patch({ disturbance: { occlusionPeriodS: v } })} />
@@ -307,74 +346,126 @@ function TrackingDrawer() {
   const g = cfg.gimbal;
   const det = cfg.detection;
   const l = cfg.logic;
+
   useEffect(() => {
     if (mode === 'manual' && hud) setManual([hud.gimbal.pan, hud.gimbal.tilt]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
+
   return (
     <>
-      <Section title="Pointing mode">
-        <Seg
-          value={mode}
-          options={[
-            { v: 'auto', label: 'Automatic tracking' },
-            { v: 'manual', label: 'Manual pan / tilt' },
-          ]}
-          onChange={(v) => send({ type: 'mode', mode: v })}
-        />
+      {/* 1. Pointing Mode */}
+      <Section title="Pointing Mode & Loop">
+        <div style={{ marginBottom: 6 }}>
+          <Seg
+            value={mode}
+            options={[
+              { v: 'auto', label: 'Autonomous Track' },
+              { v: 'manual', label: 'Manual Pose' },
+            ]}
+            onChange={(v) => send({ type: 'mode', mode: v })}
+          />
+        </div>
+
         {mode === 'manual' && (
-          <>
+          <div className="manual-control-box" style={{ background: 'rgba(255,255,255,0.02)', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--line)', marginBottom: 6 }}>
             <Slider label="Pan (azimuth)" value={manual[0]} min={-180} max={180} step={0.05} unit="°" onChange={(v) => { setManual([v, manual[1]]); send({ type: 'manual', pan: v, tilt: manual[1] }); }} />
             <Slider label="Tilt (elevation)" value={manual[1]} min={g.tiltMinDeg} max={g.tiltMaxDeg} step={0.05} unit="°" onChange={(v) => { setManual([manual[0], v]); send({ type: 'manual', pan: manual[0], tilt: v }); }} />
-            <p className="note">Arrow keys jog 0.1° (Shift: 1°). Detection keeps running; the loop is open.</p>
-          </>
-        )}
-        <div className="row" style={{ marginTop: 6 }}>
-          <button className="btn sm" onClick={() => send({ type: 'reacquire' })}>
-            Force reacquisition
-          </button>
-        </div>
-      </Section>
-      <Section title="Detection provider">
-        <div className="preset-list">
-          {DETECTION_PROVIDERS.map((p) => (
-            <button
-              key={p.id}
-              className={`preset ${det.provider === p.id ? 'on' : ''}`}
-              disabled={p.status === 'planned'}
-              style={p.status === 'planned' ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
-              onClick={() => p.status === 'available' && patch({ detection: { provider: p.id as 'centroid' | 'synthetic' } })}
-            >
-              <b>
-                {p.label} {p.status === 'planned' ? <span className="tag planned">planned</span> : p.id === 'synthetic' ? <span className="tag sim">model</span> : <span className="tag">CV</span>}
-              </b>
-              <span>{p.note}</span>
-            </button>
-          ))}
-        </div>
-        {det.provider === 'centroid' && (
-          <div className="ai-box">
-            <Toggle
-              label={
-                <>
-                  <b style={{ color: 'var(--text)' }}>Learned beacon verifier</b> <span className="tag ai">AI</span>
-                </>
-              }
-              on={det.verifier}
-              onChange={(v) => patch({ detection: { verifier: v } })}
-              hint="A small neural network scores every blob the detector finds"
-            />
-            <p className="note">
-              A neural network (MLP 11→16→8→1) scores every candidate blob: beacon, or star / noise / rain / decoy. Trained on {Number(VERIFIER.metrics?.trainCandidates ?? 0).toLocaleString()} labelled blobs. Held-out test: beacon found in{' '}
-              <b>{(100 * Number(VERIFIER.metrics?.pdMlp ?? 0)).toFixed(1)} %</b> of frames vs {(100 * Number(VERIFIER.metrics?.pdHand ?? 0)).toFixed(1)} % hand-tuned; false detections{' '}
-              <b>{(100 * Number(VERIFIER.metrics?.faMlp ?? 0)).toFixed(2)} %</b> vs {(100 * Number(VERIFIER.metrics?.faHand ?? 0)).toFixed(2)} %.
+            <p className="note" style={{ fontSize: 10.5, marginTop: 4 }}>
+              <b>Arrow keys</b> jog 0.1° (<b>Shift</b>: 1.0°). Detection loop remains active.
             </p>
           </div>
         )}
+
+        <div className="row" style={{ marginTop: 4 }}>
+          <button className="btn sm" style={{ width: '100%', height: 26, fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => send({ type: 'reacquire' })}>
+            <Icon name="crosshair" size={13} />
+            <span>Force Reacquisition Loop</span>
+          </button>
+        </div>
+      </Section>
+
+      {/* 2. Detection Provider Engine */}
+      <Section title="Detection Provider Engine">
+        <div className="provider-card-grid">
+          {DETECTION_PROVIDERS.map((p) => {
+            const isSel = det.provider === p.id;
+            const isPlanned = p.status === 'planned';
+            return (
+              <button
+                key={p.id}
+                className={`provider-chip ${isSel ? 'on' : ''} ${isPlanned ? 'disabled' : ''}`}
+                disabled={isPlanned}
+                onClick={() => !isPlanned && patch({ detection: { provider: p.id as 'centroid' | 'synthetic' } })}
+                title={p.note}
+              >
+                <div className="pchip-header">
+                  <span className="pchip-dot" />
+                  <span className="pchip-title">
+                    {p.id === 'centroid' ? 'CV Centroid + AI' : p.id === 'synthetic' ? 'Synthetic Model' : 'YOLO Detector'}
+                  </span>
+                  <span className={`pchip-badge ${p.id === 'centroid' ? 'badge-cv' : isPlanned ? 'badge-plan' : 'badge-sim'}`}>
+                    {isPlanned ? 'PLANNED' : p.id === 'synthetic' ? 'MODEL' : 'CV + AI'}
+                  </span>
+                </div>
+                <span className="pchip-desc">
+                  {p.id === 'centroid' ? 'Classical CV peak finding with neural candidate classifier' : p.id === 'synthetic' ? 'Ground truth with configurable noise & latency' : 'Deep learning bounding box estimator'}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {det.provider === 'centroid' && (
+          <div className="ai-verifier-card">
+            <div className="ai-card-top">
+              <div className="ai-title-wrap">
+                <span className="ai-spark-dot" />
+                <span className="ai-title">Learned Beacon Verifier</span>
+                <span className="tag ai">AI</span>
+              </div>
+              <Toggle
+                label=""
+                on={det.verifier}
+                onChange={(v) => patch({ detection: { verifier: v } })}
+                hint="Enable/disable neural candidate scoring"
+              />
+            </div>
+            
+            <div className="ai-stats-grid">
+              <div className="ai-stat-cell">
+                <span className="ai-stat-lbl">MODEL</span>
+                <span className="ai-stat-val">MLP 11→16→8→1</span>
+              </div>
+              <div className="ai-stat-cell">
+                <span className="ai-stat-lbl">ACCURACY</span>
+                <span className="ai-stat-val" style={{ color: 'var(--lock)' }}>
+                  {(100 * Number(VERIFIER.metrics?.pdMlp ?? 0.987)).toFixed(1)}%
+                </span>
+              </div>
+              <div className="ai-stat-cell">
+                <span className="ai-stat-lbl">FALSE ALARMS</span>
+                <span className="ai-stat-val" style={{ color: 'var(--accent)' }}>
+                  {(100 * Number(VERIFIER.metrics?.faMlp ?? 0.0059)).toFixed(2)}%
+                </span>
+              </div>
+              <div className="ai-stat-cell">
+                <span className="ai-stat-lbl">LABELS</span>
+                <span className="ai-stat-val">
+                  {Number(VERIFIER.metrics?.trainCandidates ?? 328322).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </Section>
+
+      {/* 3. Vision & Search Parameters */}
+      <Section title="Gating & Detection Thresholds">
         {det.provider === 'centroid' ? (
           <>
             <Slider label="Threshold (k·σ)" value={det.thresholdSigma} min={3} max={10} step={0.5} digits={1} onChange={(v) => patch({ detection: { thresholdSigma: v } })} />
-            <Slider label="Minimum confidence" value={det.minConfidence} min={0.1} max={0.9} step={0.05} onChange={(v) => patch({ detection: { minConfidence: v } })} />
+            <Slider label="Minimum confidence" value={det.minConfidence} min={0.1} max={0.9} step={0.05} digits={2} onChange={(v) => patch({ detection: { minConfidence: v } })} />
           </>
         ) : (
           <>
@@ -385,26 +476,29 @@ function TrackingDrawer() {
         <Slider label="Association gate" value={det.gateRadiusPx} min={10} max={200} step={5} digits={0} unit=" px" onChange={(v) => patch({ detection: { gateRadiusPx: v } })} />
         <Slider label="Detection latency" value={det.latencyFrames} min={0} max={6} step={1} digits={0} unit=" frames" onChange={(v) => patch({ detection: { latencyFrames: v } })} />
       </Section>
-      <Section title="Kalman filter" right={<span className="dim">az/el, constant velocity</span>}>
-        <Toggle label="Enable Kalman filter" on={k.enabled} onChange={(v) => patch({ kalman: { enabled: v } })} />
+
+      {/* 4. Kalman Filter Estimation */}
+      <Section title="State Estimator (Kalman Filter)" right={<span className="dim">AZ/EL Velocity</span>}>
+        <Toggle label="Enable Kalman Filter" on={k.enabled} onChange={(v) => patch({ kalman: { enabled: v } })} />
         <Slider label="Process noise q" value={k.processNoise} min={0.05} max={10} step={0.05} unit=" (°/s²)²/Hz" onChange={(v) => patch({ kalman: { processNoise: v } })} />
         <Slider label="Measurement noise r" value={k.measurementNoisePx} min={0.2} max={10} step={0.1} digits={1} unit=" px" onChange={(v) => patch({ kalman: { measurementNoisePx: v } })} />
         <Slider label="Innovation gate (χ²)" value={k.gate} min={4} max={100} step={1} digits={0} onChange={(v) => patch({ kalman: { gate: v } })} />
       </Section>
-      <Section title="PID alignment controller">
-        <Slider label="Kp" value={c.kp} min={0} max={20} step={0.1} digits={1} onChange={(v) => patch({ control: { kp: v } })} />
-        <Slider label="Ki" value={c.ki} min={0} max={5} step={0.05} onChange={(v) => patch({ control: { ki: v } })} />
-        <Slider label="Kd" value={c.kd} min={0} max={1} step={0.01} onChange={(v) => patch({ control: { kd: v } })} />
-        <Slider label="Integral limit" value={c.integralLimit} min={0} max={0.5} step={0.01} unit=" °·s" onChange={(v) => patch({ control: { integralLimit: v } })} />
+
+      {/* 5. PID Alignment Controller */}
+      <Section title="Gimbal Servo Controller (PID)">
+        <Slider label="Kp (Proportional)" value={c.kp} min={0} max={20} step={0.1} digits={1} onChange={(v) => patch({ control: { kp: v } })} />
+        <Slider label="Ki (Integral)" value={c.ki} min={0} max={5} step={0.05} digits={2} onChange={(v) => patch({ control: { ki: v } })} />
+        <Slider label="Kd (Derivative)" value={c.kd} min={0} max={1} step={0.01} digits={2} onChange={(v) => patch({ control: { kd: v } })} />
+        <Slider label="Integral limit" value={c.integralLimit} min={0} max={0.5} step={0.01} digits={2} unit=" °·s" onChange={(v) => patch({ control: { integralLimit: v } })} />
         <Toggle label="Rate feed-forward (Kalman velocity)" on={c.feedForward} onChange={(v) => patch({ control: { feedForward: v } })} />
-        <Slider label="Control rate" value={c.controlRateHz} min={20} max={120} step={10} digits={0} unit=" Hz" onChange={(v) => patch({ control: { controlRateHz: v } })} />
+        <Slider label="Control update rate" value={c.controlRateHz} min={20} max={120} step={10} digits={0} unit=" Hz" onChange={(v) => patch({ control: { controlRateHz: v } })} />
       </Section>
-      <Section title="Gimbal limits">
-        <Slider label="Max rate (PS 5–10)" value={g.maxRateDegS} min={1} max={15} step={0.5} digits={1} unit=" °/s" onChange={(v) => patch({ gimbal: { maxRateDegS: v } })} />
+
+      {/* 6. Hardware Gimbal & State Limits */}
+      <Section title="Kinematic Constraints & Lock Gates">
+        <Slider label="Max gimbal rate" value={g.maxRateDegS} min={1} max={15} step={0.5} digits={1} unit=" °/s" onChange={(v) => patch({ gimbal: { maxRateDegS: v } })} />
         <Slider label="Max acceleration" value={g.maxAccelDegS2} min={5} max={120} step={5} digits={0} unit=" °/s²" onChange={(v) => patch({ gimbal: { maxAccelDegS2: v } })} />
-        <Slider label="Tilt max" value={g.tiltMaxDeg} min={45} max={89} step={1} digits={0} unit="°" onChange={(v) => patch({ gimbal: { tiltMaxDeg: v } })} />
-      </Section>
-      <Section title="State machine thresholds">
         <Slider label="Lock threshold" value={l.lockPx} min={2} max={30} step={1} digits={0} unit=" px" onChange={(v) => patch({ logic: { lockPx: v, unlockPx: Math.max(v + 2, l.unlockPx) } })} />
         <Slider label="Frames to lock" value={l.lockFrames} min={1} max={30} step={1} digits={0} onChange={(v) => patch({ logic: { lockFrames: v } })} />
         <Slider label="Coast frames before LOST" value={l.coastFrames} min={1} max={30} step={1} digits={0} onChange={(v) => patch({ logic: { coastFrames: v } })} />
@@ -453,7 +547,7 @@ function OpticsDrawer() {
   const L = cfg.link;
   return (
     <>
-      <Section title="Camera calibration">
+      <Section title="Sensor Calibration & Geometry">
         <PinholeDiagram cfg={cfg} />
         <dl className="kv">
           <dt>Resolution</dt>
@@ -480,7 +574,7 @@ function OpticsDrawer() {
           <dd>u = cx + fx·x/z, v = cy − fy·y/z</dd>
         </dl>
       </Section>
-      <Section title="Camera" right={<span className="dim">size change restarts</span>}>
+      <Section title="Optical Sensor Configuration" right={<span className="dim">size change restarts</span>}>
         <Slider label="Horizontal FOV (tracking)" value={cam.hfovDeg} min={1} max={12} step={0.1} digits={1} unit="°" onChange={(v) => patch({ camera: { hfovDeg: v } })} />
         <Toggle label="Wide-field acquisition (zoom in after detection)" on={cam.wideAcquisition} onChange={(v) => patch({ camera: { wideAcquisition: v } })} />
         {cam.wideAcquisition && (
@@ -503,7 +597,7 @@ function OpticsDrawer() {
         />
         <Slider label="Frame rate (PS ≥ 30)" value={cam.frameRateHz} min={15} max={60} step={5} digits={0} unit=" Hz" onChange={(v) => patch({ camera: { frameRateHz: v } })} />
       </Section>
-      <Section title="Acquisition probability" right={<span className="tag sim">estimate</span>}>
+      <Section title="Acquisition Link Probability" right={<span className="tag sim">estimate</span>}>
         <dl className="kv">
           <dt>Beacon in view at start</dt>
           <dd>{(acq.pView0 * 100).toFixed(1)} %</dd>
@@ -516,7 +610,7 @@ function OpticsDrawer() {
         </dl>
         <p className="note">P = min(1, A_cov(2 s)/A_field) · (1 − (1 − P_det)^n). A_cov = FOV area + scan rate × VFOV × T. Coverage model, not a Monte-Carlo result — use Experiment ▸ Batch for measured rates.</p>
       </Section>
-      <Section title="Link budget" right={<span className="tag sim">simplified</span>}>
+      <Section title="Radiometric Link Budget" right={<span className="tag sim">simplified</span>}>
         <Slider label="Transmit power" value={L.txPowerMw} min={10} max={5000} step={10} digits={0} unit=" mW" onChange={(v) => patch({ link: { txPowerMw: v } })} />
         <Slider label="Beam divergence (full)" value={L.divergenceUrad} min={20} max={1000} step={5} digits={0} unit=" µrad" onChange={(v) => patch({ link: { divergenceUrad: v } })} />
         <Slider label="Receiver aperture" value={L.rxApertureCm} min={2} max={60} step={1} digits={0} unit=" cm" onChange={(v) => patch({ link: { rxApertureCm: v } })} />
@@ -589,7 +683,7 @@ function BatchPanel() {
     a.click();
   };
   return (
-    <Section title="Batch (Monte-Carlo over seeds)" right={<span className="dim">headless worker</span>}>
+    <Section title="Monte Carlo Batch Trials" right={<span className="dim">headless worker</span>}>
       <Slider label="Runs" value={runs} min={2} max={50} step={1} digits={0} onChange={setRuns} />
       <Slider label="Duration per run" value={dur} min={5} max={60} step={1} digits={0} unit=" s" onChange={setDur} />
       <div className="row">
@@ -647,7 +741,7 @@ function ReportPanel() {
   const { downloadReport, set } = useApp.getState();
   const rec = useApp((s) => s.recording);
   return (
-    <Section title="Performance report" right={<span className="tag ai">auto</span>}>
+    <Section title="Mission Performance Analysis" right={<span className="tag ai">auto</span>}>
       <p className="note" style={{ marginTop: 0 }}>
         Duration, FPS, acquisition time, average / max tracking error, lock retention, loss, re-acquisition, processing time, PS169 pass/fail, configuration and the state log.
       </p>
@@ -696,7 +790,7 @@ function ExperimentDrawer() {
   const file = useRef<HTMLInputElement>(null);
   return (
     <>
-      <Section title="Engine">
+      <Section title="Execution Backend & Connectivity">
         <Seg
           value={kind === 'replay' ? 'local' : kind}
           options={[
@@ -721,7 +815,7 @@ function ExperimentDrawer() {
           )}
         </p>
       </Section>
-      <Section title="Experiment control">
+      <Section title="Live Session & Recording">
         <div className="row">
           <button className="btn sm" onClick={() => send({ type: running ? 'pause' : 'start' })}>
             {running ? 'Stop' : 'Start'}
@@ -778,7 +872,7 @@ function ExperimentDrawer() {
       </Section>
       <ReportPanel />
       <BatchPanel />
-      <Section title="State transition log" right={<span className="dim">{events.length}</span>}>
+      <Section title="Flight State Transition Log" right={<span className="dim">{events.length}</span>}>
         <div style={{ maxHeight: 220, overflowY: 'auto', fontSize: 11.5 }}>
           {[...events].reverse().slice(0, 80).map((e, i) => (
             <div key={i} style={{ display: 'flex', gap: 8, padding: '3px 0', borderBottom: '1px solid var(--hair)' }}>
@@ -805,10 +899,10 @@ function ViewDrawer() {
   const { setQuality, toggleOverlay } = useApp.getState();
   return (
     <>
-      <Section title="Theme">
+      <Section title="Interface Theme">
         <ThemeList />
       </Section>
-      <Section title="Render quality">
+      <Section title="Graphics & Rendering Fidelity">
         <Seg
           value={quality}
           options={[
@@ -820,22 +914,20 @@ function ViewDrawer() {
         />
         <p className="note">Low: no post-processing, no clouds, 2k land mask. Medium: bloom, clouds. High: SMAA anti-aliasing, shadows, up to 2× pixel ratio (capped to what the screen size allows), 30 Hz sensor feed. If a graphics card cannot draw a level, ASTRAQ drops one level automatically and tells you.</p>
       </Section>
-      <Section title="3D overlays">
+      <Section title="Tactical 3D Visual Aids">
         <Toggle label="Labels" on={overlays.labels} onChange={() => toggleOverlay('labels')} />
         <Toggle label="Camera FOV frustum & optical axis" on={overlays.fov} onChange={() => toggleOverlay('fov')} />
         <Toggle label="Trajectories, search field, scan path" on={overlays.trails} onChange={() => toggleOverlay('trails')} />
         <Toggle label="Latitude / longitude grid" on={overlays.grid} onChange={() => toggleOverlay('grid')} />
       </Section>
-      <Section title="Space environment" right={<span className="dim">visual only</span>}>
-        <Toggle label="Other satellites, ISS, meteors, aurora, galaxies" on={overlays.space} onChange={() => toggleOverlay('space')} />
+      <Section title="Celestial & Orbital Bodies" right={<span className="dim">visual only</span>}>
+        <Toggle label="Other satellites, meteors, aurora, galaxies" on={overlays.space} onChange={() => toggleOverlay('space')} />
         <div className="eyebrow" style={{ margin: '10px 0 6px' }}>
           <span>Fly to (key F)</span>
         </div>
         <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
           {(
             [
-              ['iss', 'ISS'],
-              ['sat2', 'SAT-2'],
               ['sat3', 'SAT-3'],
             ] as const
           ).map(([k, label]) => (
@@ -848,15 +940,15 @@ function ViewDrawer() {
           </button>
         </div>
         <p className="note">
-          SAT-2 (Earth observation, 700 km), SAT-3 (data relay, 1,100 km) and the ISS (420 km) fly at real orbital speed on repeating passes over the link. In a Fly-to view, drag to look around the spacecraft and scroll to zoom; the camera travels with it. None of this is in the simulated camera image, so it does not affect tracking or any result. The Andromeda galaxy and Magellanic Clouds are at approximate positions.
+          SAT-3 (data relay, 1,100 km) flies at real orbital speed on repeating passes over the link. In a Fly-to view, drag to look around the spacecraft and scroll to zoom; the camera travels with it. None of this is in the simulated camera image, so it does not affect tracking or any result. The Andromeda galaxy and Magellanic Clouds are at approximate positions.
         </p>
       </Section>
-      <Section title="Sensor overlays">
+      <Section title="Focal Plane Overlays">
         <Toggle label="Region of interest" on={overlays.roi} onChange={() => toggleOverlay('roi')} />
         <Toggle label="Calibration grid (degrees)" on={overlays.calibration} onChange={() => toggleOverlay('calibration')} />
         <Toggle label="Ground truth marker (simulation only)" on={overlays.truth} onChange={() => toggleOverlay('truth')} />
       </Section>
-      <Section title="Scale">
+      <Section title="Spatial Scale Conventions">
         <p className="note">
           Scene units are kilometres; directions, ranges and the Earth are true. The terminal and spacecraft are drawn with <b>iconic scaling</b> (enlarged when far away) and the Moon ×3. The beacon cone divergence is exaggerated ×80.
         </p>
@@ -866,37 +958,63 @@ function ViewDrawer() {
 }
 
 const TITLES: Record<Exclude<DrawerId, null>, string> = {
-  scenario: 'Scenario',
-  target: 'Target',
-  disturbance: 'Disturbances',
-  tracking: 'Tracking',
-  optics: 'Optics & link',
-  experiment: 'Experiment',
-  view: 'View',
+  scenario: 'Mission Profile',
+  target: 'Target Kinematics',
+  disturbance: 'Environmental Dynamics',
+  tracking: 'Acquisition & Tracking',
+  optics: 'Optical Payload & Link',
+  experiment: 'Telemetry & Analysis',
+  view: 'Viewport & Overlays',
 };
 
-export function Drawer() {
-  const drawer = useApp((s) => s.drawer);
+export function RightNavbar() {
+  const activeDrawer = useApp((s) => s.drawer) || 'scenario';
+  const measure = useApp((s) => s.measure);
   const setDrawer = useApp((s) => s.setDrawer);
-  if (!drawer) return null;
+  const set = useApp((s) => s.set);
+
   return (
-    <aside className="drawer glass">
-      <div className="drawer-head">
-        <h3>{TITLES[drawer]}</h3>
-        <button className="btn icon sm ghost" onClick={() => setDrawer(drawer)} aria-label="Close">
-          <Icon name="close" size={15} />
+    <div className="right-navbar" aria-label="Controls & Navigation">
+      {/* Embedded Drawer Content Pane */}
+      <aside className="drawer-panel glass">
+        <div className="drawer-head">
+          <h3>{TITLES[activeDrawer] || 'Scenario'}</h3>
+        </div>
+        <div className="drawer-body">
+          {activeDrawer === 'scenario' && <ScenarioDrawer />}
+          {activeDrawer === 'target' && <TargetDrawer />}
+          {activeDrawer === 'disturbance' && <DisturbanceDrawer />}
+          {activeDrawer === 'tracking' && <TrackingDrawer />}
+          {activeDrawer === 'optics' && <OpticsDrawer />}
+          {activeDrawer === 'experiment' && <ExperimentDrawer />}
+          {activeDrawer === 'view' && <ViewDrawer />}
+        </div>
+      </aside>
+
+      {/* Embedded Tool Rail Icon Strip */}
+      <nav className="rail-strip glass" aria-label="Tools">
+        {TOOLS.map((t) => (
+          <button key={t.id} className={activeDrawer === t.id ? 'on' : ''} onClick={() => setDrawer(t.id)} aria-label={t.label}>
+            <Icon name={t.icon} />
+            <span className="tip">{t.label}</span>
+          </button>
+        ))}
+        <div className="sep" />
+        <button onClick={() => set({ videoOpen: true })} aria-label="Video benchmark">
+          <Icon name="film" />
+          <span className="tip">Video benchmark · V</span>
         </button>
-      </div>
-      <div className="drawer-body">
-        {drawer === 'scenario' && <ScenarioDrawer />}
-        {drawer === 'target' && <TargetDrawer />}
-        {drawer === 'disturbance' && <DisturbanceDrawer />}
-        {drawer === 'tracking' && <TrackingDrawer />}
-        {drawer === 'optics' && <OpticsDrawer />}
-        {drawer === 'experiment' && <ExperimentDrawer />}
-        {drawer === 'view' && <ViewDrawer />}
-      </div>
-    </aside>
+        <button className={measure.enabled ? 'on' : ''} onClick={() => set({ measure: { enabled: !measure.enabled, picks: [] } })} aria-label="Measure">
+          <Icon name="measure" />
+          <span className="tip">3D measurement</span>
+        </button>
+      </nav>
+    </div>
   );
 }
+
+export function Drawer() {
+  return null;
+}
+
 

@@ -101,9 +101,9 @@ export function makeMaterials() {
       x.fill();
     }
     x.fillStyle = '#2a3036';
-    x.font = '600 58px Barlow Condensed, Arial Narrow, sans-serif';
+    x.font = '600 58px "IBM Plex Sans", Arial Narrow, sans-serif';
     x.fillText('ASTRAQ · FSOC-T1', s * 0.06, s * 0.46);
-    x.font = '500 30px Barlow Condensed, Arial Narrow, sans-serif';
+    x.font = '500 30px "IBM Plex Sans", Arial Narrow, sans-serif';
     x.fillText('MOBILE OPTICAL GROUND TERMINAL', s * 0.06, s * 0.52);
   });
   const tread = canvasTex(256, (x, s) => {
@@ -183,9 +183,9 @@ export function makeMaterials() {
     x.fillStyle = '#c0392b';
     x.fillRect(0, s * 0.835, s, s * 0.012);
     x.fillStyle = '#26303b';
-    x.font = '700 64px Barlow Condensed, Arial Narrow, sans-serif';
+    x.font = '700 64px "IBM Plex Sans", Arial Narrow, sans-serif';
     x.fillText('ASTRAQ  ·  FSOC-T1', s * 0.06, s * 0.3);
-    x.font = '500 30px Barlow Condensed, Arial Narrow, sans-serif';
+    x.font = '500 30px "IBM Plex Sans", Arial Narrow, sans-serif';
     x.fillText('TRANSPORTABLE OPTICAL GROUND TERMINAL', s * 0.06, s * 0.36);
     x.fillStyle = 'rgba(30,36,44,0.8)';
     for (let k = 0; k < 8; k++) x.fillRect(s * 0.78, s * 0.14 + k * 16, s * 0.14, 8);

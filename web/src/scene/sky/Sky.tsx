@@ -7,7 +7,7 @@ import * as THREE from 'three';
 import { useFrame, useThree } from '@react-three/fiber';
 import { makeStarCatalog } from '../../core/optics/stars';
 import { NOISE_GLSL } from '../shaders/noise';
-import { EARTH_CENTER, EARTH_R, MOON_DISTANCE_KM, MOON_RADIUS_KM, azElVec } from '../world';
+import { MOON_DISTANCE_KM, MOON_RADIUS_KM, azElVec } from '../world';
 import { useApp } from '../../state/store';
 
 export const STAR_CATALOG = makeStarCatalog();
@@ -104,22 +104,6 @@ void main() {
   #include <logdepthbuf_vertex>
 }`;
 
-function glowTexture(inner: string, outer: string, size = 256): THREE.CanvasTexture {
-  const c = document.createElement('canvas');
-  c.width = c.height = size;
-  const x = c.getContext('2d')!;
-  const g = x.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  g.addColorStop(0, inner);
-  g.addColorStop(0.12, inner);
-  g.addColorStop(0.35, outer);
-  g.addColorStop(1, 'rgba(0,0,0,0)');
-  x.fillStyle = g;
-  x.fillRect(0, 0, size, size);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
-}
-
 export const MOON_AZ = 112;
 export const MOON_EL = 27;
 
@@ -161,62 +145,21 @@ export function Sky({ sunDir }: { sunDir: THREE.Vector3 }) {
     [],
   );
 
-  const sunTex = useMemo(() => glowTexture('rgba(255,250,235,1)', 'rgba(255,190,110,0.35)'), []);
-  const flareTex = useMemo(() => glowTexture('rgba(150,200,255,0.5)', 'rgba(120,160,255,0.08)', 128), []);
-  const sunSprite = useRef<THREE.Sprite>(null);
-  const flares = useRef<THREE.Group>(null);
-
   useFrame((state) => {
     if (group.current) group.current.position.copy(camera.position);
     stars.m.uniforms.time.value = state.clock.elapsedTime;
     stars.m.uniforms.pxScale.value = dpr;
-    if (sunSprite.current) sunSprite.current.position.copy(sunDir).multiplyScalar(SKY_R * 0.9);
-    // Screen-space flare ghosts along the sun → centre axis, hidden when the Earth occludes the Sun.
-    if (flares.current) {
-      const sunWorld = camera.position.clone().addScaledVector(sunDir, SKY_R);
-      const ndc = sunWorld.clone().project(camera);
-      const onScreen = ndc.z < 1 && Math.abs(ndc.x) < 1.2 && Math.abs(ndc.y) < 1.2;
-      const oc = camera.position.clone().sub(EARTH_CENTER);
-      const b = oc.dot(sunDir);
-      const c = oc.lengthSq() - EARTH_R * EARTH_R;
-      const occluded = b * b - c > 0 && -b - Math.sqrt(b * b - c) > 0;
-      const visible = quality !== 'low' && onScreen && !occluded;
-      flares.current.visible = visible;
-      if (visible) {
-        const kids = flares.current.children;
-        const dist = 60;
-        kids.forEach((k, i) => {
-          const f = [0.55, 0.2, -0.25, -0.6, -1.05][i] ?? 0;
-          const p = new THREE.Vector3(ndc.x * f, ndc.y * f, 0.5).unproject(camera);
-          const dir = p.sub(camera.position).normalize();
-          k.position.copy(dir.multiplyScalar(dist));
-          const s = [1.4, 0.7, 2.2, 1.0, 3.2][i] * dist * 0.02;
-          k.scale.setScalar(s);
-        });
-      }
-    }
+    void sunDir;
     void size;
   });
 
   return (
-    <>
-      <group ref={group} renderOrder={-10}>
-        <mesh material={milky} renderOrder={-11}>
-          <sphereGeometry args={[SKY_R * 1.2, 48, 24]} />
-        </mesh>
-        <points geometry={stars.g} material={stars.m} renderOrder={-10} frustumCulled={false} />
-        <sprite ref={sunSprite} scale={[SKY_R * 0.05, SKY_R * 0.05, 1]} renderOrder={-9}>
-          <spriteMaterial map={sunTex} color={[4, 3.6, 3.1]} blending={THREE.AdditiveBlending} depthWrite={false} toneMapped={false} />
-        </sprite>
-      </group>
-      <group ref={flares} renderOrder={20}>
-        {[0, 1, 2, 3, 4].map((i) => (
-          <sprite key={i}>
-            <spriteMaterial map={flareTex} opacity={[0.16, 0.1, 0.07, 0.12, 0.05][i]} transparent blending={THREE.AdditiveBlending} depthTest={false} depthWrite={false} />
-          </sprite>
-        ))}
-      </group>
-    </>
+    <group ref={group} renderOrder={-10}>
+      <mesh material={milky} renderOrder={-11}>
+        <sphereGeometry args={[SKY_R * 1.2, 48, 24]} />
+      </mesh>
+      <points geometry={stars.g} material={stars.m} renderOrder={-10} frustumCulled={false} />
+    </group>
   );
 }
 

@@ -379,7 +379,6 @@ function ScreenCanvas() {
 }
 
 export function SensorView() {
-  const expanded = useApp((s) => s.sensorExpanded);
   const overlays = useApp((s) => s.overlays);
   const logic = useApp((s) => s.config.logic);
   const kind = useApp((s) => s.providerKind);
@@ -459,27 +458,22 @@ export function SensorView() {
   const d = hud?.detection;
   const e = hud?.error;
   return (
-    <>
-      {expanded && <div className="backdrop" onClick={() => set({ sensorExpanded: false })} />}
-      <section className={`sensor glass ${expanded ? 'expanded' : ''}`}>
-        <div className="sensor-head">
-          <div className="sensor-tabs">
-            <button className={tab === 'camera' ? 'on' : ''} onClick={() => set({ sensorTab: 'camera' })} title="The real 640×480 camera image">
-              Camera {kind === 'replay' ? <span className="tag">recorded</span> : <span className="tag sim">live</span>}
-            </button>
-            <button className={tab === 'screen' ? 'on' : ''} onClick={() => set({ sensorTab: 'screen' })} title="The 2000×2000 px search screen with the moving camera window (G)">
-              Screen 2000²
-            </button>
-          </div>
-          <div className="row">
-            <button className={`btn icon sm ghost ${overlays.calibration ? 'on' : ''}`} title="Calibration grid (degrees)" onClick={() => toggleOverlay('calibration')}>
-              <Icon name="crosshair" size={15} />
-            </button>
-            <button className="btn icon sm ghost" title="Expand (S)" onClick={() => set({ sensorExpanded: !expanded })}>
-              <Icon name={expanded ? 'close' : 'expand'} size={15} />
-            </button>
-          </div>
+    <section className="sensor glass">
+      <div className="sensor-head">
+        <div className="sensor-tabs">
+          <button className={tab === 'camera' ? 'on' : ''} onClick={() => set({ sensorTab: 'camera' })} title="The real 640×480 camera image">
+            Camera {kind === 'replay' ? <span className="tag">recorded</span> : <span className="tag sim">live</span>}
+          </button>
+          <button className={tab === 'screen' ? 'on' : ''} onClick={() => set({ sensorTab: 'screen' })} title="The 2000×2000 px search screen with the moving camera window (G)">
+            Screen 2000²
+          </button>
         </div>
+        <div className="row">
+          <button className={`btn icon sm ghost ${overlays.calibration ? 'on' : ''}`} title="Calibration grid (degrees)" onClick={() => toggleOverlay('calibration')}>
+            <Icon name="crosshair" size={15} />
+          </button>
+        </div>
+      </div>
         <div className="sensor-canvas-wrap">
           <canvas ref={canvas} style={tab === 'screen' ? { visibility: 'hidden' } : undefined} />
           {tab === 'screen' && <ScreenCanvas />}
@@ -503,15 +497,12 @@ export function SensorView() {
           </div>
         </div>
       </section>
-    </>
-  );
-}
+    );
+  }
 
 export function Timeline() {
   const hud = useApp((s) => s.hud);
   const events = useApp((s) => s.events);
-  const expanded = useApp((s) => s.sensorExpanded);
-  if (expanded) return null;
   const state = hud?.state ?? 'IDLE';
   const lastTr = [...events].reverse().find((e) => e.kind === 'transition');
   return (

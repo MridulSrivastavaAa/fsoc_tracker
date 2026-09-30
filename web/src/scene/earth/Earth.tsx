@@ -1,320 +1,282 @@
 /**
- * Earth: real coastlines (Natural Earth via world-atlas), procedural biomes, ocean
- * glint, terminator, illustrative night-side lights, cloud layer, and a
- * ray-marched-free analytic atmosphere that works from space and from the ground.
+ * Basic 3D Earth Globe Model.
+ *
+ * Provides a clean, performant, accurate-scale Earth sphere with:
+ *  - Real geographic continents from Natural Earth topology
+ *  - Deep ocean basemap and clean coordinate graticules (Equator, Tropics, Meridians)
+ *  - Ground station highlighted at Bengaluru, Karnataka (13.03° N, 77.51° E)
+ *  - High-precision local ground terminal site at the origin (0, 0, 0)
+ *  - Exact shape & size ratio: EARTH_R = 6,371 km sphere at (0, -EARTH_R, 0)
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import * as THREE from 'three';
-import { useFrame, useThree } from '@react-three/fiber';
-import { NOISE_GLSL } from '../shaders/noise';
-import { buildLandTexture } from './landMask';
+import { feature } from 'topojson-client';
+import type { Topology, GeometryCollection } from 'topojson-specification';
 import { EARTH_CENTER, EARTH_R, earthQuaternion } from '../world';
 import { useApp } from '../../state/store';
 
-const LOG_V_PARS = /* glsl */ `#include <common>\n#include <logdepthbuf_pars_vertex>`;
-const LOG_F_PARS = /* glsl */ `#include <logdepthbuf_pars_fragment>`;
+type Ring = [number, number][];
 
-const earthVertex = /* glsl */ `
-${LOG_V_PARS}
-varying vec3 vObjN;
-varying vec3 vWorldN;
-varying vec3 vWorldPos;
-void main() {
-  vObjN = normal;
-  vWorldN = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
-  vec4 wp = modelMatrix * vec4(position, 1.0);
-  vWorldPos = wp.xyz;
-  gl_Position = projectionMatrix * viewMatrix * wp;
-  #include <logdepthbuf_vertex>
-}`;
+/**
+ * Builds a clean, crisp equirectangular Earth texture with real continents,
+ * oceans, latitude/longitude graticules, and a prominent marker for Bengaluru, Karnataka.
+ */
+async function buildGlobeTexture(width = 2048): Promise<THREE.CanvasTexture> {
+  const height = width / 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d')!;
 
-const earthFragment = /* glsl */ `
-${LOG_F_PARS}
-uniform sampler2D landTex;
-uniform float hasLand;
-uniform vec3 sunDir;
-uniform float grid;
-uniform float cutRadius;
-uniform float octaves;
-varying vec3 vObjN;
-varying vec3 vWorldN;
-varying vec3 vWorldPos;
-${NOISE_GLSL}
-void main() {
-  #include <logdepthbuf_fragment>
-  if (cutRadius > 0.0 && length(vWorldPos) < cutRadius) discard;
-  vec3 n = normalize(vObjN);
-  float lat = asin(clamp(n.y, -1.0, 1.0));
-  float lon = atan(n.x, n.z);
-  vec2 uv = vec2(lon / 6.2831853 + 0.5, lat / 3.1415927 + 0.5);
-  vec4 m = hasLand > 0.5 ? texture2D(landTex, uv) : vec4(step(0.55, aq_fbm(n * 3.0, 4)), 0.3, 0.0, 1.0);
-  float land = smoothstep(0.3, 0.7, m.r);
-  float coast = m.g;
-  int oct = int(octaves);
-  float nz = aq_fbm(n * 55.0, oct);
-  float nz2 = aq_fbm(n * 700.0, oct);
-  float alat = abs(lat) * 57.29578;
+  // 1. Deep blue oceans
+  const oceanGrad = ctx.createLinearGradient(0, 0, 0, height);
+  oceanGrad.addColorStop(0, '#102236');
+  oceanGrad.addColorStop(0.2, '#142a44');
+  oceanGrad.addColorStop(0.5, '#183352');
+  oceanGrad.addColorStop(0.8, '#142a44');
+  oceanGrad.addColorStop(1, '#102236');
+  ctx.fillStyle = oceanGrad;
+  ctx.fillRect(0, 0, width, height);
 
-  vec3 forest = vec3(0.06, 0.10, 0.05);
-  vec3 grass = vec3(0.17, 0.20, 0.10);
-  vec3 desert = vec3(0.46, 0.37, 0.24);
-  vec3 tundra = vec3(0.27, 0.27, 0.22);
-  vec3 ice = vec3(0.86, 0.90, 0.95);
-  float aridNoise = aq_fbm(n * 5.0 + 3.0, 4);
-  float arid = smoothstep(0.42, 0.62, aridNoise) * (1.0 - smoothstep(6.0, 20.0, abs(alat - 24.0)));
-  arid = max(arid, smoothstep(0.62, 0.72, aridNoise) * (1.0 - smoothstep(20.0, 40.0, abs(alat - 35.0))));
-  vec3 landCol = mix(forest, grass, smoothstep(0.35, 0.7, nz));
-  landCol = mix(landCol, desert, arid);
-  landCol = mix(landCol, tundra, smoothstep(52.0, 62.0, alat));
-  float iceLand = smoothstep(64.0 + 6.0 * nz, 70.0 + 6.0 * nz, alat);
-  landCol = mix(landCol, ice, iceLand);
-  landCol *= 0.86 + 0.26 * nz2;
-
-  vec3 deep = vec3(0.008, 0.035, 0.075);
-  vec3 shallow = vec3(0.02, 0.11, 0.15);
-  vec3 ocean = mix(deep, shallow, smoothstep(0.15, 0.7, coast));
-  ocean = mix(ocean, ice * 0.9, smoothstep(74.0, 80.0, alat + 4.0 * nz));
-  vec3 albedo = mix(ocean, landCol, land);
-
-  vec3 N = normalize(vWorldN);
-  float ndl = dot(N, sunDir);
-  float day = smoothstep(-0.10, 0.20, ndl);
-  vec3 V = normalize(cameraPosition - vWorldPos);
-  vec3 H = normalize(sunDir + V);
-  float water = (1.0 - land) * (1.0 - smoothstep(74.0, 80.0, alat));
-  float spec = pow(max(dot(N, H), 0.0), 80.0) * water * day;
-  vec3 warm = mix(vec3(1.0, 0.5, 0.28), vec3(1.0), smoothstep(0.0, 0.3, ndl));
-  vec3 col = albedo * warm * (1.35 * max(ndl, 0.0) + 0.012) + spec * vec3(1.0, 0.86, 0.66) * 0.9;
-
-  // Night-side lights: procedural, clustered, denser near coasts (illustrative).
-  float cityN = aq_fbm(n * 320.0, 4);
-  float cityM = aq_fbm(n * 42.0 + 7.0, 3);
-  float city = smoothstep(0.60, 0.82, cityN) * smoothstep(0.44, 0.70, cityM) * land * (1.0 - iceLand) * (1.0 - smoothstep(58.0, 66.0, alat));
-  city *= 0.45 + 0.9 * smoothstep(0.5, 0.95, coast);
-  col += vec3(1.0, 0.70, 0.38) * city * 1.4 * (1.0 - day);
-
-  // Limb haze.
-  float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-  col += vec3(0.22, 0.48, 0.95) * fres * 0.45 * smoothstep(-0.25, 0.35, ndl);
-
-  if (grid > 0.5) {
-    float d = 15.0;
-    float la = abs(fract(lat * 57.29578 / d + 0.5) - 0.5) * d;
-    float lo = abs(fract(lon * 57.29578 / d + 0.5) - 0.5) * d;
-    float w = fwidth(lat * 57.29578) * 1.2;
-    float gl = 1.0 - smoothstep(0.0, w, min(la, lo * cos(lat)));
-    col = mix(col, vec3(0.45, 0.75, 1.0), gl * 0.35);
+  // Subtle ocean bathymetric texture
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.015)';
+  for (let y = 0; y < height; y += 4) {
+    ctx.fillRect(0, y, width, 1.5);
   }
-  gl_FragColor = vec4(col, 1.0);
-  #include <tonemapping_fragment>
-  #include <colorspace_fragment>
-}`;
 
-const cloudFragment = /* glsl */ `
-${LOG_F_PARS}
-uniform vec3 sunDir;
-uniform float time;
-varying vec3 vObjN;
-varying vec3 vWorldN;
-varying vec3 vWorldPos;
-${NOISE_GLSL}
-void main() {
-  #include <logdepthbuf_fragment>
-  vec3 n = normalize(vObjN);
-  vec3 q = n * 7.0 + vec3(time * 0.004, 0.0, time * 0.002);
-  float warp = aq_fbm(q * 0.8, 3);
-  float d = aq_fbm(q + warp * 1.6, 6);
-  float lat = abs(asin(n.y)) * 57.29578;
-  float band = 0.75 + 0.35 * smoothstep(40.0, 60.0, lat) - 0.25 * (1.0 - smoothstep(10.0, 28.0, abs(lat - 22.0)));
-  float dens = smoothstep(0.52, 0.78, d * band);
-  // Clear sky over the ground station (it would not be an operational window otherwise).
-  dens *= smoothstep(250.0, 1400.0, length(vWorldPos));
-  float ndl = dot(normalize(vWorldN), sunDir);
-  float day = smoothstep(-0.12, 0.25, ndl);
-  vec3 lit = mix(vec3(0.02, 0.025, 0.035), mix(vec3(1.0, 0.62, 0.42), vec3(1.0), smoothstep(0.0, 0.35, ndl)), day);
-  gl_FragColor = vec4(lit, dens * 0.9);
-  #include <tonemapping_fragment>
-  #include <colorspace_fragment>
-}`;
+  // 2. Load and render real world landmasses
+  const X = (lon: number) => ((lon + 180) / 360) * width;
+  const Y = (lat: number) => ((90 - lat) / 180) * height;
 
-const atmoVertex = /* glsl */ `
-${LOG_V_PARS}
-varying vec3 vWorldPos;
-void main() {
-  vec4 wp = modelMatrix * vec4(position, 1.0);
-  vWorldPos = wp.xyz;
-  gl_Position = projectionMatrix * viewMatrix * wp;
-  #include <logdepthbuf_vertex>
-}`;
+  try {
+    const topo = (await import('world-atlas/land-50m.json')).default as unknown as Topology<{ land: GeometryCollection }>;
+    const land = feature(topo, topo.objects.land) as unknown as GeoJSON.FeatureCollection;
 
-const atmoFragment = /* glsl */ `
-${LOG_F_PARS}
-uniform vec3 sunDir;
-uniform vec3 center;
-uniform float Rp;
-uniform float Ra;
-uniform float strength;
-varying vec3 vWorldPos;
-// Single-sample twilight atmosphere: path length through the shell sets the optical
-// depth; whether the path's mid-point sees the Sun over the Earth's limb sets the
-// illumination (this produces the Earth-shadow / twilight glow from the ground).
-void main() {
-  #include <logdepthbuf_fragment>
-  vec3 ro = cameraPosition;
-  vec3 rd = normalize(vWorldPos - cameraPosition);
-  vec3 oc = ro - center;
-  float b = dot(oc, rd);
-  float c = dot(oc, oc) - Ra * Ra;
-  float h = b * b - c;
-  if (h < 0.0) discard;
-  h = sqrt(h);
-  float t0 = max(-b - h, 0.0);
-  float t1 = -b + h;
-  float cp = dot(oc, oc) - Rp * Rp;
-  float hp = b * b - cp;
-  if (hp > 0.0) {
-    float tp = -b - sqrt(hp);
-    if (tp > 0.0) t1 = min(t1, tp);
-  }
-  float len = max(t1 - t0, 0.0);
-  vec3 col = vec3(0.0);
-  float total = 0.0;
-  // Three samples along the path.
-  for (int i = 0; i < 3; i++) {
-    float f = (float(i) + 0.5) / 3.0;
-    vec3 p = ro + rd * (t0 + f * len);
-    float r = length(p - center);
-    vec3 up = (p - center) / r;
-    float sunEl = asin(clamp(dot(up, sunDir), -1.0, 1.0));
-    float dip = acos(clamp(Rp / r, 0.0, 1.0));
-    float lit = smoothstep(-0.015, 0.06, sunEl + dip);
-    float dens = exp(-(r - Rp) / 18.0);
-    float redden = smoothstep(-0.02, 0.25, sunEl);
-    vec3 scat = mix(vec3(1.0, 0.38, 0.12), vec3(0.20, 0.45, 1.0), redden);
-    col += scat * lit * dens;
-    total += dens;
-  }
-  float depth = len * total / 3.0 / 30.0;
-  float mu = dot(rd, sunDir);
-  float phase = 0.75 + 0.25 * mu * mu + 0.5 * pow(max(mu, 0.0), 24.0);
-  float a = 1.0 - exp(-depth * 0.35);
-  vec3 outc = col / 3.0 * phase * a * strength * 1.4;
-  gl_FragColor = vec4(outc, 1.0);
-  #include <colorspace_fragment>
-}`;
-
-export function Earth({ sunDir }: { sunDir: THREE.Vector3 }) {
-  const cfg = useApp((s) => s.config.scene);
-  const quality = useApp((s) => s.quality);
-  const grid = useApp((s) => s.overlays.grid);
-  const [land, setLand] = useState<THREE.Texture | null>(null);
-  const q = useMemo(() => earthQuaternion(cfg.siteLatDeg, cfg.siteLonDeg), [cfg.siteLatDeg, cfg.siteLonDeg]);
-  const gl = useThree((s) => s.gl);
-
-  useEffect(() => {
-    let alive = true;
-    const width = quality === 'low' ? 2048 : 4096;
-    buildLandTexture(width)
-      .then((t) => {
-        if (!alive) return;
-        t.anisotropy = Math.min(8, gl.capabilities.getMaxAnisotropy());
-        setLand(t);
-      })
-      .catch((e) => console.warn('ASTRAQ: land texture unavailable, using procedural fallback', e));
-    return () => {
-      alive = false;
+    const drawRing = (ring: Ring, offset: number) => {
+      let prev = ring[0][0];
+      let acc = prev;
+      ctx.moveTo(X(acc + offset), Y(ring[0][1]));
+      const pts: [number, number][] = [[acc, ring[0][1]]];
+      for (let i = 1; i < ring.length; i++) {
+        let d = ring[i][0] - prev;
+        if (d > 180) d -= 360;
+        if (d < -180) d += 360;
+        acc += d;
+        prev = ring[i][0];
+        pts.push([acc, ring[i][1]]);
+        ctx.lineTo(X(acc + offset), Y(ring[i][1]));
+      }
+      const span = acc - ring[0][0];
+      if (Math.abs(span) > 300) {
+        const poleLat = pts.reduce((a, p) => a + p[1], 0) < 0 ? -90 : 90;
+        ctx.lineTo(X(acc + offset), Y(poleLat));
+        ctx.lineTo(X(ring[0][0] + offset), Y(poleLat));
+      }
+      ctx.closePath();
     };
-  }, [quality, gl]);
 
-  const earthMat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        vertexShader: earthVertex,
-        fragmentShader: earthFragment,
-        uniforms: {
-          landTex: { value: null },
-          hasLand: { value: 0 },
-          sunDir: { value: new THREE.Vector3(0, 1, 0) },
-          grid: { value: 0 },
-          cutRadius: { value: 2.6 },
-          octaves: { value: 5 },
-        },
-      }),
-    [],
-  );
-  const cloudMat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        vertexShader: earthVertex,
-        fragmentShader: cloudFragment,
-        transparent: true,
-        depthWrite: false,
-        uniforms: { sunDir: { value: new THREE.Vector3(0, 1, 0) }, time: { value: 0 } },
-      }),
-    [],
-  );
-  const atmoMat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        vertexShader: atmoVertex,
-        fragmentShader: atmoFragment,
-        side: THREE.BackSide,
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        uniforms: {
-          sunDir: { value: new THREE.Vector3(0, 1, 0) },
-          center: { value: EARTH_CENTER.clone() },
-          Rp: { value: EARTH_R },
-          Ra: { value: EARTH_R + 100 },
-          strength: { value: 1.0 },
-        },
-      }),
-    [],
-  );
+    // Draw continent base (lush terrain green)
+    ctx.fillStyle = '#2f5a3a';
+    for (const f of land.features) {
+      const g = f.geometry;
+      const polys: Ring[][] = g.type === 'Polygon' ? [g.coordinates as Ring[]] : g.type === 'MultiPolygon' ? (g.coordinates as Ring[][]) : [];
+      for (const poly of polys) {
+        for (const offset of [-360, 0, 360]) {
+          ctx.beginPath();
+          for (const ring of poly) drawRing(ring, offset);
+          ctx.fill('evenodd');
+        }
+      }
+    }
+
+    // Coastal outline / highlight
+    ctx.strokeStyle = '#4e855c';
+    ctx.lineWidth = Math.max(1, width / 2048);
+    for (const f of land.features) {
+      const g = f.geometry;
+      const polys: Ring[][] = g.type === 'Polygon' ? [g.coordinates as Ring[]] : g.type === 'MultiPolygon' ? (g.coordinates as Ring[][]) : [];
+      for (const poly of polys) {
+        for (const offset of [-360, 0, 360]) {
+          ctx.beginPath();
+          for (const ring of poly) drawRing(ring, offset);
+          ctx.stroke();
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Fallback continent rendering', err);
+    // Procedural fallback continents
+    ctx.fillStyle = '#2f5a3a';
+    ctx.fillRect(X(60), Y(38), width * 0.15, height * 0.35); // Asia/India approximate
+  }
+
+  // 3. Coordinate Graticules & Reference Lines
+  // 30° Latitudes / Longitudes
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([]);
+  for (let lat = -60; lat <= 60; lat += 30) {
+    if (lat === 0) continue;
+    ctx.beginPath();
+    ctx.moveTo(0, Y(lat));
+    ctx.lineTo(width, Y(lat));
+    ctx.stroke();
+  }
+  for (let lon = -150; lon <= 180; lon += 30) {
+    ctx.beginPath();
+    ctx.moveTo(X(lon), 0);
+    ctx.lineTo(X(lon), height);
+    ctx.stroke();
+  }
+
+  // Tropics (±23.44°) & Polar circles (±66.56°)
+  ctx.strokeStyle = 'rgba(245, 185, 66, 0.35)'; // gold
+  ctx.setLineDash([4, 4]);
+  for (const tLat of [-66.56, -23.44, 23.44, 66.56]) {
+    ctx.beginPath();
+    ctx.moveTo(0, Y(tLat));
+    ctx.lineTo(width, Y(tLat));
+    ctx.stroke();
+  }
+
+  // Equator in solid Accent Gold
+  ctx.strokeStyle = '#F5B942';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(0, Y(0));
+  ctx.lineTo(width, Y(0));
+  ctx.stroke();
+
+  // Prime Meridian (0°)
+  ctx.strokeStyle = 'rgba(255, 209, 102, 0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(X(0), 0);
+  ctx.lineTo(X(0), height);
+  ctx.stroke();
+
+  // 4. Ground Station Marker in Bengaluru, Karnataka (13.03° N, 77.51° E)
+  const bLon = 77.51;
+  const bLat = 13.03;
+  const bx = X(bLon);
+  const by = Y(bLat);
+
+  for (const ox of [-width, 0, width]) {
+    const cx = bx + ox;
+    if (cx < -50 || cx > width + 50) continue;
+
+    // Glowing target concentric rings
+    ctx.strokeStyle = 'rgba(245, 185, 66, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cx, by, 16, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(255, 209, 102, 0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cx, by, 8, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Solid core dot
+    ctx.fillStyle = '#FFD166';
+    ctx.beginPath();
+    ctx.arc(cx, by, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Crosshairs
+    ctx.strokeStyle = '#F5B942';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - 22, by);
+    ctx.lineTo(cx - 10, by);
+    ctx.moveTo(cx + 10, by);
+    ctx.lineTo(cx + 22, by);
+    ctx.moveTo(cx, by - 22);
+    ctx.lineTo(cx, by - 10);
+    ctx.moveTo(cx, by + 10);
+    ctx.lineTo(cx, by + 22);
+    ctx.stroke();
+
+    // Marker label
+    ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
+    ctx.fillStyle = '#FFD166';
+    ctx.fillText('BENGALURU, KA (ISRO)', cx + 18, by + 4);
+    ctx.font = '10px "IBM Plex Mono", monospace';
+    ctx.fillStyle = '#E6E9EC';
+    ctx.fillText('13.03°N, 77.51°E', cx + 18, by + 16);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.anisotropy = 8;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+/**
+ * Basic 3D Earth Globe component.
+ */
+export function Earth({ sunDir: _sunDir }: { sunDir?: THREE.Vector3 }) {
+  const cfg = useApp((s) => s.config.scene);
+  const [texture, setTexture] = useState<THREE.Texture | null>(null);
+
+  // Position Bengaluru, Karnataka directly at zenith (0, 0, 0)
+  const q = useMemo(() => earthQuaternion(cfg.siteLatDeg, cfg.siteLonDeg), [cfg.siteLatDeg, cfg.siteLonDeg]);
 
   useEffect(() => {
-    earthMat.uniforms.landTex.value = land;
-    earthMat.uniforms.hasLand.value = land ? 1 : 0;
-  }, [land, earthMat]);
-  useEffect(() => {
-    earthMat.uniforms.grid.value = grid ? 1 : 0;
-    earthMat.uniforms.octaves.value = quality === 'low' ? 3 : quality === 'medium' ? 4 : 5;
-  }, [grid, quality, earthMat]);
+    let active = true;
+    buildGlobeTexture(2048).then((tex) => {
+      if (active) setTexture(tex);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
-  const cloudRef = useRef<THREE.Mesh>(null);
-  useFrame((state) => {
-    earthMat.uniforms.sunDir.value.copy(sunDir);
-    cloudMat.uniforms.sunDir.value.copy(sunDir);
-    atmoMat.uniforms.sunDir.value.copy(sunDir);
-    cloudMat.uniforms.time.value = state.clock.elapsedTime;
-  });
+  const earthMat = useMemo(() => {
+    return new THREE.MeshStandardMaterial({
+      map: texture,
+      roughness: 0.75,
+      metalness: 0.05,
+      bumpScale: 0.05,
+    });
+  }, [texture]);
 
-  const seg = quality === 'low' ? 128 : 256;
   return (
     <group position={EARTH_CENTER} quaternion={q}>
+      {/* Main Earth Globe Sphere */}
       <mesh material={earthMat} renderOrder={0}>
-        <sphereGeometry args={[EARTH_R, seg, seg / 2]} />
+        <sphereGeometry args={[EARTH_R, 96, 48]} />
       </mesh>
-      {quality !== 'low' && (
-        <mesh ref={cloudRef} material={cloudMat} renderOrder={1} raycast={() => null}>
-          <sphereGeometry args={[EARTH_R + 9, seg, seg / 2]} />
-        </mesh>
-      )}
-      <mesh material={atmoMat} renderOrder={2} raycast={() => null}>
-        <sphereGeometry args={[EARTH_R + 100, 128, 64]} />
+
+      {/* Clean Atmosphere Rim Shell */}
+      <mesh renderOrder={1} raycast={() => null}>
+        <sphereGeometry args={[EARTH_R + 65, 64, 32]} />
+        <meshBasicMaterial
+          color="#38bdf8"
+          transparent
+          opacity={0.12}
+          side={THREE.BackSide}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
       </mesh>
     </group>
   );
 }
 
-/** High-precision ground patch around the terminal (the global sphere is cut out here). */
+/**
+ * Clean ground site pad located directly at the origin in Bengaluru, Karnataka.
+ */
 export function GroundSite() {
   const quality = useApp((s) => s.quality);
   const { geo, mat, padMat } = useMemo(() => {
-    const R = 3.0; // km
-    // Ring with radial subdivision so the Earth's curvature can be applied.
-    const refined = new THREE.RingGeometry(0.0005, R, 160, 48);
+    const R = 3.0; // km radius ground apron
+    const refined = new THREE.RingGeometry(0.0005, R, 120, 32);
     refined.rotateX(-Math.PI / 2);
     const rp = refined.attributes.position as THREE.BufferAttribute;
     for (let i = 0; i < rp.count; i++) {
@@ -323,115 +285,112 @@ export function GroundSite() {
       rp.setY(i, -(x * x + z * z) / (2 * EARTH_R));
     }
     refined.computeVertexNormals();
-    const tex = groundTexture();
-    tex.repeat.set(220, 220);
-    const alpha = radialAlpha();
+
+    const grassTex = makeGrassTexture();
+    grassTex.repeat.set(120, 120);
+
     const m = new THREE.MeshStandardMaterial({
-      map: tex,
-      color: new THREE.Color('#8a8a78'),
-      roughness: 0.96,
-      metalness: 0,
-      alphaMap: alpha,
-      transparent: true,
-      depthWrite: true,
+      map: grassTex,
+      color: new THREE.Color('#27442d'),
+      roughness: 0.95,
+      metalness: 0.02,
     });
-    const pm = new THREE.MeshStandardMaterial({ map: padTexture(), roughness: 0.85, metalness: 0.05, color: '#b9bcc0' });
+
+    const pm = new THREE.MeshStandardMaterial({
+      map: makeBengaluruPadTexture(),
+      roughness: 0.85,
+      metalness: 0.08,
+      color: '#d4d8dc',
+    });
+
     return { geo: refined, mat: m, padMat: pm };
   }, []);
+
   return (
     <group>
       <mesh geometry={geo} material={mat} receiveShadow={quality === 'high'} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.00002, 0]} material={padMat} receiveShadow={quality === 'high'}>
-        <circleGeometry args={[0.014, 64]} />
+        <circleGeometry args={[0.016, 64]} />
       </mesh>
     </group>
   );
 }
 
-function groundTexture(): THREE.CanvasTexture {
-  const c = document.createElement('canvas');
-  c.width = c.height = 512;
-  const x = c.getContext('2d')!;
-  x.fillStyle = '#4b4a3a';
-  x.fillRect(0, 0, 512, 512);
-  let s = 12345;
-  const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
-  for (let i = 0; i < 9000; i++) {
-    const g = 50 + r() * 60;
-    x.fillStyle = `rgba(${g + 20},${g + 18},${g - 5},${0.18 + r() * 0.25})`;
-    const w = 1 + r() * 5;
-    x.fillRect(r() * 512, r() * 512, w, w);
-  }
-  for (let i = 0; i < 400; i++) {
-    x.fillStyle = `rgba(60,72,38,${0.25 + r() * 0.3})`;
-    x.beginPath();
-    x.arc(r() * 512, r() * 512, 3 + r() * 14, 0, Math.PI * 2);
-    x.fill();
-  }
-  const t = new THREE.CanvasTexture(c);
-  t.wrapS = t.wrapT = THREE.RepeatWrapping;
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 8;
-  return t;
-}
-
-function radialAlpha(): THREE.CanvasTexture {
+function makeGrassTexture(): THREE.CanvasTexture {
   const c = document.createElement('canvas');
   c.width = c.height = 256;
-  const x = c.getContext('2d')!;
-  const g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
-  g.addColorStop(0, '#fff');
-  g.addColorStop(0.86, '#fff');
-  g.addColorStop(1, '#000');
-  x.fillStyle = g;
-  x.fillRect(0, 0, 256, 256);
-  const t = new THREE.CanvasTexture(c);
-  return t;
+  const ctx = c.getContext('2d')!;
+  ctx.fillStyle = '#233d28';
+  ctx.fillRect(0, 0, 256, 256);
+  let s = 42;
+  const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 3000; i++) {
+    const g = 40 + r() * 50;
+    ctx.fillStyle = `rgba(${g - 10},${g + 20},${g - 15},0.3)`;
+    ctx.fillRect(r() * 256, r() * 256, 2, 2);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }
 
-function padTexture(): THREE.CanvasTexture {
+function makeBengaluruPadTexture(): THREE.CanvasTexture {
   const c = document.createElement('canvas');
   c.width = c.height = 1024;
-  const x = c.getContext('2d')!;
-  x.fillStyle = '#7d8084';
-  x.fillRect(0, 0, 1024, 1024);
-  let s = 99;
-  const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
-  for (let i = 0; i < 14000; i++) {
-    const g = 100 + r() * 40;
-    x.fillStyle = `rgba(${g},${g},${g + 4},0.25)`;
-    x.fillRect(r() * 1024, r() * 1024, 2, 2);
-  }
-  x.strokeStyle = 'rgba(40,42,46,0.35)';
-  x.lineWidth = 2;
-  for (let k = 128; k < 1024; k += 256) {
-    x.beginPath();
-    x.moveTo(k, 0);
-    x.lineTo(k, 1024);
-    x.moveTo(0, k);
-    x.lineTo(1024, k);
-    x.stroke();
-  }
-  // Survey marker + north arrow painted on the pad.
-  x.strokeStyle = 'rgba(230,190,90,0.32)';
-  x.lineWidth = 6;
-  x.beginPath();
-  x.arc(512, 512, 300, 0, Math.PI * 2);
-  x.stroke();
-  x.fillStyle = 'rgba(230,190,90,0.5)';
-  x.beginPath();
-  x.moveTo(512, 150);
-  x.lineTo(482, 230);
-  x.lineTo(542, 230);
-  x.fill();
-  x.font = 'bold 60px sans-serif';
-  x.textAlign = 'center';
-  x.fillText('N', 512, 130);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 8;
-  // CircleGeometry UVs map the disc into the unit square with v up; north is −z → rotate so "N" faces north.
-  t.center.set(0.5, 0.5);
-  t.rotation = 0;
-  return t;
+  const ctx = c.getContext('2d')!;
+
+  // Concrete foundation
+  ctx.fillStyle = '#1e262f';
+  ctx.fillRect(0, 0, 1024, 1024);
+
+  // Concentric radar & azimuth calibration rings
+  ctx.strokeStyle = 'rgba(245, 185, 66, 0.6)';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(512, 512, 450, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(53, 64, 74, 0.8)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(512, 512, 300, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Crosshairs & Compass Cardinal Marks
+  ctx.strokeStyle = 'rgba(245, 185, 66, 0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(512, 60);
+  ctx.lineTo(512, 964);
+  ctx.moveTo(60, 512);
+  ctx.lineTo(964, 512);
+  ctx.stroke();
+
+  // North Arrow
+  ctx.fillStyle = '#F5B942';
+  ctx.beginPath();
+  ctx.moveTo(512, 100);
+  ctx.lineTo(480, 170);
+  ctx.lineTo(544, 170);
+  ctx.fill();
+
+  ctx.font = 'bold 44px "IBM Plex Sans", sans-serif';
+  ctx.fillStyle = '#FFD166';
+  ctx.textAlign = 'center';
+  ctx.fillText('N', 512, 85);
+
+  // Station Label
+  ctx.font = 'bold 30px "IBM Plex Sans", sans-serif';
+  ctx.fillStyle = '#E6E9EC';
+  ctx.fillText('ISRO GROUND STATION · BENGALURU', 512, 500);
+
+  ctx.font = '22px "IBM Plex Mono", monospace';
+  ctx.fillStyle = '#89939D';
+  ctx.fillText('13.03° N · 77.51° E · KARNATAKA', 512, 540);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 8;
+  return tex;
 }

@@ -15,7 +15,7 @@ import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { vis } from '../vis';
-import { STATE_HEX, live, trails, useApp } from '../../state/store';
+import { live, trails, useApp } from '../../state/store';
 import { basisFromAzEl, dirFromField } from '../../core/geometry';
 
 const LOGV = /* glsl */ `#include <common>\n#include <logdepthbuf_pars_vertex>`;
@@ -158,15 +158,28 @@ export function Optics() {
 
   useFrame((state) => {
     const L = vis.range;
-    const col = STATE_HEX[vis.state];
-    // ── FOV frustum ────────────────────────────────────────────────
-    const b = basisFromAzEl(vis.axisAz, vis.axisEl);
-    tmp.f.set(...b.f);
-    tmp.r.set(...b.r);
-    tmp.u.set(...b.u);
+    const apex = vis.lens;
+    const isLocked = vis.state === 'LOCKED';
+
+    // ── FOV frustum (3D focal vision box) ──────────────────────────
+    // LOCKED → derive forward from lens→sat (world-space), guaranteed pixel-perfect.
+    // Scanning / Acquiring → use vis.lensDir (read from physical 3D model each frame)
+    //   so the frustum dynamically sweeps with the gimbal during search.
+    if (isLocked) {
+      tmp.f.copy(vis.sat).sub(apex).normalize();
+    } else {
+      tmp.f.copy(vis.lensDir);
+    }
+    // Build stable right/up basis orthogonal to the forward direction.
+    // Fall back to world-east when beam is near-vertical.
+    const worldUp = new THREE.Vector3(0, 1, 0);
+    const upDot = Math.abs(tmp.f.dot(worldUp));
+    const worldRef = upDot > 0.99 ? new THREE.Vector3(1, 0, 0) : worldUp;
+    tmp.r.copy(tmp.f).cross(worldRef).negate().normalize();
+    tmp.u.copy(tmp.r).cross(tmp.f).normalize();
+
     const th = Math.tan(THREE.MathUtils.degToRad(vis.hfov / 2));
     const tv = Math.tan(THREE.MathUtils.degToRad(vis.vfov / 2));
-    const apex = vis.lens;
     const corner = (sx: number, sy: number) =>
       tmp.p.copy(apex).addScaledVector(tmp.f, L).addScaledVector(tmp.r, sx * th * L).addScaledVector(tmp.u, sy * tv * L).clone();
     const c1 = corner(-1, -1);
@@ -180,11 +193,16 @@ export function Optics() {
     const segs = [apex, c1, apex, c2, apex, c3, apex, c4, c1, c2, c2, c3, c3, c4, c4, c1];
     segs.forEach((v, i) => ep.setXYZ(i, v.x, v.y, v.z));
     ep.needsUpdate = true;
-    (frustum.edges.material as THREE.LineBasicMaterial).color.set(col);
-    (frustum.faces.material as THREE.MeshBasicMaterial).color.set(col);
+
+    // Yellow during any non-locked state; Green ONLY when fully LOCKED.
+    const focalCol = isLocked ? '#22c55e' : '#facc15';
+    (frustum.edges.material as THREE.LineBasicMaterial).color.set(focalCol);
+    (frustum.faces.material as THREE.MeshBasicMaterial).color.set(focalCol);
+    (frustum.edges.material as THREE.LineBasicMaterial).opacity = isLocked ? 0.8 : 0.6;
+    (frustum.faces.material as THREE.MeshBasicMaterial).opacity = isLocked ? 0.04 : 0.025;
     frustum.faces.visible = frustum.edges.visible = overlays.fov && !vis.pov && vis.view !== 'link';
 
-    // ── Optical axis ──────────────────────────────────────────────
+    // ── Optical axis (aligned to actual beam direction) ────────────
     const ap = axis.geometry.attributes.position as THREE.BufferAttribute;
     ap.setXYZ(0, apex.x, apex.y, apex.z);
     tmp.p.copy(apex).addScaledVector(tmp.f, L * 1.08);

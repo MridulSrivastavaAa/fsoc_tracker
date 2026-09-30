@@ -171,7 +171,7 @@ function Chart({ tab }: { tab: TabDef }) {
       });
       // Legend.
       let lx = padL + 6 * dpr;
-      ctx.font = `${10.5 * dpr}px Barlow, sans-serif`;
+      ctx.font = `${10.5 * dpr}px "IBM Plex Sans", sans-serif`;
       tab.series.forEach((s) => {
         ctx.fillStyle = cssVar(s.color);
         ctx.fillRect(lx, padT + 2 * dpr, 12 * dpr, 2 * dpr);

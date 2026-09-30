@@ -6,10 +6,10 @@ import { Stage } from '../scene/Stage';
 import { SceneLabels } from '../scene/Labels';
 import { live, useApp } from '../state/store';
 import { TopBar, ViewSwitch, DemoCaption, ReplayBar, Toast } from '../hud/Top';
-import { SensorView, Timeline } from '../hud/Sensor';
+import { SensorView } from '../hud/Sensor';
 import { Dock } from '../hud/Dock';
 import { Analysis } from '../hud/Analysis';
-import { Drawer, ToolRail } from '../hud/Drawers';
+import { RightNavbar } from '../hud/Drawers';
 import { Help, MeasurePanel } from '../hud/Overlays';
 import { ThemePopover } from '../hud/Theme';
 import { VideoBench } from '../hud/VideoBench';
@@ -32,17 +32,16 @@ function useKeyboard() {
         st.send({ type: st.running ? 'pause' : 'start' });
       } else if (e.key === 'r' || e.key === 'R') st.send({ type: 'reset' });
       else if (e.key === 'd' || e.key === 'D') st.send({ type: 'demo', on: !st.demo });
-      else if (e.key === 's' || e.key === 'S') st.set({ sensorExpanded: !st.sensorExpanded });
       else if (e.key === 'a' || e.key === 'A') st.set({ analysisOpen: !st.analysisOpen });
       else if (e.key === '?') st.set({ helpOpen: !st.helpOpen });
-      else if (e.key === 'Escape') st.set({ helpOpen: false, sensorExpanded: false, drawer: null, themeOpen: false, videoOpen: false });
+      else if (e.key === 'Escape') st.set({ helpOpen: false, themeOpen: false, videoOpen: false });
       else if (e.key === '+' || e.key === '=') cameraApi.zoom(0.6);
       else if (e.key === '-' || e.key === '_') cameraApi.zoom(1.66);
       else if (e.key === 'v' || e.key === 'V') st.set({ videoOpen: !st.videoOpen });
       else if (e.key === 't' || e.key === 'T') st.set({ themeOpen: !st.themeOpen });
       else if (e.key === 'p' || e.key === 'P') st.downloadReport('live', 'html');
       else if (e.key === 'f' || e.key === 'F') {
-        const order = ['iss', 'sat2', 'sat3'] as const;
+        const order = ['sat3'] as const;
         const i = st.view === 'follow' ? order.indexOf(st.followKey) : -1;
         st.flyTo(order[(i + 1) % order.length]);
       } else if (e.key === 'g' || e.key === 'G') st.set({ sensorTab: st.sensorTab === 'screen' ? 'camera' : 'screen' });
@@ -105,15 +104,13 @@ export default function App() {
         </div>
       )}
       <TopBar />
-      <ViewSwitch />
       <DemoCaption />
       <ReplayBar />
-      <ToolRail />
-      <Drawer />
+      <RightNavbar />
       <MeasurePanel />
-      <div className="rightcol">
+      <div className="leftcol">
         <SensorView />
-        <Timeline />
+        <ViewSwitch />
       </div>
       <Analysis />
       <Dock />

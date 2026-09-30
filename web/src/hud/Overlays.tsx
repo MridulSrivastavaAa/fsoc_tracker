@@ -159,7 +159,7 @@ export function Help() {
                 <span className="mono">V</span> video benchmark · <span className="mono">P</span> performance report · <span className="mono">T</span> theme
               </li>
               <li>
-                <span className="mono">F</span> fly to the other spacecraft (ISS → SAT-2 → SAT-3) · <span className="mono">1</span> back to overview
+                <span className="mono">F</span> fly to SAT-3 relay spacecraft · <span className="mono">1</span> back to overview
               </li>
             </ul>
           </div>
