@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-In Step 3, we designed and implemented a **deterministic, multi-factor Adaptive Optical Flow Confidence Gater** ([`AdaptiveFlowGater`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/src/fsoc/vision/flow_gating.py#L20-L162)) to address the primary scientific vulnerability identified in Step 2: **high-frequency mechanical camera jitter ($\pm 20\text{ px/frame}$)**.
+In Step 3, we designed and implemented a **deterministic, multi-factor Adaptive Optical Flow Confidence Gater** ([`AdaptiveFlowGater`](src/fsoc/vision/flow_gating.py#L20-L162)) to address the primary scientific vulnerability identified in Step 2: **high-frequency mechanical camera jitter ($\pm 20\text{ px/frame}$)**.
 
 Under high-frequency uncorrelated spatial jitter, finite-difference optical flow vectors produce large derivative noise ($\approx \pm 600\text{ px/s}$) which represents image-plane vibration rather than true physical target velocity. The adaptive gater continuously evaluates raw feature quality, forward-backward error, velocity innovation against the IMM state predictor, and spatial oscillation signatures. It produces a smooth fusion weight $w_{\text{flow}} \in [0, 1]$ that scales the velocity measurement covariance $\mathbf{R}_{\text{vel\_eff}} = \mathbf{R}_{\text{vel\_base}} / \max(w_{\text{flow}}, \epsilon)$.
 
@@ -138,7 +138,7 @@ Conducted across 10 benchmark scenarios with matched random seeds (`seed=42`) an
 ## 6. Verification & Test Summary
 
 - **Total Test Suite**: **181 tests passing** (`pytest` exited with code 0).
-- **New Unit Tests Added** ([`tests/unit/test_flow_gating.py`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/tests/unit/test_flow_gating.py)):
+- **New Unit Tests Added** ([`tests/unit/test_flow_gating.py`](tests/unit/test_flow_gating.py)):
   1. `test_reliable_flow_high_weight`: Confirms $w_{\text{flow}} \ge 0.70$ and `GOOD_FLOW`.
   2. `test_low_feature_count_reduced_weight`: Confirms deweighting and `LOW_FEATURE_COUNT`.
   3. `test_high_fb_error_reduced_weight`: Confirms deweighting and `HIGH_FB_ERROR`.

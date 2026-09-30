@@ -80,13 +80,13 @@ npm run dev (on http://localhost:5173/)
 
 ### 12. PS Compliance Failures
 - **Status**: NO ERRORS DETECTED
-- All 33 requirements evaluated and validated in [`PS26169_COMPLIANCE_MATRIX.md`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/PS26169_COMPLIANCE_MATRIX.md).
+- All 33 requirements evaluated and validated in [`PS26169_COMPLIANCE_MATRIX.md`](PS26169_COMPLIANCE_MATRIX.md).
 
 ---
 
 ### 13. Browser Errors
 - **Status**: NO ERRORS DETECTED
-- Browser console logs captured 0 JavaScript exceptions, 0 failed network requests, and 0 WebGL shader errors (see [`browser_errors.log`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/browser_errors.log)).
+- Browser console logs captured 0 JavaScript exceptions, 0 failed network requests, and 0 WebGL shader errors (see [`browser_errors.log`](browser_errors.log)).
 
 ---
 

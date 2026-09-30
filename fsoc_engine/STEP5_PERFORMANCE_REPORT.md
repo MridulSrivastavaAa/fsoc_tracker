@@ -144,7 +144,7 @@ Monitored across 1-minute and 5-minute continuous runs under active combined dis
 - **JavaScript Console Errors**: **0**
 - **DOM & WebGL Render Integrity**: Verified cleanly with 3D Cesium/Three globe view, live 640×480 monochrome camera viewport, and crosshair overlay.
 - **Interactive Controls Verified**: Play, Pause, Reset, Disturbance Drawers (Atmosphere, Sensor Noise, Jitter), Scenario Switching, and CSV/JSON/Report Export.
-- **Error Log**: Captured in [`browser_errors.log`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/browser_errors.log) (**NO ERRORS DETECTED**).
+- **Error Log**: Captured in [`browser_errors.log`](browser_errors.log) (**NO ERRORS DETECTED**).
 
 ---
 
@@ -159,16 +159,16 @@ Monitored across 1-minute and 5-minute continuous runs under active combined dis
 
 ## 10. Generated Files & Artifacts
 
-- [`PS26169_COMPLIANCE_MATRIX.md`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/PS26169_COMPLIANCE_MATRIX.md)
-- [`STEP5_PERFORMANCE_REPORT.md`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/STEP5_PERFORMANCE_REPORT.md)
-- [`STEP5_ERROR_LOG.md`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/STEP5_ERROR_LOG.md)
-- [`browser_errors.log`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/browser_errors.log)
-- [`performance_results.json`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/performance_results.json)
-- [`performance_results.csv`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/performance_results.csv)
-- [`benchmark1_results.json`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/benchmark1_results.json)
-- [`benchmark1_results.csv`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/benchmark1_results.csv)
-- [`benchmark2_results.json`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/benchmark2_results.json)
-- [`benchmark2_results.csv`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/benchmark2_results.csv)
-- [`BENCHMARK1_REPORT.md`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/BENCHMARK1_REPORT.md)
-- [`BENCHMARK2_REPORT.md`](file:///d:/SIH_26169/fsoc_tracker/fsoc_tracker/BENCHMARK2_REPORT.md)
+- [`PS26169_COMPLIANCE_MATRIX.md`](PS26169_COMPLIANCE_MATRIX.md)
+- [`STEP5_PERFORMANCE_REPORT.md`](STEP5_PERFORMANCE_REPORT.md)
+- [`STEP5_ERROR_LOG.md`](STEP5_ERROR_LOG.md)
+- [`browser_errors.log`](browser_errors.log)
+- [`performance_results.json`](performance_results.json)
+- [`performance_results.csv`](performance_results.csv)
+- [`benchmark1_results.json`](benchmark1_results.json)
+- [`benchmark1_results.csv`](benchmark1_results.csv)
+- [`benchmark2_results.json`](benchmark2_results.json)
+- [`benchmark2_results.csv`](benchmark2_results.csv)
+- [`BENCHMARK1_REPORT.md`](BENCHMARK1_REPORT.md)
+- [`BENCHMARK2_REPORT.md`](BENCHMARK2_REPORT.md)
 ================================================================================
