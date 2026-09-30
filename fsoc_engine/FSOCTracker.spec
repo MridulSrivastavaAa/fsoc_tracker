@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['C:/SIH/final_2/fsoc_tracker/fsoc_tracker/launcher.py'],
-    pathex=['C:/SIH/final_2/fsoc_tracker/fsoc_tracker/src'],
+    ['C:/SIH/final_2/fsoc_tracker/fsoc_engine/launcher.py'],
+    pathex=['C:/SIH/final_2/fsoc_tracker/fsoc_engine/src'],
     binaries=[],
-    datas=[('C:/SIH/final_2/fsoc_tracker/fsoc_tracker/configs', 'configs'), ('C:/SIH/final_2/fsoc_tracker/fsoc_tracker/models', 'models'), ('C:/SIH/final_2/fsoc_tracker/fsoc_tracker/web_dist', 'web_dist'), ('C:/SIH/final_2/fsoc_tracker/fsoc_tracker/src', 'src'), ('C:/SIH/final_2/fsoc_tracker/fsoc_tracker/test_videos', 'test_videos')],
+    datas=[('C:/SIH/final_2/fsoc_tracker/fsoc_engine/configs', 'configs'), ('C:/SIH/final_2/fsoc_tracker/fsoc_engine/models', 'models'), ('C:/SIH/final_2/fsoc_tracker/fsoc_engine/web_dist', 'web_dist'), ('C:/SIH/final_2/fsoc_tracker/fsoc_engine/src', 'src'), ('C:/SIH/final_2/fsoc_tracker/fsoc_engine/test_videos', 'test_videos')],
     hiddenimports=['webview', 'bottle', 'pythonnet', 'clr'],
     hookspath=[],
     hooksconfig={},

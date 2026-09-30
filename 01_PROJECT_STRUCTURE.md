@@ -10,15 +10,16 @@
 
 ## 2. Repository Layout
 ```
-fsoc_tracker/
-├── README.md
-├── pyproject.toml / requirements.txt
-├── configs/
-│   ├── default.yaml              # all default parameters (from PS table)
-│   ├── scenarios/                # benchmark scenarios (one yaml each)
-│   └── datagen.yaml              # data generation config (see file 04)
-│
-├── src/fsoc/
+fsoc_tracker/ (Workspace / Git Root)
+├── web/                          # 3D Three.js & React Mission Control Web HUD
+├── fsoc_engine/                  # Python Backend & AI Tracking Engine
+│   ├── configs/                  # YAML configurations (default parameters from PS table)
+│   ├── models/                   # Trained ONNX beacon verifiers
+│   ├── test_videos/              # Multi-tier benchmark evaluation videos
+│   ├── src/fsoc/                 # Core Python source code (Vision, IMM, Kalman, GUI)
+│   ├── pyproject.toml / requirements.txt
+│   └── tests/                    # Comprehensive unit tests
+```
 │   ├── core/
 │   │   ├── config.py             # load/validate YAML (pydantic)
 │   │   ├── types.py              # Frame, Detection, TrackState, Command, Metrics dataclasses

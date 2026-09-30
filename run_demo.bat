@@ -1,6 +1,6 @@
 @echo off
 title ISRO FSOC Tracker - Operator Workstation
-cd /d "%~dp0fsoc_tracker"
+cd /d "%~dp0fsoc_engine"
 set PYTHONPATH=src;%PYTHONPATH%
 
 echo =====================================================================

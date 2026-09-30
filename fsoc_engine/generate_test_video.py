@@ -25,11 +25,11 @@ def generate_video():
     width, height = 640, 480
     cx_nominal, cy_nominal = width / 2.0, height / 2.0
 
-    output_dir = Path("c:/SIH/final_2/fsoc_tracker/fsoc_tracker/test_videos")
+    output_dir = Path(__file__).resolve().parent / "test_videos"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # Also save in public folder for direct browser download if needed
-    public_dir = Path("c:/SIH/final_2/fsoc_tracker/web/public")
+    public_dir = Path(__file__).resolve().parent.parent / "web" / "public"
     public_dir.mkdir(parents=True, exist_ok=True)
 
     video_path = output_dir / "fsoc_test_video_30s_60fps.mp4"

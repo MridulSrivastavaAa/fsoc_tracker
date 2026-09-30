@@ -1,6 +1,6 @@
 @echo off
 title ISRO FSOC Tracker - Automated Benchmark Suite
-cd /d "%~dp0fsoc_tracker"
+cd /d "%~dp0fsoc_engine"
 set PYTHONPATH=src;%PYTHONPATH%
 
 echo =====================================================================
