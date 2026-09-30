@@ -1,5 +1,5 @@
 /**
- * ASTRAQ application shell: full-bleed 3D stage with the HUD layered on top.
+ * NATRA application shell: full-bleed 3D stage with the HUD layered on top.
  */
 import { useEffect, useRef } from 'react';
 import { Stage } from '../scene/Stage';
@@ -18,7 +18,7 @@ import { cameraApi } from '../scene/CameraRig';
 import { spaceAnchors, spaceBodies } from '../scene/space/SpaceObjects';
 
 // Test hook for automated UI checks (read-only use).
-(window as unknown as { __ASTRAQ__: unknown }).__ASTRAQ__ = { useApp, live, vis, space: spaceAnchors, bodies: spaceBodies };
+(window as unknown as { __NATRA__: unknown }).__NATRA__ = { useApp, live, vis, space: spaceAnchors, bodies: spaceBodies };
 
 function useKeyboard() {
   useEffect(() => {

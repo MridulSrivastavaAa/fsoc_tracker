@@ -179,17 +179,25 @@ async def analyze_video(
         if truth is not None:
             content = await truth.read()
             text = content.decode("utf-8", errors="ignore")
-            lines = text.strip().splitlines()
-            for line in lines[1:]:  # skip header
-                parts = line.split(",")
-                if len(parts) >= 3:
-                    try:
-                        f_idx = int(parts[0].strip())
-                        tx = float(parts[1].strip())
-                        ty = float(parts[2].strip())
-                        truth_points[f_idx] = (tx, ty)
-                    except ValueError:
-                        pass
+            lines = [l.strip() for l in text.strip().splitlines() if l.strip()]
+            if lines:
+                header = [h.strip().lower() for h in lines[0].split(",")]
+                fi = next((i for i, h in enumerate(header) if h in ["frame", "frame_index", "frame_idx", "f_idx", "f", "index"]), 0)
+                xi = next((i for i, h in enumerate(header) if h in ["truth_x", "gt_x", "truthx", "x", "target_x", "pos_x"]), -1)
+                if xi == -1:
+                    xi = 2 if len(header) > 2 and "time" in header[1] else 1
+                yi = next((i for i, h in enumerate(header) if h in ["truth_y", "gt_y", "truthy", "y", "target_y", "pos_y"]), xi + 1)
+
+                for line in lines[1:]:
+                    parts = [p.strip() for p in line.split(",")]
+                    if len(parts) > max(fi, xi, yi):
+                        try:
+                            f_idx = int(float(parts[fi]))
+                            tx = float(parts[xi])
+                            ty = float(parts[yi])
+                            truth_points[f_idx] = (tx, ty)
+                        except (ValueError, IndexError):
+                            pass
 
         # Open video and inspect
         cap = cv2.VideoCapture(str(video_path))
@@ -206,8 +214,10 @@ async def analyze_video(
         # Initialize tracking components
         cfg = default_config()
         cfg.camera.fov_x_deg = hfovDeg
-        cfg.vision.target_size_px = spotSizePx
-        cfg.vision.adaptive_threshold_k = thresholdSigma
+        cfg.vision.preprocess.mad_k = thresholdSigma
+        if spotSizePx > 0:
+            cfg.vision.detector.min_area = max(1.0, 3.14 * (spotSizePx / 3.0) ** 2)
+            cfg.vision.detector.max_area = max(5.0, 3.14 * (spotSizePx * 2.5) ** 2)
 
         preprocessor = VisionPreprocessor(cfg)
         detector = SpotDetector(cfg, preprocessor=preprocessor)
@@ -341,6 +351,23 @@ th {{ color: #94a3b8; font-size: 13px; text-transform: uppercase; }}
 </body>
 </html>""")
 
+        # Sample trajectory frames for frontend live visualizer (max 1200 frames)
+        sample_step = max(1, len(frame_logs) // 1200)
+        trajectory_sample = [
+            {
+                "frame": f["frame"],
+                "time_s": f["time_s"],
+                "state": f["state"],
+                "est_x": f["est_x"],
+                "est_y": f["est_y"],
+                "gt_x": f["gt_x"],
+                "gt_y": f["gt_y"],
+                "error_px": f["error_px"],
+            }
+            for idx, f in enumerate(frame_logs)
+            if idx % sample_step == 0
+        ]
+
         return {
             "summary": {
                 "width": width,
@@ -358,6 +385,7 @@ th {{ color: #94a3b8; font-size: 13px; text-transform: uppercase; }}
                 "lockRetentionPct": round(lock_retention, 1),
                 "truthProvided": bool(truth_points),
             },
+            "trajectory": trajectory_sample,
             "csv": f"/api/video/download/{csv_filename}",
             "report": f"/api/video/download/{html_filename}",
         }

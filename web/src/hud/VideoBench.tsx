@@ -17,6 +17,7 @@ import { syntheticFrame } from '../core/video/synthetic';
 import { Icon, Seg, Slider, Toggle } from './ui';
 
 type Source = 'browser' | 'server';
+
 interface Progress {
   i: number;
   n: number;
@@ -24,9 +25,27 @@ interface Progress {
   fps: number;
 }
 
-function drawPreview(cv: HTMLCanvasElement, gray: Uint8Array | Uint8ClampedArray, W: number, H: number, row: VideoRow | null, spot: number) {
+export interface TrajectoryPoint {
+  frame: number;
+  time_s: number;
+  state: string;
+  est_x: number | null;
+  est_y: number | null;
+  gt_x: number | null;
+  gt_y: number | null;
+  error_px: number | null;
+}
+
+function drawPreview(
+  cv: HTMLCanvasElement,
+  gray: Uint8Array | Uint8ClampedArray,
+  W: number,
+  H: number,
+  row: VideoRow | null,
+  spot: number
+) {
   const maxW = 560;
-  const maxH = 420;
+  const maxH = 400;
   const k = Math.min(maxW / W, maxH / H);
   const w = Math.max(1, Math.round(W * k));
   const h = Math.max(1, Math.round(H * k));
@@ -34,7 +53,7 @@ function drawPreview(cv: HTMLCanvasElement, gray: Uint8Array | Uint8ClampedArray
   cv.height = h;
   const ctx = cv.getContext('2d')!;
   const img = ctx.createImageData(w, h);
-  // Area-average downscale (what the frame looks like), with mild gain so a dim beacon shows.
+
   const step = 1 / k;
   for (let y = 0; y < h; y++) {
     const y0 = Math.floor(y * step);
@@ -44,34 +63,49 @@ function drawPreview(cv: HTMLCanvasElement, gray: Uint8Array | Uint8ClampedArray
       const x1 = Math.min(W, Math.max(x0 + 1, Math.floor((x + 1) * step)));
       let sum = 0;
       let cnt = 0;
-      for (let yy = y0; yy < y1; yy += 1) for (let xx = x0; xx < x1; xx += 1) {
-        sum += gray[yy * W + xx];
-        cnt++;
+      for (let yy = y0; yy < y1; yy += 1) {
+        for (let xx = x0; xx < x1; xx += 1) {
+          sum += gray[yy * W + xx];
+          cnt++;
+        }
       }
       const o = (y * w + x) * 4;
-      img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.min(255, (1.6 * sum) / cnt);
+      img.data[o] = img.data[o + 1] = img.data[o + 2] = Math.min(255, (1.8 * sum) / cnt);
       img.data[o + 3] = 255;
     }
   }
   ctx.putImageData(img, 0, 0);
-  ctx.lineWidth = 1.5;
+
+  // Center crosshair
+  ctx.lineWidth = 1.2;
   ctx.strokeStyle = 'rgba(232,240,247,0.35)';
   ctx.beginPath();
-  ctx.moveTo(w / 2 - 8, h / 2);
-  ctx.lineTo(w / 2 + 8, h / 2);
-  ctx.moveTo(w / 2, h / 2 - 8);
-  ctx.lineTo(w / 2, h / 2 + 8);
+  ctx.moveTo(w / 2 - 10, h / 2);
+  ctx.lineTo(w / 2 + 10, h / 2);
+  ctx.moveTo(w / 2, h / 2 - 10);
+  ctx.lineTo(w / 2, h / 2 + 10);
   ctx.stroke();
+
   if (!row) return;
+
+  // Ground Truth Circle
   if (row.truthX !== null && row.truthY !== null) {
-    ctx.strokeStyle = 'rgba(255,208,138,0.9)';
+    ctx.strokeStyle = 'rgba(255,208,138,0.95)';
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.arc(row.truthX * k, row.truthY * k, 9, 0, Math.PI * 2);
+    ctx.arc(row.truthX * k, row.truthY * k, 10, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.fillStyle = '#ffd08a';
+    ctx.font = '10px monospace';
+    ctx.fillText('TRUTH', row.truthX * k + 12, row.truthY * k + 3);
   }
+
+  // Detected spot & Kalman bounding box
   if (row.x !== null && row.y !== null) {
-    const s = Math.max(10, spot * k * 2);
-    ctx.strokeStyle = row.state === 'TRACKING' ? '#9cf5c8' : '#ffb547';
+    const s = Math.max(12, spot * k * 2.2);
+    const isLock = row.state === 'TRACKING';
+    ctx.strokeStyle = isLock ? '#34d399' : '#fbbf24';
+    ctx.lineWidth = 1.8;
     ctx.strokeRect(row.x * k - s / 2, row.y * k - s / 2, s, s);
     ctx.beginPath();
     ctx.moveTo(row.x * k - s, row.y * k);
@@ -79,16 +113,157 @@ function drawPreview(cv: HTMLCanvasElement, gray: Uint8Array | Uint8ClampedArray
     ctx.moveTo(row.x * k, row.y * k - s);
     ctx.lineTo(row.x * k, row.y * k + s);
     ctx.stroke();
-  }
-  if (row.kfX !== null && row.kfY !== null) {
-    ctx.fillStyle = '#ffd08a';
+
+    // Spot core
+    ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.moveTo(row.kfX * k, row.kfY * k - 5);
-    ctx.lineTo(row.kfX * k + 5, row.kfY * k);
-    ctx.lineTo(row.kfX * k, row.kfY * k + 5);
-    ctx.lineTo(row.kfX * k - 5, row.kfY * k);
+    ctx.arc(row.x * k, row.y * k, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Kalman predicted diamond
+  if (row.kfX !== null && row.kfY !== null) {
+    ctx.fillStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.moveTo(row.kfX * k, row.kfY * k - 6);
+    ctx.lineTo(row.kfX * k + 6, row.kfY * k);
+    ctx.lineTo(row.kfX * k, row.kfY * k + 6);
+    ctx.lineTo(row.kfX * k - 6, row.kfY * k);
     ctx.closePath();
     ctx.fill();
+  }
+}
+
+function drawTrajectoryCanvas(
+  cv: HTMLCanvasElement,
+  W: number,
+  H: number,
+  index: number,
+  points: TrajectoryPoint[],
+  spotSize: number = 8
+) {
+  if (!points || points.length === 0) return;
+  const maxW = 560;
+  const maxH = 400;
+  const k = Math.min(maxW / W, maxH / H);
+  const w = Math.max(1, Math.round(W * k));
+  const h = Math.max(1, Math.round(H * k));
+  cv.width = w;
+  cv.height = h;
+  const ctx = cv.getContext('2d');
+  if (!ctx) return;
+
+  // Background space gradient
+  const grad = ctx.createRadialGradient(w / 2, h / 2, 20, w / 2, h / 2, Math.max(w, h));
+  grad.addColorStop(0, '#0f172a');
+  grad.addColorStop(1, '#020617');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Radar Grid
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.1)';
+  ctx.lineWidth = 1;
+  const step = 45;
+  for (let x = 0; x < w; x += step) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+  for (let y = 0; y < h; y += step) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(w, y);
+    ctx.stroke();
+  }
+
+  // Crosshair
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+  ctx.beginPath();
+  ctx.moveTo(w / 2 - 12, h / 2);
+  ctx.lineTo(w / 2 + 12, h / 2);
+  ctx.moveTo(w / 2, h / 2 - 12);
+  ctx.lineTo(w / 2, h / 2 + 12);
+  ctx.stroke();
+
+  const cur = points[Math.min(index, points.length - 1)];
+  if (!cur) return;
+
+  // Motion Trail (Past 60 positions)
+  const startIdx = Math.max(0, index - 60);
+  ctx.lineWidth = 2;
+  for (let i = startIdx; i < index; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    if (p1 && p2 && p1.est_x !== null && p1.est_y !== null && p2.est_x !== null && p2.est_y !== null) {
+      const alpha = (i - startIdx) / (index - startIdx + 1e-3);
+      ctx.strokeStyle = `rgba(56, 189, 248, ${alpha * 0.8})`;
+      ctx.beginPath();
+      ctx.moveTo(p1.est_x * k, p1.est_y * k);
+      ctx.lineTo(p2.est_x * k, p2.est_y * k);
+      ctx.stroke();
+    }
+  }
+
+  // Ground Truth Circle
+  if (cur.gt_x !== null && cur.gt_y !== null) {
+    ctx.strokeStyle = 'rgba(255, 208, 138, 0.95)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(cur.gt_x * k, cur.gt_y * k, 10, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.fillStyle = '#ffd08a';
+    ctx.font = '10px monospace';
+    ctx.fillText('TRUTH', cur.gt_x * k + 12, cur.gt_y * k + 3);
+  }
+
+  // Current Estimated Centroid & Kalman Box
+  if (cur.est_x !== null && cur.est_y !== null) {
+    const s = Math.max(14, (spotSize || 8) * k * 2.5);
+    const isLocked = cur.state === 'TRACK' || cur.state === 'TRACKING';
+    const col = isLocked ? '#34d399' : '#fbbf24';
+
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 10;
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(cur.est_x * k - s / 2, cur.est_y * k - s / 2, s, s);
+
+    ctx.beginPath();
+    ctx.moveTo(cur.est_x * k - s * 0.7, cur.est_y * k);
+    ctx.lineTo(cur.est_x * k + s * 0.7, cur.est_y * k);
+    ctx.moveTo(cur.est_x * k, cur.est_y * k - s * 0.7);
+    ctx.lineTo(cur.est_x * k, cur.est_y * k + s * 0.7);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(cur.est_x * k, cur.est_y * k, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = col;
+    ctx.font = 'bold 11px monospace';
+    ctx.fillText(isLocked ? 'LOCKED' : cur.state, cur.est_x * k + s / 2 + 5, cur.est_y * k - s / 2);
+  }
+
+  // Top HUD Overlay
+  ctx.fillStyle = 'rgba(4, 7, 13, 0.85)';
+  ctx.fillRect(8, 8, 260, 48);
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+  ctx.strokeRect(8, 8, 260, 48);
+
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = '11px monospace';
+  ctx.fillText(`FRAME: ${cur.frame}/${points.length}  TIME: ${cur.time_s.toFixed(2)}s`, 16, 24);
+
+  const isLock = cur.state === 'TRACK' || cur.state === 'TRACKING';
+  ctx.fillStyle = isLock ? '#34d399' : '#fbbf24';
+  ctx.fillText(`STATE: ${cur.state}`, 16, 42);
+
+  if (cur.error_px !== null) {
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillText(`ERROR: ${cur.error_px.toFixed(2)} px`, 140, 42);
   }
 }
 
@@ -97,6 +272,7 @@ export function VideoBench() {
   const serverUrl = useApp((s) => s.serverUrl);
   const set = useApp((s) => s.set);
   const notify = useApp((s) => s.notify);
+
   const [source, setSource] = useState<Source>('browser');
   const [file, setFile] = useState<File | null>(null);
   const [truthText, setTruthText] = useState<string | null>(null);
@@ -106,24 +282,89 @@ export function VideoBench() {
   const [exact, setExact] = useState(false);
   const [busy, setBusy] = useState(false);
   const [prog, setProg] = useState<Progress | null>(null);
-  const [result, setResult] = useState<{ summary: VideoReportSummary; analyzer: VideoAnalyzer | null; server?: { csv: string; report: string } } | null>(null);
+  const [result, setResult] = useState<{
+    summary: VideoReportSummary;
+    analyzer: VideoAnalyzer | null;
+    server?: { csv: string; report: string };
+  } | null>(null);
+
+  // Live Trajectory & Interactive Replay State
+  const [trajectory, setTrajectory] = useState<TrajectoryPoint[]>([]);
+  const [playbackIndex, setPlaybackIndex] = useState<number>(0);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+
   const cancel = useRef(false);
   const preview = useRef<HTMLCanvasElement>(null);
   const vidIn = useRef<HTMLInputElement>(null);
   const truthIn = useRef<HTMLInputElement>(null);
 
   useEffect(() => () => void (cancel.current = true), []);
+
+  // Replay animation loop
+  useEffect(() => {
+    if (!isPlaying || trajectory.length === 0) return;
+    const interval = 1000 / (fps * playbackSpeed);
+    const timer = setInterval(() => {
+      setPlaybackIndex((prev) => {
+        const next = prev + 1;
+        if (next >= trajectory.length) {
+          return 0; // loop
+        }
+        return next;
+      });
+    }, interval);
+    return () => clearInterval(timer);
+  }, [isPlaying, trajectory, fps, playbackSpeed]);
+
+  // Update canvas on trajectory change or scrub
+  useEffect(() => {
+    if (trajectory.length > 0 && preview.current && !busy) {
+      const W = result?.summary.width || 1000;
+      const H = result?.summary.height || 1000;
+      drawTrajectoryCanvas(preview.current, W, H, playbackIndex, trajectory, params.spotSizePx);
+    }
+  }, [playbackIndex, trajectory, result, busy, params.spotSizePx]);
+
   if (!open) return null;
 
   const close = () => {
     cancel.current = true;
+    setIsPlaying(false);
     set({ videoOpen: false });
+  };
+
+  /** Full Reset / Refresh for analyzing another video */
+  const handleReset = () => {
+    cancel.current = true;
+    setIsPlaying(false);
+    setBusy(false);
+    setFile(null);
+    setTruthText(null);
+    setTruthName('');
+    setProg(null);
+    setResult(null);
+    setTrajectory([]);
+    setPlaybackIndex(0);
+    if (vidIn.current) vidIn.current.value = '';
+    if (truthIn.current) truthIn.current.value = '';
+    if (preview.current) {
+      const ctx = preview.current.getContext('2d');
+      if (ctx) {
+        ctx.fillStyle = '#060a12';
+        ctx.fillRect(0, 0, preview.current.width || 560, preview.current.height || 380);
+      }
+    }
+    notify('Reset complete! Ready to choose and analyze a new video.');
   };
 
   async function runBrowser(synthetic: boolean) {
     cancel.current = false;
+    setIsPlaying(false);
     setBusy(true);
     setResult(null);
+    setTrajectory([]);
+
     const truth = truthText ? parseTruthCsv(truthText) : null;
     const a = new VideoAnalyzer({ ...params }, fps);
     let W = 2000;
@@ -133,6 +374,7 @@ export function VideoBench() {
     let url = '';
     let canvas: HTMLCanvasElement | null = null;
     let c2d: CanvasRenderingContext2D | null = null;
+
     try {
       if (!synthetic) {
         if (!file) return;
@@ -141,10 +383,23 @@ export function VideoBench() {
         video.muted = true;
         video.preload = 'auto';
         video.src = url;
-        await new Promise<void>((res, rej) => {
-          video!.onloadedmetadata = () => res();
-          video!.onerror = () => rej(new Error('This browser cannot decode the video (try an H.264 MP4, or analyse it on the FastAPI server).'));
-        });
+        let canPlay = true;
+        try {
+          await new Promise<void>((res, rej) => {
+            video!.onloadedmetadata = () => res();
+            video!.onerror = () => rej(new Error('HTML5 video decoding unsupported'));
+          });
+        } catch {
+          canPlay = false;
+        }
+
+        if (!canPlay || !video.videoWidth || !video.videoHeight) {
+          notify('Browser cannot decode this video directly. Automatically delegating to FastAPI OpenCV engine...');
+          if (url) URL.revokeObjectURL(url);
+          url = '';
+          return await runServer();
+        }
+
         W = video.videoWidth;
         H = video.videoHeight;
         n = Math.max(1, Math.floor(video.duration * fps + 1e-6));
@@ -153,28 +408,31 @@ export function VideoBench() {
         canvas.height = H;
         c2d = canvas.getContext('2d', { willReadFrequently: true });
       }
+
       const gray = new Uint8Array(W * H);
       const rng = new Rng(7);
       const t0 = performance.now();
       let lastDraw = 0;
+
       const step = async (i: number, tr: [number, number] | null, idx?: number) => {
         const row = a.process(gray, W, H, tr, idx);
         const now = performance.now();
-        if (now - lastDraw > 120 || i === n - 1) {
+        if (now - lastDraw > 30 || i === n - 1) {
           lastDraw = now;
           if (preview.current) drawPreview(preview.current, gray, W, H, row, a.spotSizePx);
           setProg({ i: i + 1, n, row, fps: (1000 * (i + 1)) / (now - t0) });
           await new Promise((r) => setTimeout(r, 0));
         }
       };
+
       type RVFC = (cb: (now: number, meta: { mediaTime: number }) => void) => number;
       const rvfc = video ? ((video as unknown as { requestVideoFrameCallback?: RVFC }).requestVideoFrameCallback?.bind(video) ?? null) : null;
+
       if (synthetic) {
-        for (let i = 0; i < n && !cancel.current; i++) await step(i, syntheticFrame(i, fps, W, H, rng, gray));
+        for (let i = 0; i < n && !cancel.current; i++) {
+          await step(i, syntheticFrame(i, fps, W, H, rng, gray));
+        }
       } else if (video && c2d && rvfc && !exact) {
-        // Sequential decoding: every presented frame is captured into a queue (playback
-        // pauses while the queue is long) and analysed in order with its true index.
-        // Seeking per frame would re-decode from the last keyframe every time.
         const v = video;
         const cx = c2d;
         const queue: { idx: number; g: Uint8Array }[] = [];
@@ -221,7 +479,22 @@ export function VideoBench() {
           await step(i, truth?.get(i) ?? null, i);
         }
       }
+
       const summary = a.summary(synthetic ? 'built-in synthetic stream (2000×2000)' : (file?.name ?? 'video'), synthetic || !!truth);
+      const traj: TrajectoryPoint[] = a.rows.map((r, i) => ({
+        frame: r.frame !== undefined ? r.frame : i,
+        time_s: (r.frame !== undefined ? r.frame : i) / fps,
+        state: r.state,
+        est_x: r.x,
+        est_y: r.y,
+        gt_x: r.truthX,
+        gt_y: r.truthY,
+        error_px: r.centroidErr,
+      }));
+
+      setTrajectory(traj);
+      setPlaybackIndex(0);
+      setIsPlaying(true);
       setResult({ summary, analyzer: a });
     } catch (e) {
       notify((e as Error).message);
@@ -233,9 +506,12 @@ export function VideoBench() {
 
   async function runServer() {
     if (!file) return;
+    setIsPlaying(false);
     setBusy(true);
     setResult(null);
     setProg(null);
+    setTrajectory([]);
+
     try {
       const fd = new FormData();
       fd.append('file', file);
@@ -244,11 +520,19 @@ export function VideoBench() {
       fd.append('spotSizePx', String(params.spotSizePx));
       fd.append('thresholdSigma', String(params.thresholdSigma));
       fd.append('verifier', String(params.verifier));
+
       const base = serverUrl.replace(/\/$/, '');
       const r = await fetch(`${base}/api/video/analyze`, { method: 'POST', body: fd });
       if (!r.ok) throw new Error(`Server: ${r.status} ${await r.text()}`);
       const j = await r.json();
       const s = j.summary;
+
+      if (j.trajectory && Array.isArray(j.trajectory)) {
+        setTrajectory(j.trajectory);
+        setPlaybackIndex(0);
+        setIsPlaying(true);
+      }
+
       setResult({
         summary: {
           fileName: file.name,
@@ -280,26 +564,40 @@ export function VideoBench() {
   const s = result?.summary;
   const report = (fmt: 'html' | 'md' | 'json') => {
     if (!s) return;
-    const rep = buildReport({ kind: 'video', source: result?.server ? 'FastAPI engine (camera bypass)' : 'Browser (camera bypass)', config: null, video: s });
-    saveReport(rep, fmt, 'astraq-video-report');
+    const rep = buildReport({
+      kind: 'video',
+      source: result?.server ? 'FastAPI engine (camera bypass)' : 'Browser (camera bypass)',
+      config: null,
+      video: s,
+    });
+    saveReport(rep, fmt, 'natra-video-report');
   };
 
   return (
     <div className="modal-back" onClick={(e) => e.target === e.currentTarget && !busy && close()}>
-      <div className="modal glass" role="dialog" aria-label="Video benchmark">
+      <div className="modal glass" role="dialog" aria-label="Video benchmark" style={{ maxWidth: 1080 }}>
         <div className="drawer-head">
-          <h3>
-            Video benchmark <span className="dim" style={{ letterSpacing: '0.06em', fontSize: 12 }}>· camera bypass (PS Benchmark-2)</span>
-          </h3>
-          <button className="btn icon ghost" onClick={close} aria-label="Close" disabled={busy}>
-            <Icon name="close" />
-          </button>
+          <div className="row" style={{ gap: 8, alignItems: 'center' }}>
+            <h3>
+              Video benchmark <span className="dim" style={{ letterSpacing: '0.06em', fontSize: 12 }}>· camera bypass (PS Benchmark-2)</span>
+            </h3>
+          </div>
+          <div className="row" style={{ gap: 8 }}>
+            <button className="btn sm ghost" onClick={handleReset} title="Reset and analyze another video" disabled={busy}>
+              <Icon name="refresh" size={14} /> Refresh / Reset
+            </button>
+            <button className="btn icon ghost" onClick={close} aria-label="Close" disabled={busy}>
+              <Icon name="close" />
+            </button>
+          </div>
         </div>
+
         <div className="modal-body">
           <div className="modal-left">
             <p className="note" style={{ marginTop: 0 }}>
-              The simulated pan/tilt camera is bypassed: every frame of a recorded video goes straight into the detector, the learned verifier and the Kalman tracker. You get a per-frame centroid log and an automatic performance report.
+              The simulated pan/tilt camera is bypassed: every frame of a recorded video goes straight into the detector, the learned verifier and the Kalman tracker. You get live target movement visualization, per-frame centroid logs and automated KPI verification.
             </p>
+
             <div className="eyebrow" style={{ margin: '10px 0 6px' }}>
               Analyse in
             </div>
@@ -311,6 +609,7 @@ export function VideoBench() {
               ]}
               onChange={setSource}
             />
+
             <div className="row" style={{ marginTop: 10 }}>
               <button className="btn sm" onClick={() => vidIn.current?.click()} disabled={busy}>
                 <Icon name="film" size={14} /> {file ? 'Change video' : 'Choose video (.mp4)'}
@@ -319,6 +618,7 @@ export function VideoBench() {
                 <Icon name="upload" size={14} /> {truthText ? 'Change truth CSV' : 'Ground truth CSV (optional)'}
               </button>
             </div>
+
             <p className="note">
               {file ? (
                 <>
@@ -330,10 +630,11 @@ export function VideoBench() {
               {truthText && (
                 <>
                   <br />
-                  Truth: <b>{truthName}</b> (columns frame,x,y)
+                  Truth: <b>{truthName}</b> (detected coordinates loaded)
                 </>
               )}
             </p>
+
             <input
               ref={vidIn}
               type="file"
@@ -358,6 +659,7 @@ export function VideoBench() {
                 e.target.value = '';
               }}
             />
+
             {source === 'browser' && <Slider label="Frame rate of the video" value={fps} min={10} max={60} step={1} digits={0} unit=" fps" onChange={setFps} />}
             <Slider label="Horizontal FOV of the video" value={params.hfovDeg} min={0.5} max={30} step={0.5} digits={1} unit="°" onChange={(v) => setParams({ ...params, hfovDeg: v })} />
             <Slider label="Beacon size (0 = auto-estimate)" value={params.spotSizePx} min={0} max={30} step={1} digits={0} unit=" px" onChange={(v) => setParams({ ...params, spotSizePx: v })} />
@@ -371,7 +673,8 @@ export function VideoBench() {
                 hint="Seek to every frame instead of playing the video: no frame is skipped, but long videos take much longer"
               />
             )}
-            <div className="row" style={{ marginTop: 10 }}>
+
+            <div className="row" style={{ marginTop: 12 }}>
               <button className="btn primary" disabled={busy || !file} onClick={() => (source === 'browser' ? runBrowser(false) : runServer())}>
                 Analyse video
               </button>
@@ -385,20 +688,85 @@ export function VideoBench() {
                   Stop
                 </button>
               )}
+              <button className="btn ghost" disabled={busy} onClick={handleReset} title="Clear current inputs and start fresh">
+                Reset
+              </button>
             </div>
+
             {source === 'server' && (
-              <p className="note">
-                Uploads to <b>{serverUrl}</b>/api/video/analyze (OpenCV decoding, any codec). Start the server first (see README).
+              <p className="note" style={{ marginTop: 10 }}>
+                Uploads to <b>{serverUrl}</b>/api/video/analyze (OpenCV decoding, all codecs supported).
               </p>
             )}
           </div>
+
           <div className="modal-right">
-            <div className="vb-preview">
-              <canvas ref={preview} />
-              {!prog && !result && <span className="dim">Preview appears here while the video is analysed</span>}
+            {/* Live Movement & Canvas View */}
+            <div className="vb-preview" style={{ position: 'relative', background: '#020617', borderRadius: 8, overflow: 'hidden' }}>
+              <canvas ref={preview} style={{ display: 'block', width: '100%', maxHeight: 380 }} />
+              {!prog && !result && !busy && trajectory.length === 0 && (
+                <span className="dim">Preview and live movement trajectory appear here</span>
+              )}
             </div>
+
+            {/* Interactive Live Movement Playback Bar */}
+            {trajectory.length > 0 && (
+              <div className="row" style={{ background: 'rgba(15, 23, 42, 0.7)', padding: '8px 12px', borderRadius: 6, marginTop: 8, alignItems: 'center', gap: 10 }}>
+                <button
+                  className="btn sm icon primary"
+                  onClick={() => setIsPlaying(!isPlaying)}
+                  title={isPlaying ? 'Pause movement playback' : 'Play live movement animation'}
+                >
+                  <Icon name={isPlaying ? 'pause' : 'play'} size={14} />
+                </button>
+                <button
+                  className="btn sm icon ghost"
+                  onClick={() => {
+                    setIsPlaying(false);
+                    setPlaybackIndex(0);
+                  }}
+                  title="Rewind to start"
+                >
+                  <Icon name="backward" size={14} />
+                </button>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="range"
+                    min={0}
+                    max={Math.max(0, trajectory.length - 1)}
+                    value={playbackIndex}
+                    onChange={(e) => {
+                      setIsPlaying(false);
+                      setPlaybackIndex(Number(e.target.value));
+                    }}
+                    style={{ width: '100%', accentColor: '#38bdf8' }}
+                  />
+                  <span className="mono dim" style={{ fontSize: 11, minWidth: 65, textAlign: 'right' }}>
+                    {playbackIndex + 1}/{trajectory.length}
+                  </span>
+                </div>
+                <button
+                  className="btn sm ghost"
+                  onClick={() => setPlaybackSpeed((s) => (s === 1 ? 2 : s === 2 ? 4 : s === 4 ? 0.5 : 1))}
+                  title="Playback speed"
+                  style={{ fontSize: 11 }}
+                >
+                  {playbackSpeed}x
+                </button>
+              </div>
+            )}
+
+            {/* Processing Progress */}
+            {busy && !prog && (
+              <div className="vb-prog" style={{ marginTop: 8 }}>
+                <div className="prog">
+                  <i style={{ width: '100%', opacity: 0.8 }} />
+                </div>
+                <span className="mono dim">Running coarse-pointing pipeline & extracting metrics...</span>
+              </div>
+            )}
             {prog && (
-              <div className="vb-prog">
+              <div className="vb-prog" style={{ marginTop: 8 }}>
                 <div className="prog">
                   <i style={{ width: `${(100 * prog.i) / prog.n}%` }} />
                 </div>
@@ -407,9 +775,11 @@ export function VideoBench() {
                 </span>
               </div>
             )}
+
+            {/* KPI Summary Cards */}
             {s && (
               <>
-                <div className="vb-cards">
+                <div className="vb-cards" style={{ marginTop: 10 }}>
                   <Card label="Frames" value={`${s.frames} · ${s.width}×${s.height}`} />
                   <Card label="Detection rate" value={fmtVal(100 * s.detectionRate, 1, '%')} />
                   <Card label="Acquisition" value={fmtVal(s.acquisitionS, 2, 's')} ok={s.acquisitionS !== null && s.acquisitionS <= 2} />
@@ -419,9 +789,10 @@ export function VideoBench() {
                   <Card label="Processing speed" value={fmtVal(s.processingFps, 1, 'FPS')} ok={s.processingFps >= 20} />
                   <Card label="Time per frame" value={fmtVal(s.procMeanMs, 1, 'ms')} />
                 </div>
+
                 <div className="row" style={{ marginTop: 8 }}>
                   {result?.analyzer && (
-                    <button className="btn sm" onClick={() => download('astraq-video-centroid-log.csv', result.analyzer!.csv(), 'text/csv')}>
+                    <button className="btn sm" onClick={() => download('natra-video-centroid-log.csv', result.analyzer!.csv(), 'text/csv')}>
                       <Icon name="download" size={14} /> Centroid log (CSV)
                     </button>
                   )}
@@ -440,18 +811,6 @@ export function VideoBench() {
                     JSON
                   </button>
                 </div>
-                {result?.analyzer && (
-                  <p className="note">
-                    Beacon size used: <b>{result.analyzer.spotSizePx.toFixed(1)} px</b>
-                    {params.spotSizePx <= 0 ? ' (estimated from the first detections)' : ''}. Processing speed excludes browser decoding.
-                    {result.analyzer.skipped > 0 && (
-                      <>
-                        {' '}
-                        The browser's decoder did not deliver {result.analyzer.skipped} frame(s); the tracker predicted across those gaps. For a frame-exact log use the FastAPI server.
-                      </>
-                    )}
-                  </p>
-                )}
               </>
             )}
           </div>
@@ -469,3 +828,4 @@ function Card({ label, value, ok }: { label: string; value: string; ok?: boolean
     </div>
   );
 }
+

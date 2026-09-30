@@ -7,7 +7,7 @@ import '@fontsource/ibm-plex-sans/700.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 import '@fontsource/ibm-plex-mono/600.css';
-import './styles/astraq.css';
+import './styles/natra.css';
 import App from './app/App';
 
 function webglAvailable(): boolean {
@@ -23,7 +23,7 @@ const root = createRoot(document.getElementById('root')!);
 if (!webglAvailable()) {
   root.render(
     <div style={{ padding: 40, fontFamily: '"IBM Plex Sans", sans-serif', color: '#e8f0f7', maxWidth: 640 }}>
-      <h2 style={{ letterSpacing: '0.3em' }}>ASTRAQ</h2>
+      <h2 style={{ letterSpacing: '0.3em' }}>NATRA</h2>
       <p>WebGL is not available in this browser, so the 3D view cannot start.</p>
       <p>Enable hardware acceleration (Chrome: Settings ▸ System ▸ "Use graphics acceleration when available"), update your graphics driver, or try another browser. See README → Troubleshooting.</p>
     </div>,

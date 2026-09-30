@@ -61,7 +61,7 @@ export interface ReportRow {
 }
 
 export interface PerformanceReport {
-  format: 'astraq-performance-report';
+  format: 'natra-performance-report';
   version: 1;
   kind: ReportKind;
   title: string;
@@ -184,10 +184,10 @@ export function buildReport(inp: ReportInput): PerformanceReport {
     .filter((r) => r.limit)
     .map((r) => ({ label: r.label, limit: r.limit as string, value: fmtVal(r.value, r.digits, r.unit), pass: r.pass ?? null }));
   return {
-    format: 'astraq-performance-report',
+    format: 'natra-performance-report',
     version: 1,
     kind: inp.kind,
-    title: inp.title ?? `ASTRAQ performance report — ${kindTitle}`,
+    title: inp.title ?? `NATRA performance report — ${kindTitle}`,
     generatedAt,
     source: inp.source,
     scenario: inp.config?.scenarioId ?? null,
@@ -290,6 +290,6 @@ td.v{font-variant-numeric:tabular-nums;white-space:nowrap}tr.ps td:first-child{f
 <div class="cards">${cards}</div>
 <h2>Performance summary</h2><table><thead><tr><th>Metric</th><th>Value</th><th>PS169 limit</th><th>Result</th></tr></thead><tbody>${psRows}</tbody></table>
 ${batch}${cfg}${ev}
-<footer>Bold rows are the quantities the SIH26169 problem statement asks the performance report to contain. Tracking error = angle between the optical axis and the true beacon direction, expressed in pixels, over TRACKING/LOCKED frames after the first lock. Re-acquisition = LOST → TRACKING, with the clock starting when the beacon is visible again. Generated automatically by ASTRAQ.</footer>
+<footer>Bold rows are the quantities the SIH26169 problem statement asks the performance report to contain. Tracking error = angle between the optical axis and the true beacon direction, expressed in pixels, over TRACKING/LOCKED frames after the first lock. Re-acquisition = LOST → TRACKING, with the clock starting when the beacon is visible again. Generated automatically by NATRA.</footer>
 </main></body></html>`;
 }

@@ -53,6 +53,50 @@ def _find_web_dist_dir() -> Optional[Path]:
     return None
 
 
+def _launch_app_window(url: str, title: str = "ISRO FSOC 3D Workstation") -> bool:
+    """Launch clean dedicated application window via native browser app mode."""
+    import subprocess
+    import shutil
+    import webbrowser
+
+    edge_candidates = [
+        Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
+        Path(r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
+        Path(r"C:\Users") / Path.home().name / r"AppData\Local\Microsoft\Edge\Application\msedge.exe",
+    ]
+    which_edge = shutil.which("msedge")
+    if which_edge:
+        edge_candidates.insert(0, Path(which_edge))
+
+    for p in edge_candidates:
+        if p.exists():
+            try:
+                subprocess.Popen(
+                    [str(p), f"--app={url}", "--window-size=1400,860", "--start-maximized"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                return True
+            except Exception:
+                pass
+
+    chrome_which = shutil.which("chrome")
+    if chrome_which:
+        try:
+            subprocess.Popen(
+                [chrome_which, f"--app={url}", "--window-size=1400,860"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            return True
+        except Exception:
+            pass
+
+    # Fallback to system default browser
+    webbrowser.open(url)
+    return True
+
+
 def launch_3d_desktop(title: str = "ISRO / SAC PS 26169 — FSOC 3D Virtual Camera Tracking Workstation") -> None:
     """
     Launch the native 3D desktop application window.
@@ -72,22 +116,32 @@ def launch_3d_desktop(title: str = "ISRO / SAC PS 26169 — FSOC 3D Virtual Came
 
     url = f"http://127.0.0.1:{port}/"
 
+    # 1. Try PyWebView if environment supports it without pythonnet crash
+    webview_success = False
     if HAS_WEBVIEW:
-        # Native Desktop Application Window
-        window = webview.create_window(
-            title=title,
-            url=url,
-            width=1400,
-            height=860,
-            min_size=(1050, 700),
-            background_color="#0a0f16",
-        )
         try:
-            webview.start()
-        finally:
+            window = webview.create_window(
+                title=title,
+                url=url,
+                width=1400,
+                height=860,
+                min_size=(1050, 700),
+                background_color="#0a0f16",
+            )
+            webview.start(gui="edgechromium")
+            webview_success = True
+        except Exception as e:
+            # Python.Runtime / CLR error on other laptops -> fallback seamlessly
+            webview_success = False
+
+    # 2. Seamless Standalone Native Window Mode (Works on 100% Windows PCs)
+    if not webview_success:
+        _launch_app_window(url, title)
+        # Keep server alive in main thread
+        try:
+            import time
+            while True:
+                time.sleep(1.0)
+        except (KeyboardInterrupt, SystemExit):
             httpd.shutdown()
-    else:
-        # Fallback to local desktop viewer if pywebview is missing
-        import webbrowser
-        print(f"[INFO] Opening 3D Workstation at {url}")
-        webbrowser.open(url)
+

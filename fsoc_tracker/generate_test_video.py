@@ -143,7 +143,8 @@ def generate_video():
         if is_visible and (0 <= eff_x < width) and (0 <= eff_y < height):
             ksize = int(math.ceil(beacon_sigma * 6)) // 2 * 2 + 1
             k = cv2.getGaussianKernel(ksize, beacon_sigma)
-            kernel = (np.outer(k, k) * intensity).astype(np.float32)
+            k_norm = k / np.max(k)
+            kernel = (np.outer(k_norm, k_norm) * intensity).astype(np.float32)
 
             x0 = int(round(eff_x)) - ksize // 2
             y0 = int(round(eff_y)) - ksize // 2
@@ -174,9 +175,13 @@ def generate_video():
         f_csv.write("\n".join(truth_rows))
 
     # Also copy to public folder for convenience
-    import shutil
-    shutil.copy(video_path, public_dir / "fsoc_test_video_30s_60fps.mp4")
-    shutil.copy(csv_path, public_dir / "fsoc_test_video_30s_60fps_truth.csv")
+    try:
+        import shutil
+        shutil.copyfile(str(video_path), str(public_dir / "fsoc_test_video_30s_60fps.mp4"))
+        with open(public_dir / "fsoc_test_video_30s_60fps_truth.csv", "w", encoding="utf-8") as f_pub:
+            f_pub.write("\n".join(truth_rows))
+    except Exception as e:
+        print(f"Note copying to public: {e}")
 
     print(f"SUCCESS: Video created at {video_path}")
     print(f"SUCCESS: Truth CSV created at {csv_path}")

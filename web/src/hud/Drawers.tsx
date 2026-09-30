@@ -706,7 +706,7 @@ function BatchPanel() {
     const blob = new Blob([[head, ...rows].join('\n')], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `astraq-batch-${cfg.scenarioId}.csv`;
+    a.download = `natra-batch-${cfg.scenarioId}.csv`;
     a.click();
   };
   return (
@@ -723,7 +723,7 @@ function BatchPanel() {
         <button
           className="btn sm"
           disabled={!results.length || busy}
-          onClick={() => saveReport(buildReport({ kind: 'batch', source: 'Browser engine (batch worker)', config: cfg, batch: results }), 'html', `astraq-batch-report-${cfg.scenarioId}`)}
+          onClick={() => saveReport(buildReport({ kind: 'batch', source: 'Browser engine (batch worker)', config: cfg, batch: results }), 'html', `natra-batch-report-${cfg.scenarioId}`)}
         >
           <Icon name="report" size={14} /> Report
         </button>
@@ -793,7 +793,7 @@ function ReportPanel() {
         on={autoReport}
         onChange={(v) => {
           try {
-            localStorage.setItem('astraq.autoReport', v ? '1' : '0');
+            localStorage.setItem('natra.autoReport', v ? '1' : '0');
           } catch {
             /* storage unavailable */
           }
@@ -887,7 +887,7 @@ function ExperimentDrawer() {
               if (!f) return;
               try {
                 const data = JSON.parse(await f.text());
-                if (!isRecording(data)) throw new Error('Not an ASTRAQ recording');
+                if (!isRecording(data)) throw new Error('Not an NATRA recording');
                 connect('replay', { recording: data });
               } catch (x) {
                 notify(`Could not load recording: ${(x as Error).message}`);
@@ -939,7 +939,7 @@ function ViewDrawer() {
           ]}
           onChange={setQuality}
         />
-        <p className="note">Low: no post-processing, no clouds, 2k land mask. Medium: bloom, clouds. High: SMAA anti-aliasing, shadows, up to 2× pixel ratio (capped to what the screen size allows), 30 Hz sensor feed. If a graphics card cannot draw a level, ASTRAQ drops one level automatically and tells you.</p>
+        <p className="note">Low: no post-processing, no clouds, 2k land mask. Medium: bloom, clouds. High: SMAA anti-aliasing, shadows, up to 2× pixel ratio (capped to what the screen size allows), 30 Hz sensor feed. If a graphics card cannot draw a level, NATRA drops one level automatically and tells you.</p>
       </Section>
       <Section title="Tactical 3D Visual Aids">
         <Toggle label="Labels" on={overlays.labels} onChange={() => toggleOverlay('labels')} />

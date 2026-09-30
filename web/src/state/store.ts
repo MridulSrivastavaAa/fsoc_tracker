@@ -263,12 +263,12 @@ export const useApp = create<AppState>((set, get) => {
     view: 'overview',
     viewNonce: 0,
     followKey: 'sat3',
-    quality: (localStorageGet('astraq.quality') as Quality) ?? 'medium',
+    quality: (localStorageGet('natra.quality') as Quality) ?? 'medium',
     theme: initialTheme(),
     themeOpen: false,
     videoOpen: false,
     sensorTab: 'camera',
-    autoReport: localStorageGet('astraq.autoReport') !== '0',
+    autoReport: localStorageGet('natra.autoReport') !== '0',
     overlays: { labels: true, fov: true, trails: true, grid: false, truth: false, calibration: false, roi: true, space: true },
     sensorExpanded: false,
     analysisOpen: false,
@@ -335,12 +335,12 @@ export const useApp = create<AppState>((set, get) => {
     setView: (v) => set({ view: v, viewNonce: get().viewNonce + 1 }),
     flyTo: (k) => set({ view: 'follow', followKey: k, viewNonce: get().viewNonce + 1, overlays: { ...get().overlays, space: true } }),
     setQuality: (q) => {
-      localStorageSet('astraq.quality', q);
+      localStorageSet('natra.quality', q);
       set({ quality: q });
       provider?.send({ type: 'imageRate', hz: q === 'low' ? 8 : q === 'medium' ? 15 : 30 });
     },
     setTheme: (t) => {
-      localStorageSet('astraq.theme', t);
+      localStorageSet('natra.theme', t);
       applyTheme(t);
       set({ theme: t });
     },
@@ -366,22 +366,22 @@ export const useApp = create<AppState>((set, get) => {
         const last = recorder.frames[recorder.frames.length - 1];
         if (!last) return get().notify('Nothing recorded yet — press Record first');
         const rep = buildReport({ kind: 'recording', source: kindLabel, config: get().config, metrics: last.metrics, events: recorder.events });
-        saveReport(rep, fmt, `astraq-report-${stamp()}`);
+        saveReport(rep, fmt, `natra-report-${stamp()}`);
       } else {
         const snap = live.snap;
         if (!snap) return get().notify('No telemetry yet');
         const rep = buildReport({ kind: 'live', source: kindLabel, config: get().config, metrics: snap.metrics, events: get().events });
-        saveReport(rep, fmt, `astraq-report-${stamp()}`);
+        saveReport(rep, fmt, `natra-report-${stamp()}`);
       }
     },
     exportCsv() {
       if (!recorder.frames.length) return get().notify('Nothing recorded yet — press Record first');
-      download(`astraq-run-${stamp()}.csv`, recorder.toCsv(), 'text/csv');
+      download(`natra-run-${stamp()}.csv`, recorder.toCsv(), 'text/csv');
     },
     exportJson() {
       if (!recorder.frames.length) return get().notify('Nothing recorded yet — press Record first');
-      const rec = recorder.toRecording(`ASTRAQ run ${stamp()}`, get().config, get().providerKind);
-      download(`astraq-run-${stamp()}.json`, JSON.stringify(rec), 'application/json');
+      const rec = recorder.toRecording(`NATRA run ${stamp()}`, get().config, get().providerKind);
+      download(`natra-run-${stamp()}.json`, JSON.stringify(rec), 'application/json');
     },
     seekReplay(i) {
       if (provider instanceof ReplayProvider) {
@@ -430,7 +430,7 @@ export const STATE_HEX: Record<TrackState, string> = {
 };
 
 function initialTheme(): ThemeId {
-  const t = localStorageGet('astraq.theme') as ThemeId | null;
+  const t = localStorageGet('natra.theme') as ThemeId | null;
   const ok = THEMES.some((x) => x.id === t) ? (t as ThemeId) : 'deep-space';
   applyTheme(ok);
   return ok;

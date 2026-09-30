@@ -5,7 +5,7 @@
  *   frame → grey → CentroidDetector (+ learned verifier) → pixel-space Kalman
  *         → track state → per-frame centroid log + summary + performance report
  *
- * Mirror of server/astraq_engine/video.py. Works on any frame size (e.g. a full
+ * Mirror of server/natra_engine/video.py. Works on any frame size (e.g. a full
  * 2000×2000 "screen" video). If the spot size is not given (0), it is estimated from
  * the first confident detections.
  */
@@ -348,22 +348,35 @@ export class VideoAnalyzer {
   }
 }
 
-/** Ground truth CSV: header with frame,x,y (extra columns ignored). */
+/** Ground truth CSV: flexible header matching for frame, truth_x/x, truth_y/y. */
 export function parseTruthCsv(text: string): Map<number, [number, number]> {
   const out = new Map<number, [number, number]>();
-  const lines = text.trim().split(/\r?\n/);
+  const lines = text.trim().split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (!lines.length) return out;
-  const head = lines[0].split(',').map((s) => s.trim().toLowerCase());
-  const fi = head.indexOf('frame');
-  const xi = head.indexOf('x');
-  const yi = head.indexOf('y');
-  if (fi < 0 || xi < 0 || yi < 0) return out;
+
+  const header = lines[0].split(',').map((s) => s.trim().toLowerCase());
+  
+  // Find frame index column
+  let fi = header.findIndex((h) => ['frame', 'frame_index', 'frame_idx', 'f_idx', 'f', 'index'].includes(h));
+  if (fi < 0) fi = 0; // default to first column
+
+  // Find X coordinate column
+  let xi = header.findIndex((h) => ['truth_x', 'gt_x', 'truthx', 'x', 'target_x', 'pos_x', 'est_x'].includes(h));
+  if (xi < 0) xi = header.length >= 3 ? (header[1].includes('time') ? 2 : 1) : 1;
+
+  // Find Y coordinate column
+  let yi = header.findIndex((h) => ['truth_y', 'gt_y', 'truthy', 'y', 'target_y', 'pos_y', 'est_y'].includes(h));
+  if (yi < 0) yi = xi + 1;
+
   for (const l of lines.slice(1)) {
-    const p = l.split(',');
+    const p = l.split(',').map((s) => s.trim());
+    if (p.length <= Math.max(fi, xi, yi)) continue;
     const fr = Number(p[fi]);
     const x = Number(p[xi]);
     const y = Number(p[yi]);
-    if (Number.isFinite(fr) && Number.isFinite(x) && Number.isFinite(y)) out.set(fr, [x, y]);
+    if (Number.isFinite(fr) && Number.isFinite(x) && Number.isFinite(y)) {
+      out.set(Math.round(fr), [x, y]);
+    }
   }
   return out;
 }

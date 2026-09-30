@@ -102,7 +102,7 @@ export function makeMaterials() {
     }
     x.fillStyle = '#2a3036';
     x.font = '600 58px "IBM Plex Sans", Arial Narrow, sans-serif';
-    x.fillText('ASTRAQ · FSOC-T1', s * 0.06, s * 0.46);
+    x.fillText('NATRA · FSOC-T1', s * 0.06, s * 0.46);
     x.font = '500 30px "IBM Plex Sans", Arial Narrow, sans-serif';
     x.fillText('MOBILE OPTICAL GROUND TERMINAL', s * 0.06, s * 0.52);
   });
@@ -184,7 +184,7 @@ export function makeMaterials() {
     x.fillRect(0, s * 0.835, s, s * 0.012);
     x.fillStyle = '#26303b';
     x.font = '700 64px "IBM Plex Sans", Arial Narrow, sans-serif';
-    x.fillText('ASTRAQ  ·  FSOC-T1', s * 0.06, s * 0.3);
+    x.fillText('NATRA  ·  FSOC-T1', s * 0.06, s * 0.3);
     x.font = '500 30px "IBM Plex Sans", Arial Narrow, sans-serif';
     x.fillText('TRANSPORTABLE OPTICAL GROUND TERMINAL', s * 0.06, s * 0.36);
     x.fillStyle = 'rgba(30,36,44,0.8)';

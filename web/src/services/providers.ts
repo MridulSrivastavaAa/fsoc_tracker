@@ -192,4 +192,4 @@ export class ReplayProvider implements TelemetryProvider {
 }
 
 export const DEFAULT_SERVER_URL: string =
-  (import.meta.env.VITE_ASTRAQ_SERVER as string | undefined) ?? 'http://localhost:8000';
+  (import.meta.env.VITE_NATRA_SERVER as string | undefined) ?? 'http://localhost:8000';
