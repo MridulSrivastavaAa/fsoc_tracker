@@ -13,10 +13,16 @@ import argparse
 import sys
 from pathlib import Path
 
-from ..core.config import load_config, default_config
-from ..core.engine import ClosedLoopEngine
-from ..benchmarks.runner import BenchmarkRunner
-from ..benchmarks.metrics import ScenarioKPIs
+try:
+    from ..core.config import load_config, default_config
+    from ..core.engine import ClosedLoopEngine
+    from ..benchmarks.runner import BenchmarkRunner
+    from ..benchmarks.metrics import ScenarioKPIs
+except (ImportError, ValueError):
+    from fsoc.core.config import load_config, default_config
+    from fsoc.core.engine import ClosedLoopEngine
+    from fsoc.benchmarks.runner import BenchmarkRunner
+    from fsoc.benchmarks.metrics import ScenarioKPIs
 
 
 def print_kpi_table(kpis: list[ScenarioKPIs]) -> None:
@@ -135,7 +141,9 @@ def main(argv: list[str] | None = None) -> int:
             launch_gui(cfg)
         return 0
     else:
-        parser.print_help()
+        # Default behavior for standalone .exe: launch full 3D Desktop GUI Workstation
+        from ..gui.app_3d import launch_3d_desktop
+        launch_3d_desktop()
         return 0
 
 

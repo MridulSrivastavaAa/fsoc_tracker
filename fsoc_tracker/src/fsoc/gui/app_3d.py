@@ -30,6 +30,14 @@ class QuietHTTPHandler(http.server.SimpleHTTPRequestHandler):
 
 def _find_web_dist_dir() -> Optional[Path]:
     """Find the compiled 3D web distribution assets."""
+    # 1. PyInstaller bundled location
+    if hasattr(sys, "_MEIPASS"):
+        meipass = Path(sys._MEIPASS)
+        for sub in [meipass / "web_dist", meipass / "web" / "dist", meipass]:
+            if sub.exists() and (sub / "index.html").exists():
+                return sub
+
+    # 2. Development candidates
     candidates = [
         Path(__file__).resolve().parents[3] / "web_dist",
         Path(__file__).resolve().parents[3] / "web" / "dist",
@@ -37,6 +45,7 @@ def _find_web_dist_dir() -> Optional[Path]:
         Path(__file__).resolve().parents[4] / "web" / "dist",
         Path.cwd() / "web_dist",
         Path.cwd() / "web" / "dist",
+        Path.cwd() / "dist" / "FSOCTracker" / "_internal" / "web_dist",
     ]
     for p in candidates:
         if p.exists() and (p / "index.html").exists():

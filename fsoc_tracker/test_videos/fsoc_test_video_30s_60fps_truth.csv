@@ -1,0 +1,1801 @@
+frame,time_s,truth_x,truth_y,visible,phase
+0,0.0000,477.96,297.53,1,Nominal Orbit
+1,0.0167,477.36,298.26,1,Nominal Orbit
+2,0.0333,476.74,299.00,1,Nominal Orbit
+3,0.0500,476.12,299.72,1,Nominal Orbit
+4,0.0667,475.49,300.45,1,Nominal Orbit
+5,0.0833,474.86,301.17,1,Nominal Orbit
+6,0.1000,474.21,301.89,1,Nominal Orbit
+7,0.1167,473.56,302.61,1,Nominal Orbit
+8,0.1333,472.90,303.32,1,Nominal Orbit
+9,0.1500,472.23,304.03,1,Nominal Orbit
+10,0.1667,471.56,304.74,1,Nominal Orbit
+11,0.1833,470.88,305.44,1,Nominal Orbit
+12,0.2000,470.19,306.14,1,Nominal Orbit
+13,0.2167,469.49,306.84,1,Nominal Orbit
+14,0.2333,468.79,307.53,1,Nominal Orbit
+15,0.2500,468.08,308.22,1,Nominal Orbit
+16,0.2667,467.36,308.91,1,Nominal Orbit
+17,0.2833,466.64,309.60,1,Nominal Orbit
+18,0.3000,465.90,310.28,1,Nominal Orbit
+19,0.3167,465.16,310.95,1,Nominal Orbit
+20,0.3333,464.42,311.63,1,Nominal Orbit
+21,0.3500,463.66,312.30,1,Nominal Orbit
+22,0.3667,462.90,312.96,1,Nominal Orbit
+23,0.3833,462.14,313.63,1,Nominal Orbit
+24,0.4000,461.36,314.29,1,Nominal Orbit
+25,0.4167,460.58,314.94,1,Nominal Orbit
+26,0.4333,459.79,315.60,1,Nominal Orbit
+27,0.4500,459.00,316.25,1,Nominal Orbit
+28,0.4667,458.19,316.89,1,Nominal Orbit
+29,0.4833,457.39,317.53,1,Nominal Orbit
+30,0.5000,456.57,318.17,1,Nominal Orbit
+31,0.5167,455.75,318.80,1,Nominal Orbit
+32,0.5333,454.92,319.43,1,Nominal Orbit
+33,0.5500,454.09,320.06,1,Nominal Orbit
+34,0.5667,453.24,320.68,1,Nominal Orbit
+35,0.5833,452.40,321.30,1,Nominal Orbit
+36,0.6000,451.54,321.91,1,Nominal Orbit
+37,0.6167,450.68,322.52,1,Nominal Orbit
+38,0.6333,449.81,323.13,1,Nominal Orbit
+39,0.6500,448.94,323.73,1,Nominal Orbit
+40,0.6667,448.06,324.33,1,Nominal Orbit
+41,0.6833,447.17,324.92,1,Nominal Orbit
+42,0.7000,446.28,325.51,1,Nominal Orbit
+43,0.7167,445.38,326.10,1,Nominal Orbit
+44,0.7333,444.48,326.68,1,Nominal Orbit
+45,0.7500,443.57,327.26,1,Nominal Orbit
+46,0.7667,442.65,327.83,1,Nominal Orbit
+47,0.7833,441.73,328.40,1,Nominal Orbit
+48,0.8000,440.80,328.96,1,Nominal Orbit
+49,0.8167,439.86,329.52,1,Nominal Orbit
+50,0.8333,438.92,330.08,1,Nominal Orbit
+51,0.8500,437.98,330.63,1,Nominal Orbit
+52,0.8667,437.03,331.18,1,Nominal Orbit
+53,0.8833,436.07,331.72,1,Nominal Orbit
+54,0.9000,435.10,332.26,1,Nominal Orbit
+55,0.9167,434.14,332.79,1,Nominal Orbit
+56,0.9333,433.16,333.32,1,Nominal Orbit
+57,0.9500,432.18,333.84,1,Nominal Orbit
+58,0.9667,431.20,334.36,1,Nominal Orbit
+59,0.9833,430.20,334.88,1,Nominal Orbit
+60,1.0000,429.21,335.39,1,Nominal Orbit
+61,1.0167,428.21,335.90,1,Nominal Orbit
+62,1.0333,427.20,336.40,1,Nominal Orbit
+63,1.0500,426.19,336.89,1,Nominal Orbit
+64,1.0667,425.17,337.39,1,Nominal Orbit
+65,1.0833,424.15,337.87,1,Nominal Orbit
+66,1.1000,423.12,338.36,1,Nominal Orbit
+67,1.1167,422.09,338.83,1,Nominal Orbit
+68,1.1333,421.05,339.31,1,Nominal Orbit
+69,1.1500,420.01,339.77,1,Nominal Orbit
+70,1.1667,418.96,340.24,1,Nominal Orbit
+71,1.1833,417.91,340.70,1,Nominal Orbit
+72,1.2000,416.85,341.15,1,Nominal Orbit
+73,1.2167,415.79,341.60,1,Nominal Orbit
+74,1.2333,414.72,342.04,1,Nominal Orbit
+75,1.2500,413.65,342.48,1,Nominal Orbit
+76,1.2667,412.58,342.91,1,Nominal Orbit
+77,1.2833,411.50,343.34,1,Nominal Orbit
+78,1.3000,410.41,343.76,1,Nominal Orbit
+79,1.3167,409.32,344.18,1,Nominal Orbit
+80,1.3333,408.23,344.59,1,Nominal Orbit
+81,1.3500,407.13,345.00,1,Nominal Orbit
+82,1.3667,406.03,345.41,1,Nominal Orbit
+83,1.3833,404.93,345.80,1,Nominal Orbit
+84,1.4000,403.82,346.20,1,Nominal Orbit
+85,1.4167,402.70,346.58,1,Nominal Orbit
+86,1.4333,401.58,346.97,1,Nominal Orbit
+87,1.4500,400.46,347.34,1,Nominal Orbit
+88,1.4667,399.34,347.72,1,Nominal Orbit
+89,1.4833,398.21,348.08,1,Nominal Orbit
+90,1.5000,397.07,348.44,1,Nominal Orbit
+91,1.5167,395.93,348.80,1,Nominal Orbit
+92,1.5333,394.79,349.15,1,Nominal Orbit
+93,1.5500,393.65,349.50,1,Nominal Orbit
+94,1.5667,392.50,349.84,1,Nominal Orbit
+95,1.5833,391.35,350.17,1,Nominal Orbit
+96,1.6000,390.19,350.50,1,Nominal Orbit
+97,1.6167,389.03,350.82,1,Nominal Orbit
+98,1.6333,387.87,351.14,1,Nominal Orbit
+99,1.6500,386.71,351.46,1,Nominal Orbit
+100,1.6667,385.54,351.76,1,Nominal Orbit
+101,1.6833,384.37,352.07,1,Nominal Orbit
+102,1.7000,383.19,352.36,1,Nominal Orbit
+103,1.7167,382.01,352.65,1,Nominal Orbit
+104,1.7333,380.83,352.94,1,Nominal Orbit
+105,1.7500,379.65,353.22,1,Nominal Orbit
+106,1.7667,378.46,353.49,1,Nominal Orbit
+107,1.7833,377.27,353.76,1,Nominal Orbit
+108,1.8000,376.08,354.03,1,Nominal Orbit
+109,1.8167,374.88,354.29,1,Nominal Orbit
+110,1.8333,373.68,354.54,1,Nominal Orbit
+111,1.8500,372.48,354.79,1,Nominal Orbit
+112,1.8667,371.28,355.03,1,Nominal Orbit
+113,1.8833,370.07,355.26,1,Nominal Orbit
+114,1.9000,368.87,355.49,1,Nominal Orbit
+115,1.9167,367.66,355.72,1,Nominal Orbit
+116,1.9333,366.44,355.94,1,Nominal Orbit
+117,1.9500,365.23,356.15,1,Nominal Orbit
+118,1.9667,364.01,356.36,1,Nominal Orbit
+119,1.9833,362.79,356.56,1,Nominal Orbit
+120,2.0000,361.57,356.76,1,Nominal Orbit
+121,2.0167,360.34,356.95,1,Nominal Orbit
+122,2.0333,359.12,357.13,1,Nominal Orbit
+123,2.0500,357.89,357.31,1,Nominal Orbit
+124,2.0667,356.66,357.48,1,Nominal Orbit
+125,2.0833,355.43,357.65,1,Nominal Orbit
+126,2.1000,354.20,357.81,1,Nominal Orbit
+127,2.1167,352.96,357.97,1,Nominal Orbit
+128,2.1333,351.73,358.12,1,Nominal Orbit
+129,2.1500,350.49,358.27,1,Nominal Orbit
+130,2.1667,349.25,358.40,1,Nominal Orbit
+131,2.1833,348.01,358.54,1,Nominal Orbit
+132,2.2000,346.77,358.67,1,Nominal Orbit
+133,2.2167,345.52,358.79,1,Nominal Orbit
+134,2.2333,344.28,358.90,1,Nominal Orbit
+135,2.2500,343.03,359.01,1,Nominal Orbit
+136,2.2667,341.79,359.12,1,Nominal Orbit
+137,2.2833,340.54,359.22,1,Nominal Orbit
+138,2.3000,339.29,359.31,1,Nominal Orbit
+139,2.3167,338.04,359.40,1,Nominal Orbit
+140,2.3333,336.79,359.48,1,Nominal Orbit
+141,2.3500,335.54,359.55,1,Nominal Orbit
+142,2.3667,334.29,359.62,1,Nominal Orbit
+143,2.3833,333.03,359.69,1,Nominal Orbit
+144,2.4000,331.78,359.74,1,Nominal Orbit
+145,2.4167,330.52,359.79,1,Nominal Orbit
+146,2.4333,329.27,359.84,1,Nominal Orbit
+147,2.4500,328.02,359.88,1,Nominal Orbit
+148,2.4667,326.76,359.92,1,Nominal Orbit
+149,2.4833,325.50,359.94,1,Nominal Orbit
+150,2.5000,324.25,359.97,1,Nominal Orbit
+151,2.5167,322.99,359.98,1,Nominal Orbit
+152,2.5333,321.73,359.99,1,Nominal Orbit
+153,2.5500,320.48,360.00,1,Nominal Orbit
+154,2.5667,319.22,360.00,1,Nominal Orbit
+155,2.5833,317.96,359.99,1,Nominal Orbit
+156,2.6000,316.71,359.98,1,Nominal Orbit
+157,2.6167,315.45,359.96,1,Nominal Orbit
+158,2.6333,314.20,359.94,1,Nominal Orbit
+159,2.6500,312.94,359.91,1,Nominal Orbit
+160,2.6667,311.68,359.87,1,Nominal Orbit
+161,2.6833,310.43,359.83,1,Nominal Orbit
+162,2.7000,309.17,359.78,1,Nominal Orbit
+163,2.7167,307.92,359.73,1,Nominal Orbit
+164,2.7333,306.67,359.67,1,Nominal Orbit
+165,2.7500,305.41,359.61,1,Nominal Orbit
+166,2.7667,304.16,359.53,1,Nominal Orbit
+167,2.7833,302.91,359.46,1,Nominal Orbit
+168,2.8000,301.66,359.38,1,Nominal Orbit
+169,2.8167,300.41,359.29,1,Nominal Orbit
+170,2.8333,299.16,359.19,1,Nominal Orbit
+171,2.8500,297.91,359.09,1,Nominal Orbit
+172,2.8667,296.67,358.99,1,Nominal Orbit
+173,2.8833,295.42,358.88,1,Nominal Orbit
+174,2.9000,294.18,358.76,1,Nominal Orbit
+175,2.9167,292.93,358.64,1,Nominal Orbit
+176,2.9333,291.69,358.51,1,Nominal Orbit
+177,2.9500,290.45,358.37,1,Nominal Orbit
+178,2.9667,289.21,358.23,1,Nominal Orbit
+179,2.9833,287.98,358.09,1,Nominal Orbit
+180,3.0000,286.74,357.93,1,Nominal Orbit
+181,3.0167,285.51,357.78,1,Nominal Orbit
+182,3.0333,284.27,357.61,1,Nominal Orbit
+183,3.0500,283.04,357.44,1,Nominal Orbit
+184,3.0667,281.81,357.27,1,Nominal Orbit
+185,3.0833,280.59,357.09,1,Nominal Orbit
+186,3.1000,279.36,356.90,1,Nominal Orbit
+187,3.1167,278.14,356.71,1,Nominal Orbit
+188,3.1333,276.92,356.51,1,Nominal Orbit
+189,3.1500,275.70,356.31,1,Nominal Orbit
+190,3.1667,274.48,356.10,1,Nominal Orbit
+191,3.1833,273.27,355.89,1,Nominal Orbit
+192,3.2000,272.05,355.66,1,Nominal Orbit
+193,3.2167,270.84,355.44,1,Nominal Orbit
+194,3.2333,269.64,355.21,1,Nominal Orbit
+195,3.2500,268.43,354.97,1,Nominal Orbit
+196,3.2667,267.23,354.73,1,Nominal Orbit
+197,3.2833,266.03,354.48,1,Nominal Orbit
+198,3.3000,264.83,354.22,1,Nominal Orbit
+199,3.3167,263.64,353.97,1,Nominal Orbit
+200,3.3333,262.44,353.70,1,Nominal Orbit
+201,3.3500,261.26,353.43,1,Nominal Orbit
+202,3.3667,260.07,353.15,1,Nominal Orbit
+203,3.3833,258.89,352.87,1,Nominal Orbit
+204,3.4000,257.71,352.58,1,Nominal Orbit
+205,3.4167,256.53,352.29,1,Nominal Orbit
+206,3.4333,255.35,351.99,1,Nominal Orbit
+207,3.4500,254.18,351.69,1,Nominal Orbit
+208,3.4667,253.01,351.38,1,Nominal Orbit
+209,3.4833,251.85,351.07,1,Nominal Orbit
+210,3.5000,250.69,350.75,1,Nominal Orbit
+211,3.5167,249.53,350.42,1,Nominal Orbit
+212,3.5333,248.38,350.09,1,Nominal Orbit
+213,3.5500,247.22,349.75,1,Nominal Orbit
+214,3.5667,246.08,349.41,1,Nominal Orbit
+215,3.5833,244.93,349.07,1,Nominal Orbit
+216,3.6000,243.79,348.71,1,Nominal Orbit
+217,3.6167,242.66,348.36,1,Nominal Orbit
+218,3.6333,241.52,347.99,1,Nominal Orbit
+219,3.6500,240.39,347.63,1,Nominal Orbit
+220,3.6667,239.27,347.25,1,Nominal Orbit
+221,3.6833,238.15,346.88,1,Nominal Orbit
+222,3.7000,237.03,346.49,1,Nominal Orbit
+223,3.7167,235.92,346.10,1,Nominal Orbit
+224,3.7333,234.81,345.71,1,Nominal Orbit
+225,3.7500,233.70,345.31,1,Nominal Orbit
+226,3.7667,232.60,344.91,1,Nominal Orbit
+227,3.7833,231.51,344.50,1,Nominal Orbit
+228,3.8000,230.41,344.08,1,Nominal Orbit
+229,3.8167,229.33,343.66,1,Nominal Orbit
+230,3.8333,228.24,343.24,1,Nominal Orbit
+231,3.8500,227.16,342.81,1,Nominal Orbit
+232,3.8667,226.09,342.37,1,Nominal Orbit
+233,3.8833,225.02,341.93,1,Nominal Orbit
+234,3.9000,223.95,341.49,1,Nominal Orbit
+235,3.9167,222.89,341.04,1,Nominal Orbit
+236,3.9333,221.84,340.59,1,Nominal Orbit
+237,3.9500,220.79,340.13,1,Nominal Orbit
+238,3.9667,219.74,339.66,1,Nominal Orbit
+239,3.9833,218.70,339.19,1,Nominal Orbit
+240,4.0000,217.66,338.72,1,Nominal Orbit
+241,4.0167,216.63,338.24,1,Nominal Orbit
+242,4.0333,215.61,337.76,1,Nominal Orbit
+243,4.0500,214.59,337.27,1,Nominal Orbit
+244,4.0667,213.57,336.78,1,Nominal Orbit
+245,4.0833,212.56,336.28,1,Nominal Orbit
+246,4.1000,211.55,335.78,1,Nominal Orbit
+247,4.1167,210.55,335.27,1,Nominal Orbit
+248,4.1333,209.56,334.76,1,Nominal Orbit
+249,4.1500,208.57,334.24,1,Nominal Orbit
+250,4.1667,207.58,333.72,1,Nominal Orbit
+251,4.1833,206.61,333.19,1,Nominal Orbit
+252,4.2000,205.63,332.66,1,Nominal Orbit
+253,4.2167,204.66,332.13,1,Nominal Orbit
+254,4.2333,203.70,331.59,1,Nominal Orbit
+255,4.2500,202.75,331.05,1,Nominal Orbit
+256,4.2667,201.80,330.50,1,Nominal Orbit
+257,4.2833,200.85,329.95,1,Nominal Orbit
+258,4.3000,199.91,329.39,1,Nominal Orbit
+259,4.3167,198.98,328.83,1,Nominal Orbit
+260,4.3333,198.05,328.26,1,Nominal Orbit
+261,4.3500,197.13,327.69,1,Nominal Orbit
+262,4.3667,196.21,327.12,1,Nominal Orbit
+263,4.3833,195.31,326.54,1,Nominal Orbit
+264,4.4000,194.40,325.96,1,Nominal Orbit
+265,4.4167,193.51,325.37,1,Nominal Orbit
+266,4.4333,192.61,324.78,1,Nominal Orbit
+267,4.4500,191.73,324.19,1,Nominal Orbit
+268,4.4667,190.85,323.59,1,Nominal Orbit
+269,4.4833,189.98,322.98,1,Nominal Orbit
+270,4.5000,189.11,322.38,1,Nominal Orbit
+271,4.5167,188.25,321.77,1,Nominal Orbit
+272,4.5333,187.40,321.15,1,Nominal Orbit
+273,4.5500,186.55,320.53,1,Nominal Orbit
+274,4.5667,185.71,319.91,1,Nominal Orbit
+275,4.5833,184.88,319.28,1,Nominal Orbit
+276,4.6000,184.05,318.65,1,Nominal Orbit
+277,4.6167,183.23,318.02,1,Nominal Orbit
+278,4.6333,182.42,317.38,1,Nominal Orbit
+279,4.6500,181.61,316.74,1,Nominal Orbit
+280,4.6667,180.81,316.09,1,Nominal Orbit
+281,4.6833,180.02,315.44,1,Nominal Orbit
+282,4.7000,179.23,314.79,1,Nominal Orbit
+283,4.7167,178.45,314.13,1,Nominal Orbit
+284,4.7333,177.68,313.47,1,Nominal Orbit
+285,4.7500,176.91,312.81,1,Nominal Orbit
+286,4.7667,176.16,312.14,1,Nominal Orbit
+287,4.7833,175.40,311.47,1,Nominal Orbit
+288,4.8000,174.66,310.79,1,Nominal Orbit
+289,4.8167,173.92,310.11,1,Nominal Orbit
+290,4.8333,173.19,309.43,1,Nominal Orbit
+291,4.8500,172.47,308.75,1,Nominal Orbit
+292,4.8667,171.75,308.06,1,Nominal Orbit
+293,4.8833,171.04,307.37,1,Nominal Orbit
+294,4.9000,170.34,306.67,1,Nominal Orbit
+295,4.9167,169.64,305.97,1,Nominal Orbit
+296,4.9333,168.96,305.27,1,Nominal Orbit
+297,4.9500,168.28,304.57,1,Nominal Orbit
+298,4.9667,167.61,303.86,1,Nominal Orbit
+299,4.9833,166.94,303.15,1,Nominal Orbit
+300,5.0000,166.28,302.44,1,Nominal Orbit
+301,5.0167,165.63,301.72,1,Nominal Orbit
+302,5.0333,164.99,301.00,1,Nominal Orbit
+303,5.0500,164.35,300.28,1,Nominal Orbit
+304,5.0667,163.73,299.55,1,Nominal Orbit
+305,5.0833,163.11,298.82,1,Nominal Orbit
+306,5.1000,162.50,298.09,1,Nominal Orbit
+307,5.1167,161.89,297.35,1,Nominal Orbit
+308,5.1333,161.29,296.62,1,Nominal Orbit
+309,5.1500,160.71,295.88,1,Nominal Orbit
+310,5.1667,160.12,295.13,1,Nominal Orbit
+311,5.1833,159.55,294.39,1,Nominal Orbit
+312,5.2000,158.98,293.64,1,Nominal Orbit
+313,5.2167,158.43,292.89,1,Nominal Orbit
+314,5.2333,157.88,292.14,1,Nominal Orbit
+315,5.2500,157.34,291.38,1,Nominal Orbit
+316,5.2667,156.80,290.62,1,Nominal Orbit
+317,5.2833,156.27,289.86,1,Nominal Orbit
+318,5.3000,155.76,289.10,1,Nominal Orbit
+319,5.3167,155.25,288.33,1,Nominal Orbit
+320,5.3333,154.74,287.57,1,Nominal Orbit
+321,5.3500,154.25,286.80,1,Nominal Orbit
+322,5.3667,153.76,286.02,1,Nominal Orbit
+323,5.3833,153.29,285.25,1,Nominal Orbit
+324,5.4000,152.82,284.47,1,Nominal Orbit
+325,5.4167,152.36,283.69,1,Nominal Orbit
+326,5.4333,151.90,282.91,1,Nominal Orbit
+327,5.4500,151.46,282.13,1,Nominal Orbit
+328,5.4667,151.02,281.34,1,Nominal Orbit
+329,5.4833,150.59,280.55,1,Nominal Orbit
+330,5.5000,150.17,279.76,1,Nominal Orbit
+331,5.5167,149.76,278.97,1,Nominal Orbit
+332,5.5333,149.35,278.18,1,Nominal Orbit
+333,5.5500,148.96,277.38,1,Nominal Orbit
+334,5.5667,148.57,276.59,1,Nominal Orbit
+335,5.5833,148.19,275.79,1,Nominal Orbit
+336,5.6000,147.82,274.99,1,Nominal Orbit
+337,5.6167,147.46,274.19,1,Nominal Orbit
+338,5.6333,147.11,273.38,1,Nominal Orbit
+339,5.6500,146.76,272.58,1,Nominal Orbit
+340,5.6667,146.42,271.77,1,Nominal Orbit
+341,5.6833,146.09,270.96,1,Nominal Orbit
+342,5.7000,145.77,270.15,1,Nominal Orbit
+343,5.7167,145.46,269.34,1,Nominal Orbit
+344,5.7333,145.16,268.53,1,Nominal Orbit
+345,5.7500,144.87,267.71,1,Nominal Orbit
+346,5.7667,144.58,266.90,1,Nominal Orbit
+347,5.7833,144.30,266.08,1,Nominal Orbit
+348,5.8000,144.03,265.26,1,Nominal Orbit
+349,5.8167,143.77,264.44,1,Nominal Orbit
+350,5.8333,143.52,263.62,1,Nominal Orbit
+351,5.8500,143.28,262.80,1,Nominal Orbit
+352,5.8667,143.04,261.98,1,Nominal Orbit
+353,5.8833,142.82,261.15,1,Nominal Orbit
+354,5.9000,142.60,260.33,1,Nominal Orbit
+355,5.9167,142.39,259.50,1,Nominal Orbit
+356,5.9333,142.19,258.67,1,Nominal Orbit
+357,5.9500,142.00,257.85,1,Nominal Orbit
+358,5.9667,141.82,257.02,1,Nominal Orbit
+359,5.9833,141.65,256.19,1,Nominal Orbit
+360,6.0000,459.74,236.75,1,Turbulence & Jitter
+361,6.0167,451.39,243.27,1,Turbulence & Jitter
+362,6.0333,459.47,245.69,1,Turbulence & Jitter
+363,6.0500,452.38,248.83,1,Turbulence & Jitter
+364,6.0667,459.98,254.50,1,Turbulence & Jitter
+365,6.0833,459.04,254.63,1,Turbulence & Jitter
+366,6.1000,450.41,261.07,1,Turbulence & Jitter
+367,6.1167,458.21,263.37,1,Turbulence & Jitter
+368,6.1333,450.84,266.36,1,Turbulence & Jitter
+369,6.1500,458.17,271.87,1,Turbulence & Jitter
+370,6.1667,456.95,271.80,1,Turbulence & Jitter
+371,6.1833,448.04,278.01,1,Turbulence & Jitter
+372,6.2000,455.57,280.06,1,Turbulence & Jitter
+373,6.2167,447.92,282.77,1,Turbulence & Jitter
+374,6.2333,454.98,287.97,1,Turbulence & Jitter
+375,6.2500,453.49,287.57,1,Turbulence & Jitter
+376,6.2667,444.31,293.42,1,Turbulence & Jitter
+377,6.2833,451.57,295.09,1,Turbulence & Jitter
+378,6.3000,443.66,297.40,1,Turbulence & Jitter
+379,6.3167,450.44,302.17,1,Turbulence & Jitter
+380,6.3333,448.69,301.31,1,Turbulence & Jitter
+381,6.3500,439.25,306.69,1,Turbulence & Jitter
+382,6.3667,446.25,307.86,1,Turbulence & Jitter
+383,6.3833,438.08,309.66,1,Turbulence & Jitter
+384,6.4000,444.61,313.89,1,Turbulence & Jitter
+385,6.4167,442.60,312.48,1,Turbulence & Jitter
+386,6.4333,432.91,317.29,1,Turbulence & Jitter
+387,6.4500,439.66,317.87,1,Turbulence & Jitter
+388,6.4667,431.25,319.06,1,Turbulence & Jitter
+389,6.4833,437.53,322.68,1,Turbulence & Jitter
+390,6.5000,435.29,320.63,1,Turbulence & Jitter
+391,6.5167,425.36,324.79,1,Turbulence & Jitter
+392,6.5333,431.87,324.72,1,Turbulence & Jitter
+393,6.5500,423.23,325.24,1,Turbulence & Jitter
+394,6.5667,429.29,328.17,1,Turbulence & Jitter
+395,6.5833,426.82,325.44,1,Turbulence & Jitter
+396,6.6000,416.67,328.91,1,Turbulence & Jitter
+397,6.6167,422.97,328.13,1,Turbulence & Jitter
+398,6.6333,414.11,327.94,1,Turbulence & Jitter
+399,6.6500,419.96,330.16,1,Turbulence & Jitter
+400,6.6667,417.28,326.71,1,Turbulence & Jitter
+401,6.6833,406.93,329.46,1,Turbulence & Jitter
+402,6.7000,413.03,327.96,1,Turbulence & Jitter
+403,6.7167,403.97,327.05,1,Turbulence & Jitter
+404,6.7333,409.63,328.56,1,Turbulence & Jitter
+405,6.7500,406.77,324.40,1,Turbulence & Jitter
+406,6.7667,396.23,326.43,1,Turbulence & Jitter
+407,6.7833,402.15,324.23,1,Turbulence & Jitter
+408,6.8000,392.92,322.62,1,Turbulence & Jitter
+409,6.8167,398.41,323.44,1,Turbulence & Jitter
+410,6.8333,395.38,318.59,1,Turbulence & Jitter
+411,6.8500,384.69,319.95,1,Turbulence & Jitter
+412,6.8667,390.45,317.08,1,Turbulence & Jitter
+413,6.8833,381.07,314.82,1,Turbulence & Jitter
+414,6.9000,386.42,314.99,1,Turbulence & Jitter
+415,6.9167,383.24,309.51,1,Turbulence & Jitter
+416,6.9333,372.41,310.26,1,Turbulence & Jitter
+417,6.9500,378.04,306.80,1,Turbulence & Jitter
+418,6.9667,368.54,303.95,1,Turbulence & Jitter
+419,6.9833,373.76,303.56,1,Turbulence & Jitter
+420,7.0000,370.47,297.54,1,Turbulence & Jitter
+421,7.0167,359.53,297.76,1,Turbulence & Jitter
+422,7.0333,365.05,293.79,1,Turbulence & Jitter
+423,7.0500,355.44,290.46,1,Turbulence & Jitter
+424,7.0667,360.57,289.61,1,Turbulence & Jitter
+425,7.0833,357.19,283.14,1,Turbulence & Jitter
+426,7.1000,346.16,282.95,1,Turbulence & Jitter
+427,7.1167,351.61,278.58,1,Turbulence & Jitter
+428,7.1333,341.92,274.88,1,Turbulence & Jitter
+429,7.1500,346.98,273.68,1,Turbulence & Jitter
+430,7.1667,343.54,266.90,1,Turbulence & Jitter
+431,7.1833,332.45,266.41,1,Turbulence & Jitter
+432,7.2000,337.84,261.77,1,Turbulence & Jitter
+433,7.2167,328.11,257.83,1,Turbulence & Jitter
+434,7.2333,333.12,256.42,1,Turbulence & Jitter
+435,7.2500,329.64,249.45,1,Turbulence & Jitter
+436,7.2667,318.53,248.80,1,Turbulence & Jitter
+437,7.2833,323.89,244.04,1,Turbulence & Jitter
+438,7.3000,314.14,240.00,1,Turbulence & Jitter
+439,7.3167,319.14,238.51,1,Turbulence & Jitter
+440,7.3333,315.65,231.50,1,Turbulence & Jitter
+441,7.3500,304.53,230.83,1,Turbulence & Jitter
+442,7.3667,309.90,226.08,1,Turbulence & Jitter
+443,7.3833,300.16,222.08,1,Turbulence & Jitter
+444,7.4000,305.17,220.67,1,Turbulence & Jitter
+445,7.4167,301.70,213.75,1,Turbulence & Jitter
+446,7.4333,290.61,213.21,1,Turbulence & Jitter
+447,7.4500,296.01,208.62,1,Turbulence & Jitter
+448,7.4667,286.30,204.80,1,Turbulence & Jitter
+449,7.4833,291.35,203.60,1,Turbulence & Jitter
+450,7.5000,287.93,196.92,1,Turbulence & Jitter
+451,7.5167,276.89,196.65,1,Turbulence & Jitter
+452,7.5333,282.35,192.35,1,Turbulence & Jitter
+453,7.5500,272.70,188.85,1,Turbulence & Jitter
+454,7.5667,277.83,187.99,1,Turbulence & Jitter
+455,7.5833,274.48,181.68,1,Turbulence & Jitter
+456,7.6000,263.52,181.80,1,Turbulence & Jitter
+457,7.6167,269.06,177.92,1,Turbulence & Jitter
+458,7.6333,259.51,174.86,1,Turbulence & Jitter
+459,7.6500,264.73,174.46,1,Turbulence & Jitter
+460,7.6667,261.48,168.64,1,Turbulence & Jitter
+461,7.6833,250.62,169.26,1,Turbulence & Jitter
+462,7.7000,256.28,165.90,1,Turbulence & Jitter
+463,7.7167,246.84,163.39,1,Turbulence & Jitter
+464,7.7333,252.18,163.55,1,Turbulence & Jitter
+465,7.7500,249.06,158.31,1,Turbulence & Jitter
+466,7.7667,238.34,159.53,1,Turbulence & Jitter
+467,7.7833,244.13,156.78,1,Turbulence & Jitter
+468,7.8000,234.83,154.89,1,Turbulence & Jitter
+469,7.8167,240.32,155.70,1,Turbulence & Jitter
+470,7.8333,237.35,151.10,1,Turbulence & Jitter
+471,7.8500,226.78,152.99,1,Turbulence & Jitter
+472,7.8667,232.73,150.92,1,Turbulence & Jitter
+473,7.8833,223.60,149.71,1,Turbulence & Jitter
+474,7.9000,229.26,151.21,1,Turbulence & Jitter
+475,7.9167,226.46,147.32,1,Turbulence & Jitter
+476,7.9333,216.07,149.91,1,Turbulence & Jitter
+477,7.9500,222.20,148.55,1,Turbulence & Jitter
+478,7.9667,213.26,148.06,1,Turbulence & Jitter
+479,7.9833,219.11,150.27,1,Turbulence & Jitter
+480,8.0000,216.51,147.09,1,Turbulence & Jitter
+481,8.0167,206.31,150.41,1,Turbulence & Jitter
+482,8.0333,212.65,149.76,1,Turbulence & Jitter
+483,8.0500,203.91,149.99,1,Turbulence & Jitter
+484,8.0667,209.97,152.91,1,Turbulence & Jitter
+485,8.0833,207.58,150.45,1,Turbulence & Jitter
+486,8.1000,197.60,154.46,1,Turbulence & Jitter
+487,8.1167,204.16,154.51,1,Turbulence & Jitter
+488,8.1333,195.65,155.43,1,Turbulence & Jitter
+489,8.1500,201.93,159.03,1,Turbulence & Jitter
+490,8.1667,199.78,157.24,1,Turbulence & Jitter
+491,8.1833,190.03,161.91,1,Turbulence & Jitter
+492,8.2000,196.83,162.61,1,Turbulence & Jitter
+493,8.2167,188.55,164.16,1,Turbulence & Jitter
+494,8.2333,195.08,168.39,1,Turbulence & Jitter
+495,8.2500,193.17,167.20,1,Turbulence & Jitter
+496,8.2667,183.68,172.47,1,Turbulence & Jitter
+497,8.2833,190.72,173.74,1,Turbulence & Jitter
+498,8.3000,182.70,175.84,1,Turbulence & Jitter
+499,8.3167,189.48,180.61,1,Turbulence & Jitter
+500,8.3333,187.83,179.93,1,Turbulence & Jitter
+501,8.3500,178.59,185.70,1,Turbulence & Jitter
+502,8.3667,185.90,187.44,1,Turbulence & Jitter
+503,8.3833,178.14,190.00,1,Turbulence & Jitter
+504,8.4000,185.19,195.20,1,Turbulence & Jitter
+505,8.4167,183.81,194.93,1,Turbulence & Jitter
+506,8.4333,174.84,201.08,1,Turbulence & Jitter
+507,8.4500,182.42,203.19,1,Turbulence & Jitter
+508,8.4667,174.93,206.08,1,Turbulence & Jitter
+509,8.4833,182.25,211.58,1,Turbulence & Jitter
+510,8.5000,181.14,211.60,1,Turbulence & Jitter
+511,8.5167,172.45,218.00,1,Turbulence & Jitter
+512,8.5333,180.30,220.34,1,Turbulence & Jitter
+513,8.5500,173.10,223.43,1,Turbulence & Jitter
+514,8.5667,180.69,229.11,1,Turbulence & Jitter
+515,8.5833,179.86,229.27,1,Turbulence & Jitter
+516,8.6000,171.45,235.79,1,Turbulence & Jitter
+517,8.6167,179.58,238.21,1,Turbulence & Jitter
+518,8.6333,172.65,241.37,1,Turbulence & Jitter
+519,8.6500,180.53,247.07,1,Turbulence & Jitter
+520,8.6667,179.98,247.24,1,Turbulence & Jitter
+521,8.6833,171.85,253.73,1,Turbulence & Jitter
+522,8.7000,180.26,256.10,1,Turbulence & Jitter
+523,8.7167,173.61,259.17,1,Turbulence & Jitter
+524,8.7333,181.77,264.76,1,Turbulence & Jitter
+525,8.7500,181.49,264.79,1,Turbulence & Jitter
+526,8.7667,173.64,271.11,1,Turbulence & Jitter
+527,8.7833,182.33,273.28,1,Turbulence & Jitter
+528,8.8000,175.96,276.13,1,Turbulence & Jitter
+529,8.8167,184.39,281.47,1,Turbulence & Jitter
+530,8.8333,184.39,281.22,1,Turbulence & Jitter
+531,8.8500,176.81,287.24,1,Turbulence & Jitter
+532,8.8667,185.77,289.08,1,Turbulence & Jitter
+533,8.8833,179.67,291.57,1,Turbulence & Jitter
+534,8.9000,188.37,296.53,1,Turbulence & Jitter
+535,8.9167,188.64,295.88,1,Turbulence & Jitter
+536,8.9333,181.32,301.47,1,Turbulence & Jitter
+537,8.9500,190.55,302.86,1,Turbulence & Jitter
+538,8.9667,184.71,304.88,1,Turbulence & Jitter
+539,8.9833,193.67,309.35,1,Turbulence & Jitter
+540,9.0000,194.19,308.18,1,Turbulence & Jitter
+541,9.0167,187.13,313.24,1,Turbulence & Jitter
+542,9.0333,196.61,314.08,1,Turbulence & Jitter
+543,9.0500,191.02,315.52,1,Turbulence & Jitter
+544,9.0667,200.24,319.41,1,Turbulence & Jitter
+545,9.0833,201.01,317.63,1,Turbulence & Jitter
+546,9.1000,194.19,322.07,1,Turbulence & Jitter
+547,9.1167,203.91,322.28,1,Turbulence & Jitter
+548,9.1333,198.56,323.08,1,Turbulence & Jitter
+549,9.1500,208.00,326.30,1,Turbulence & Jitter
+550,9.1667,209.01,323.86,1,Turbulence & Jitter
+551,9.1833,202.42,327.62,1,Turbulence & Jitter
+552,9.2000,212.36,327.14,1,Turbulence & Jitter
+553,9.2167,207.23,327.25,1,Turbulence & Jitter
+554,9.2333,216.89,329.77,1,Turbulence & Jitter
+555,9.2500,218.11,326.62,1,Turbulence & Jitter
+556,9.2667,211.73,329.67,1,Turbulence & Jitter
+557,9.2833,221.88,328.47,1,Turbulence & Jitter
+558,9.3000,216.96,327.86,1,Turbulence & Jitter
+559,9.3167,226.82,329.66,1,Turbulence & Jitter
+560,9.3333,228.23,325.79,1,Turbulence & Jitter
+561,9.3500,222.04,328.12,1,Turbulence & Jitter
+562,9.3667,232.38,326.21,1,Turbulence & Jitter
+563,9.3833,227.64,324.89,1,Turbulence & Jitter
+564,9.4000,237.68,325.98,1,Turbulence & Jitter
+565,9.4167,239.27,321.41,1,Turbulence & Jitter
+566,9.4333,233.25,323.05,1,Turbulence & Jitter
+567,9.4500,243.75,320.45,1,Turbulence & Jitter
+568,9.4667,239.17,318.46,1,Turbulence & Jitter
+569,9.4833,249.37,318.89,1,Turbulence & Jitter
+570,9.5000,251.10,313.66,1,Turbulence & Jitter
+571,9.5167,245.23,314.66,1,Turbulence & Jitter
+572,9.5333,255.88,311.43,1,Turbulence & Jitter
+573,9.5500,251.43,308.82,1,Turbulence & Jitter
+574,9.5667,261.76,308.65,1,Turbulence & Jitter
+575,9.5833,263.63,302.84,1,Turbulence & Jitter
+576,9.6000,257.88,303.27,1,Turbulence & Jitter
+577,9.6167,268.64,299.50,1,Turbulence & Jitter
+578,9.6333,264.31,296.36,1,Turbulence & Jitter
+579,9.6500,274.75,295.69,1,Turbulence & Jitter
+580,9.6667,276.71,289.39,1,Turbulence & Jitter
+581,9.6833,271.06,289.36,1,Turbulence & Jitter
+582,9.7000,281.92,285.14,1,Turbulence & Jitter
+583,9.7167,277.67,281.58,1,Turbulence & Jitter
+584,9.7333,288.19,280.51,1,Turbulence & Jitter
+585,9.7500,290.23,273.84,1,Turbulence & Jitter
+586,9.7667,284.65,273.46,1,Turbulence & Jitter
+587,9.7833,295.57,268.92,1,Turbulence & Jitter
+588,9.8000,291.38,265.06,1,Turbulence & Jitter
+589,9.8167,301.95,263.72,1,Turbulence & Jitter
+590,9.8333,304.04,256.81,1,Turbulence & Jitter
+591,9.8500,298.50,256.21,1,Turbulence & Jitter
+592,9.8667,309.46,251.48,1,Turbulence & Jitter
+593,9.8833,305.30,247.47,1,Turbulence & Jitter
+594,9.9000,315.90,245.99,1,Turbulence & Jitter
+595,9.9167,318.01,238.98,1,Turbulence & Jitter
+596,9.9333,312.48,238.30,1,Turbulence & Jitter
+597,9.9500,323.45,233.53,1,Turbulence & Jitter
+598,9.9667,319.29,229.50,1,Turbulence & Jitter
+599,9.9833,329.89,228.03,1,Turbulence & Jitter
+600,10.0000,331.99,221.06,1,Turbulence & Jitter
+601,10.0167,326.45,220.45,1,Turbulence & Jitter
+602,10.0333,337.40,215.78,1,Turbulence & Jitter
+603,10.0500,333.22,211.87,1,Turbulence & Jitter
+604,10.0667,343.79,210.56,1,Turbulence & Jitter
+605,10.0833,345.85,203.77,1,Turbulence & Jitter
+606,10.1000,340.27,203.37,1,Turbulence & Jitter
+607,10.1167,351.17,198.93,1,Turbulence & Jitter
+608,10.1333,346.94,195.28,1,Turbulence & Jitter
+609,10.1500,357.45,194.26,1,Turbulence & Jitter
+610,10.1667,359.45,187.79,1,Turbulence & Jitter
+611,10.1833,353.81,187.73,1,Turbulence & Jitter
+612,10.2000,364.63,183.66,1,Turbulence & Jitter
+613,10.2167,360.32,180.40,1,Turbulence & Jitter
+614,10.2333,370.74,179.80,1,Turbulence & Jitter
+615,10.2500,372.66,173.76,1,Turbulence & Jitter
+616,10.2667,366.92,174.17,1,Turbulence & Jitter
+617,10.2833,377.64,170.57,1,Turbulence & Jitter
+618,10.3000,373.22,167.82,1,Turbulence & Jitter
+619,10.3167,383.53,167.74,1,Turbulence & Jitter
+620,10.3333,385.33,162.24,1,Turbulence & Jitter
+621,10.3500,379.47,163.21,1,Turbulence & Jitter
+622,10.3667,390.07,160.20,1,Turbulence & Jitter
+623,10.3833,385.52,158.04,1,Turbulence & Jitter
+624,10.4000,395.70,158.57,1,Turbulence & Jitter
+625,10.4167,397.35,153.70,1,Turbulence & Jitter
+626,10.4333,391.34,155.30,1,Turbulence & Jitter
+627,10.4500,401.79,152.94,1,Turbulence & Jitter
+628,10.4667,397.09,151.45,1,Turbulence & Jitter
+629,10.4833,407.10,152.65,1,Turbulence & Jitter
+630,10.5000,408.60,148.46,1,Turbulence & Jitter
+631,10.5167,402.42,150.76,1,Turbulence & Jitter
+632,10.5333,412.69,149.10,1,Turbulence & Jitter
+633,10.5500,407.81,148.31,1,Turbulence & Jitter
+634,10.5667,417.65,150.22,1,Turbulence & Jitter
+635,10.5833,418.95,146.75,1,Turbulence & Jitter
+636,10.6000,412.59,149.76,1,Turbulence & Jitter
+637,10.6167,422.67,148.82,1,Turbulence & Jitter
+638,10.6333,417.59,148.75,1,Turbulence & Jitter
+639,10.6500,427.22,151.38,1,Turbulence & Jitter
+640,10.6667,428.32,148.62,1,Turbulence & Jitter
+641,10.6833,421.74,152.35,1,Turbulence & Jitter
+642,10.7000,431.61,152.11,1,Turbulence & Jitter
+643,10.7167,426.31,152.75,1,Turbulence & Jitter
+644,10.7333,435.72,156.08,1,Turbulence & Jitter
+645,10.7500,436.60,154.01,1,Turbulence & Jitter
+646,10.7667,429.79,158.42,1,Turbulence & Jitter
+647,10.7833,439.43,158.85,1,Turbulence & Jitter
+648,10.8000,433.90,160.15,1,Turbulence & Jitter
+649,10.8167,443.08,164.13,1,Turbulence & Jitter
+650,10.8333,443.71,162.69,1,Turbulence & Jitter
+651,10.8500,436.67,167.72,1,Turbulence & Jitter
+652,10.8667,446.06,168.77,1,Turbulence & Jitter
+653,10.8833,440.28,170.65,1,Turbulence & Jitter
+654,10.9000,449.20,175.21,1,Turbulence & Jitter
+655,10.9167,449.59,174.33,1,Turbulence & Jitter
+656,10.9333,442.28,179.90,1,Turbulence & Jitter
+657,10.9500,451.42,181.46,1,Turbulence & Jitter
+658,10.9667,445.38,183.85,1,Turbulence & Jitter
+659,10.9833,454.04,188.88,1,Turbulence & Jitter
+660,11.0000,454.16,188.46,1,Turbulence & Jitter
+661,11.0167,446.60,194.46,1,Turbulence & Jitter
+662,11.0333,455.46,196.43,1,Turbulence & Jitter
+663,11.0500,449.16,199.20,1,Turbulence & Jitter
+664,11.0667,457.55,204.59,1,Turbulence & Jitter
+665,11.0833,457.40,204.51,1,Turbulence & Jitter
+666,11.1000,449.56,210.82,1,Turbulence & Jitter
+667,11.1167,458.15,213.08,1,Turbulence & Jitter
+668,11.1333,451.57,216.10,1,Turbulence & Jitter
+669,11.1500,459.68,221.72,1,Turbulence & Jitter
+670,11.1667,459.26,221.84,1,Turbulence & Jitter
+671,11.1833,451.14,228.33,1,Turbulence & Jitter
+672,11.2000,459.45,230.73,1,Turbulence & Jitter
+673,11.2167,452.59,233.88,1,Turbulence & Jitter
+674,11.2333,460.43,239.59,1,Turbulence & Jitter
+675,11.2500,459.72,239.77,1,Turbulence & Jitter
+676,11.2667,451.32,246.30,1,Turbulence & Jitter
+677,11.2833,459.35,248.70,1,Turbulence & Jitter
+678,11.3000,452.22,251.83,1,Turbulence & Jitter
+679,11.3167,459.77,257.48,1,Turbulence & Jitter
+680,11.3333,458.79,257.58,1,Turbulence & Jitter
+681,11.3500,450.11,263.99,1,Turbulence & Jitter
+682,11.3667,457.86,266.26,1,Turbulence & Jitter
+683,11.3833,450.45,269.22,1,Turbulence & Jitter
+684,11.4000,457.73,274.68,1,Turbulence & Jitter
+685,11.4167,456.46,274.56,1,Turbulence & Jitter
+686,11.4333,447.51,280.73,1,Turbulence & Jitter
+687,11.4500,454.99,282.72,1,Turbulence & Jitter
+688,11.4667,447.30,285.37,1,Turbulence & Jitter
+689,11.4833,454.31,290.51,1,Turbulence & Jitter
+690,11.5000,452.77,290.04,1,Turbulence & Jitter
+691,11.5167,443.55,295.82,1,Turbulence & Jitter
+692,11.5333,450.76,297.41,1,Turbulence & Jitter
+693,11.5500,442.81,299.64,1,Turbulence & Jitter
+694,11.5667,449.55,304.33,1,Turbulence & Jitter
+695,11.5833,447.75,303.38,1,Turbulence & Jitter
+696,11.6000,438.27,308.67,1,Turbulence & Jitter
+697,11.6167,445.23,309.75,1,Turbulence & Jitter
+698,11.6333,437.01,311.45,1,Turbulence & Jitter
+699,11.6500,443.50,315.59,1,Turbulence & Jitter
+700,11.6667,441.46,314.07,1,Turbulence & Jitter
+701,11.6833,431.72,318.78,1,Turbulence & Jitter
+702,11.7000,438.43,319.26,1,Turbulence & Jitter
+703,11.7167,429.98,320.34,1,Turbulence & Jitter
+704,11.7333,436.23,323.84,1,Turbulence & Jitter
+705,11.7500,433.94,321.68,1,Turbulence & Jitter
+706,11.7667,423.98,325.73,1,Turbulence & Jitter
+707,11.7833,430.45,325.54,1,Turbulence & Jitter
+708,11.8000,421.77,325.94,1,Turbulence & Jitter
+709,11.8167,427.79,328.76,1,Turbulence & Jitter
+710,11.8333,425.29,325.90,1,Turbulence & Jitter
+711,11.8500,415.10,329.25,1,Turbulence & Jitter
+712,11.8667,421.36,328.35,1,Turbulence & Jitter
+713,11.8833,412.47,328.04,1,Turbulence & Jitter
+714,11.9000,418.29,330.14,1,Turbulence & Jitter
+715,11.9167,415.58,326.57,1,Turbulence & Jitter
+716,11.9333,405.19,329.20,1,Turbulence & Jitter
+717,11.9500,411.26,327.58,1,Turbulence & Jitter
+718,11.9667,402.17,326.55,1,Turbulence & Jitter
+719,11.9833,407.80,327.94,1,Turbulence & Jitter
+720,12.0000,430.00,240.00,1,Cloud Occlusion
+721,12.0167,429.97,242.00,1,Cloud Occlusion
+722,12.0333,429.86,244.00,1,Cloud Occlusion
+723,12.0500,429.69,245.99,1,Cloud Occlusion
+724,12.0667,429.45,247.99,1,Cloud Occlusion
+725,12.0833,429.14,249.97,1,Cloud Occlusion
+726,12.1000,428.76,251.96,1,Cloud Occlusion
+727,12.1167,428.32,253.93,1,Cloud Occlusion
+728,12.1333,427.81,255.89,1,Cloud Occlusion
+729,12.1500,427.23,257.85,1,Cloud Occlusion
+730,12.1667,426.58,259.79,1,Cloud Occlusion
+731,12.1833,425.87,261.72,1,Cloud Occlusion
+732,12.2000,425.09,263.64,1,Cloud Occlusion
+733,12.2167,424.24,265.54,1,Cloud Occlusion
+734,12.2333,423.33,267.43,1,Cloud Occlusion
+735,12.2500,422.36,269.30,1,Cloud Occlusion
+736,12.2667,421.32,271.15,1,Cloud Occlusion
+737,12.2833,420.21,272.99,1,Cloud Occlusion
+738,12.3000,419.05,274.80,1,Cloud Occlusion
+739,12.3167,417.82,276.59,1,Cloud Occlusion
+740,12.3333,416.53,278.35,1,Cloud Occlusion
+741,12.3500,415.19,280.10,1,Cloud Occlusion
+742,12.3667,413.78,281.81,1,Cloud Occlusion
+743,12.3833,412.31,283.51,1,Cloud Occlusion
+744,12.4000,410.79,285.17,1,Cloud Occlusion
+745,12.4167,409.21,286.81,1,Cloud Occlusion
+746,12.4333,407.57,288.41,1,Cloud Occlusion
+747,12.4500,405.88,289.99,1,Cloud Occlusion
+748,12.4667,404.13,291.54,1,Cloud Occlusion
+749,12.4833,402.33,293.05,1,Cloud Occlusion
+750,12.5000,400.49,294.53,1,Cloud Occlusion
+751,12.5167,398.59,295.98,1,Cloud Occlusion
+752,12.5333,396.64,297.39,1,Cloud Occlusion
+753,12.5500,394.64,298.76,1,Cloud Occlusion
+754,12.5667,392.60,300.10,1,Cloud Occlusion
+755,12.5833,390.51,301.40,1,Cloud Occlusion
+756,12.6000,388.38,302.67,1,Cloud Occlusion
+757,12.6167,386.20,303.89,1,Cloud Occlusion
+758,12.6333,383.99,305.07,1,Cloud Occlusion
+759,12.6500,381.73,306.22,1,Cloud Occlusion
+760,12.6667,379.43,307.32,1,Cloud Occlusion
+761,12.6833,377.10,308.38,1,Cloud Occlusion
+762,12.7000,374.73,309.39,1,Cloud Occlusion
+763,12.7167,372.33,310.37,1,Cloud Occlusion
+764,12.7333,369.90,311.30,1,Cloud Occlusion
+765,12.7500,367.43,312.18,1,Cloud Occlusion
+766,12.7667,364.93,313.02,1,Cloud Occlusion
+767,12.7833,362.41,313.82,1,Cloud Occlusion
+768,12.8000,359.86,314.56,1,Cloud Occlusion
+769,12.8167,357.28,315.26,1,Cloud Occlusion
+770,12.8333,354.69,315.92,1,Cloud Occlusion
+771,12.8500,352.07,316.53,1,Cloud Occlusion
+772,12.8667,349.42,317.08,1,Cloud Occlusion
+773,12.8833,346.77,317.60,1,Cloud Occlusion
+774,12.9000,344.09,318.06,1,Cloud Occlusion
+775,12.9167,341.40,318.47,1,Cloud Occlusion
+776,12.9333,338.70,318.84,1,Cloud Occlusion
+777,12.9500,335.98,319.15,1,Cloud Occlusion
+778,12.9667,333.26,319.42,1,Cloud Occlusion
+779,12.9833,330.52,319.63,1,Cloud Occlusion
+780,13.0000,,,0,Cloud Occlusion
+781,13.0167,,,0,Cloud Occlusion
+782,13.0333,,,0,Cloud Occlusion
+783,13.0500,,,0,Cloud Occlusion
+784,13.0667,,,0,Cloud Occlusion
+785,13.0833,,,0,Cloud Occlusion
+786,13.1000,,,0,Cloud Occlusion
+787,13.1167,,,0,Cloud Occlusion
+788,13.1333,,,0,Cloud Occlusion
+789,13.1500,,,0,Cloud Occlusion
+790,13.1667,,,0,Cloud Occlusion
+791,13.1833,,,0,Cloud Occlusion
+792,13.2000,,,0,Cloud Occlusion
+793,13.2167,,,0,Cloud Occlusion
+794,13.2333,,,0,Cloud Occlusion
+795,13.2500,,,0,Cloud Occlusion
+796,13.2667,,,0,Cloud Occlusion
+797,13.2833,,,0,Cloud Occlusion
+798,13.3000,,,0,Cloud Occlusion
+799,13.3167,,,0,Cloud Occlusion
+800,13.3333,,,0,Cloud Occlusion
+801,13.3500,,,0,Cloud Occlusion
+802,13.3667,,,0,Cloud Occlusion
+803,13.3833,,,0,Cloud Occlusion
+804,13.4000,,,0,Cloud Occlusion
+805,13.4167,,,0,Cloud Occlusion
+806,13.4333,,,0,Cloud Occlusion
+807,13.4500,,,0,Cloud Occlusion
+808,13.4667,,,0,Cloud Occlusion
+809,13.4833,,,0,Cloud Occlusion
+810,13.5000,,,0,Cloud Occlusion
+811,13.5167,,,0,Cloud Occlusion
+812,13.5333,,,0,Cloud Occlusion
+813,13.5500,,,0,Cloud Occlusion
+814,13.5667,,,0,Cloud Occlusion
+815,13.5833,,,0,Cloud Occlusion
+816,13.6000,,,0,Cloud Occlusion
+817,13.6167,,,0,Cloud Occlusion
+818,13.6333,,,0,Cloud Occlusion
+819,13.6500,,,0,Cloud Occlusion
+820,13.6667,,,0,Cloud Occlusion
+821,13.6833,,,0,Cloud Occlusion
+822,13.7000,,,0,Cloud Occlusion
+823,13.7167,,,0,Cloud Occlusion
+824,13.7333,,,0,Cloud Occlusion
+825,13.7500,,,0,Cloud Occlusion
+826,13.7667,,,0,Cloud Occlusion
+827,13.7833,,,0,Cloud Occlusion
+828,13.8000,,,0,Cloud Occlusion
+829,13.8167,,,0,Cloud Occlusion
+830,13.8333,,,0,Cloud Occlusion
+831,13.8500,,,0,Cloud Occlusion
+832,13.8667,,,0,Cloud Occlusion
+833,13.8833,,,0,Cloud Occlusion
+834,13.9000,,,0,Cloud Occlusion
+835,13.9167,,,0,Cloud Occlusion
+836,13.9333,,,0,Cloud Occlusion
+837,13.9500,,,0,Cloud Occlusion
+838,13.9667,,,0,Cloud Occlusion
+839,13.9833,,,0,Cloud Occlusion
+840,14.0000,,,0,Cloud Occlusion
+841,14.0167,,,0,Cloud Occlusion
+842,14.0333,,,0,Cloud Occlusion
+843,14.0500,,,0,Cloud Occlusion
+844,14.0667,,,0,Cloud Occlusion
+845,14.0833,,,0,Cloud Occlusion
+846,14.1000,,,0,Cloud Occlusion
+847,14.1167,,,0,Cloud Occlusion
+848,14.1333,,,0,Cloud Occlusion
+849,14.1500,,,0,Cloud Occlusion
+850,14.1667,,,0,Cloud Occlusion
+851,14.1833,,,0,Cloud Occlusion
+852,14.2000,,,0,Cloud Occlusion
+853,14.2167,,,0,Cloud Occlusion
+854,14.2333,,,0,Cloud Occlusion
+855,14.2500,,,0,Cloud Occlusion
+856,14.2667,,,0,Cloud Occlusion
+857,14.2833,,,0,Cloud Occlusion
+858,14.3000,,,0,Cloud Occlusion
+859,14.3167,,,0,Cloud Occlusion
+860,14.3333,,,0,Cloud Occlusion
+861,14.3500,,,0,Cloud Occlusion
+862,14.3667,,,0,Cloud Occlusion
+863,14.3833,,,0,Cloud Occlusion
+864,14.4000,,,0,Cloud Occlusion
+865,14.4167,,,0,Cloud Occlusion
+866,14.4333,,,0,Cloud Occlusion
+867,14.4500,,,0,Cloud Occlusion
+868,14.4667,,,0,Cloud Occlusion
+869,14.4833,,,0,Cloud Occlusion
+870,14.5000,,,0,Cloud Occlusion
+871,14.5167,231.34,192.65,1,Cloud Occlusion
+872,14.5333,232.99,191.05,1,Cloud Occlusion
+873,14.5500,234.70,189.48,1,Cloud Occlusion
+874,14.5667,236.47,187.95,1,Cloud Occlusion
+875,14.5833,238.28,186.45,1,Cloud Occlusion
+876,14.6000,240.15,184.98,1,Cloud Occlusion
+877,14.6167,242.06,183.54,1,Cloud Occlusion
+878,14.6333,244.03,182.14,1,Cloud Occlusion
+879,14.6500,246.04,180.78,1,Cloud Occlusion
+880,14.6667,248.10,179.46,1,Cloud Occlusion
+881,14.6833,250.20,178.17,1,Cloud Occlusion
+882,14.7000,252.35,176.92,1,Cloud Occlusion
+883,14.7167,254.54,175.71,1,Cloud Occlusion
+884,14.7333,256.77,174.54,1,Cloud Occlusion
+885,14.7500,259.04,173.41,1,Cloud Occlusion
+886,14.7667,261.35,172.32,1,Cloud Occlusion
+887,14.7833,263.69,171.28,1,Cloud Occlusion
+888,14.8000,266.07,170.27,1,Cloud Occlusion
+889,14.8167,268.48,169.32,1,Cloud Occlusion
+890,14.8333,270.93,168.40,1,Cloud Occlusion
+891,14.8500,273.41,167.53,1,Cloud Occlusion
+892,14.8667,275.91,166.71,1,Cloud Occlusion
+893,14.8833,278.45,165.93,1,Cloud Occlusion
+894,14.9000,281.00,165.20,1,Cloud Occlusion
+895,14.9167,283.59,164.51,1,Cloud Occlusion
+896,14.9333,286.19,163.87,1,Cloud Occlusion
+897,14.9500,288.82,163.28,1,Cloud Occlusion
+898,14.9667,291.47,162.74,1,Cloud Occlusion
+899,14.9833,294.13,162.24,1,Cloud Occlusion
+900,15.0000,296.81,161.80,1,Cloud Occlusion
+901,15.0167,299.51,161.40,1,Cloud Occlusion
+902,15.0333,302.22,161.05,1,Cloud Occlusion
+903,15.0500,304.93,160.75,1,Cloud Occlusion
+904,15.0667,307.66,160.50,1,Cloud Occlusion
+905,15.0833,310.40,160.31,1,Cloud Occlusion
+906,15.1000,313.14,160.16,1,Cloud Occlusion
+907,15.1167,315.89,160.06,1,Cloud Occlusion
+908,15.1333,318.64,160.01,1,Cloud Occlusion
+909,15.1500,321.39,160.01,1,Cloud Occlusion
+910,15.1667,324.14,160.06,1,Cloud Occlusion
+911,15.1833,326.88,160.16,1,Cloud Occlusion
+912,15.2000,329.62,160.31,1,Cloud Occlusion
+913,15.2167,332.36,160.51,1,Cloud Occlusion
+914,15.2333,335.09,160.76,1,Cloud Occlusion
+915,15.2500,337.81,161.06,1,Cloud Occlusion
+916,15.2667,340.52,161.40,1,Cloud Occlusion
+917,15.2833,343.21,161.80,1,Cloud Occlusion
+918,15.3000,345.89,162.25,1,Cloud Occlusion
+919,15.3167,348.56,162.74,1,Cloud Occlusion
+920,15.3333,351.20,163.29,1,Cloud Occlusion
+921,15.3500,353.83,163.88,1,Cloud Occlusion
+922,15.3667,356.44,164.52,1,Cloud Occlusion
+923,15.3833,359.02,165.20,1,Cloud Occlusion
+924,15.4000,361.58,165.93,1,Cloud Occlusion
+925,15.4167,364.11,166.71,1,Cloud Occlusion
+926,15.4333,366.62,167.54,1,Cloud Occlusion
+927,15.4500,369.09,168.41,1,Cloud Occlusion
+928,15.4667,371.54,169.32,1,Cloud Occlusion
+929,15.4833,373.95,170.28,1,Cloud Occlusion
+930,15.5000,376.33,171.29,1,Cloud Occlusion
+931,15.5167,378.67,172.33,1,Cloud Occlusion
+932,15.5333,380.98,173.42,1,Cloud Occlusion
+933,15.5500,383.25,174.55,1,Cloud Occlusion
+934,15.5667,385.48,175.72,1,Cloud Occlusion
+935,15.5833,387.67,176.93,1,Cloud Occlusion
+936,15.6000,389.82,178.18,1,Cloud Occlusion
+937,15.6167,391.92,179.47,1,Cloud Occlusion
+938,15.6333,393.98,180.79,1,Cloud Occlusion
+939,15.6500,395.99,182.16,1,Cloud Occlusion
+940,15.6667,397.95,183.56,1,Cloud Occlusion
+941,15.6833,399.87,184.99,1,Cloud Occlusion
+942,15.7000,401.74,186.46,1,Cloud Occlusion
+943,15.7167,403.55,187.96,1,Cloud Occlusion
+944,15.7333,405.31,189.50,1,Cloud Occlusion
+945,15.7500,407.02,191.07,1,Cloud Occlusion
+946,15.7667,408.68,192.66,1,Cloud Occlusion
+947,15.7833,410.28,194.29,1,Cloud Occlusion
+948,15.8000,411.82,195.95,1,Cloud Occlusion
+949,15.8167,413.30,197.63,1,Cloud Occlusion
+950,15.8333,414.73,199.34,1,Cloud Occlusion
+951,15.8500,416.10,201.07,1,Cloud Occlusion
+952,15.8667,417.41,202.83,1,Cloud Occlusion
+953,15.8833,418.65,204.61,1,Cloud Occlusion
+954,15.9000,419.84,206.42,1,Cloud Occlusion
+955,15.9167,420.96,208.24,1,Cloud Occlusion
+956,15.9333,422.02,210.09,1,Cloud Occlusion
+957,15.9500,423.02,211.95,1,Cloud Occlusion
+958,15.9667,423.95,213.84,1,Cloud Occlusion
+959,15.9833,424.82,215.73,1,Cloud Occlusion
+960,16.0000,479.18,244.85,1,Vibration & Decoy
+961,16.0167,483.52,239.25,1,Vibration & Decoy
+962,16.0333,484.34,240.56,1,Vibration & Decoy
+963,16.0500,477.09,235.74,1,Vibration & Decoy
+964,16.0667,473.87,244.34,1,Vibration & Decoy
+965,16.0833,473.31,250.59,1,Vibration & Decoy
+966,16.1000,477.39,249.98,1,Vibration & Decoy
+967,16.1167,483.14,253.79,1,Vibration & Decoy
+968,16.1333,480.81,246.46,1,Vibration & Decoy
+969,16.1500,477.32,250.05,1,Vibration & Decoy
+970,16.1667,471.30,253.79,1,Vibration & Decoy
+971,16.1833,469.91,255.66,1,Vibration & Decoy
+972,16.2000,475.40,264.45,1,Vibration & Decoy
+973,16.2167,478.00,259.60,1,Vibration & Decoy
+974,16.2333,479.45,260.68,1,Vibration & Decoy
+975,16.2500,473.16,259.39,1,Vibration & Decoy
+976,16.2667,466.32,258.74,1,Vibration & Decoy
+977,16.2833,466.35,270.01,1,Vibration & Decoy
+978,16.3000,468.70,270.13,1,Vibration & Decoy
+979,16.3167,475.08,273.67,1,Vibration & Decoy
+980,16.3333,473.74,269.86,1,Vibration & Decoy
+981,16.3500,466.64,264.18,1,Vibration & Decoy
+982,16.3667,461.22,272.91,1,Vibration & Decoy
+983,16.3833,458.12,275.49,1,Vibration & Decoy
+984,16.4000,464.25,284.00,1,Vibration & Decoy
+985,16.4167,467.86,282.64,1,Vibration & Decoy
+986,16.4333,465.71,274.42,1,Vibration & Decoy
+987,16.4500,460.05,278.10,1,Vibration & Decoy
+988,16.4667,451.51,278.14,1,Vibration & Decoy
+989,16.4833,452.21,289.10,1,Vibration & Decoy
+990,16.5000,455.58,292.70,1,Vibration & Decoy
+991,16.5167,458.40,286.92,1,Vibration & Decoy
+992,16.5333,457.70,288.06,1,Vibration & Decoy
+993,16.5500,448.93,283.04,1,Vibration & Decoy
+994,16.5667,444.21,291.44,1,Vibration & Decoy
+995,16.5833,442.16,297.49,1,Vibration & Decoy
+996,16.6000,444.75,296.65,1,Vibration & Decoy
+997,16.6167,449.03,300.22,1,Vibration & Decoy
+998,16.6333,445.24,292.65,1,Vibration & Decoy
+999,16.6500,440.31,295.99,1,Vibration & Decoy
+1000,16.6667,432.85,299.46,1,Vibration & Decoy
+1001,16.6833,430.04,301.06,1,Vibration & Decoy
+1002,16.7000,434.12,309.57,1,Vibration & Decoy
+1003,16.7167,435.33,304.42,1,Vibration & Decoy
+1004,16.7333,435.40,305.19,1,Vibration & Decoy
+1005,16.7500,427.74,303.59,1,Vibration & Decoy
+1006,16.7667,419.55,302.61,1,Vibration & Decoy
+1007,16.7833,418.25,313.54,1,Vibration & Decoy
+1008,16.8000,419.27,313.32,1,Vibration & Decoy
+1009,16.8167,424.36,316.51,1,Vibration & Decoy
+1010,16.8333,421.73,312.33,1,Vibration & Decoy
+1011,16.8500,413.36,306.27,1,Vibration & Decoy
+1012,16.8667,406.69,314.62,1,Vibration & Decoy
+1013,16.8833,402.36,316.81,1,Vibration & Decoy
+1014,16.9000,407.28,324.92,1,Vibration & Decoy
+1015,16.9167,409.70,323.15,1,Vibration & Decoy
+1016,16.9333,406.38,314.51,1,Vibration & Decoy
+1017,16.9500,399.56,317.76,1,Vibration & Decoy
+1018,16.9667,389.89,317.36,1,Vibration & Decoy
+1019,16.9833,389.48,327.88,1,Vibration & Decoy
+1020,17.0000,391.75,331.02,1,Vibration & Decoy
+1021,17.0167,393.50,324.78,1,Vibration & Decoy
+1022,17.0333,391.75,325.44,1,Vibration & Decoy
+1023,17.0500,381.96,319.94,1,Vibration & Decoy
+1024,17.0667,376.23,327.86,1,Vibration & Decoy
+1025,17.0833,373.20,333.40,1,Vibration & Decoy
+1026,17.1000,374.84,332.06,1,Vibration & Decoy
+1027,17.1167,378.18,335.12,1,Vibration & Decoy
+1028,17.1333,373.48,327.02,1,Vibration & Decoy
+1029,17.1500,367.66,329.83,1,Vibration & Decoy
+1030,17.1667,359.34,332.77,1,Vibration & Decoy
+1031,17.1833,355.70,333.82,1,Vibration & Decoy
+1032,17.2000,358.96,341.78,1,Vibration & Decoy
+1033,17.2167,359.39,336.07,1,Vibration & Decoy
+1034,17.2333,358.69,336.27,1,Vibration & Decoy
+1035,17.2500,350.30,334.10,1,Vibration & Decoy
+1036,17.2667,341.40,332.54,1,Vibration & Decoy
+1037,17.2833,339.41,342.89,1,Vibration & Decoy
+1038,17.3000,339.78,342.07,1,Vibration & Decoy
+1039,17.3167,344.24,344.66,1,Vibration & Decoy
+1040,17.3333,341.00,339.88,1,Vibration & Decoy
+1041,17.3500,332.06,333.21,1,Vibration & Decoy
+1042,17.3667,324.85,340.93,1,Vibration & Decoy
+1043,17.3833,319.99,342.50,1,Vibration & Decoy
+1044,17.4000,324.42,349.98,1,Vibration & Decoy
+1045,17.4167,326.37,347.57,1,Vibration & Decoy
+1046,17.4333,322.61,338.29,1,Vibration & Decoy
+1047,17.4500,315.38,340.90,1,Vibration & Decoy
+1048,17.4667,305.33,339.85,1,Vibration & Decoy
+1049,17.4833,304.56,349.70,1,Vibration & Decoy
+1050,17.5000,306.52,352.18,1,Vibration & Decoy
+1051,17.5167,307.97,345.27,1,Vibration & Decoy
+1052,17.5333,305.95,345.26,1,Vibration & Decoy
+1053,17.5500,295.92,339.09,1,Vibration & Decoy
+1054,17.5667,289.99,346.33,1,Vibration & Decoy
+1055,17.5833,286.77,351.18,1,Vibration & Decoy
+1056,17.6000,288.26,349.16,1,Vibration & Decoy
+1057,17.6167,291.48,351.52,1,Vibration & Decoy
+1058,17.6333,286.69,342.73,1,Vibration & Decoy
+1059,17.6500,280.81,344.84,1,Vibration & Decoy
+1060,17.6667,272.45,347.08,1,Vibration & Decoy
+1061,17.6833,268.81,347.42,1,Vibration & Decoy
+1062,17.7000,272.09,354.67,1,Vibration & Decoy
+1063,17.7167,272.57,348.25,1,Vibration & Decoy
+1064,17.7333,271.96,347.74,1,Vibration & Decoy
+1065,17.7500,263.68,344.85,1,Vibration & Decoy
+1066,17.7667,254.92,342.57,1,Vibration & Decoy
+1067,17.7833,253.10,352.20,1,Vibration & Decoy
+1068,17.8000,253.67,350.66,1,Vibration & Decoy
+1069,17.8167,258.35,352.52,1,Vibration & Decoy
+1070,17.8333,255.37,347.01,1,Vibration & Decoy
+1071,17.8500,246.72,339.61,1,Vibration & Decoy
+1072,17.8667,239.82,346.61,1,Vibration & Decoy
+1073,17.8833,235.30,347.44,1,Vibration & Decoy
+1074,17.9000,240.10,354.18,1,Vibration & Decoy
+1075,17.9167,242.45,351.05,1,Vibration & Decoy
+1076,17.9333,239.12,341.02,1,Vibration & Decoy
+1077,17.9500,232.35,342.90,1,Vibration & Decoy
+1078,17.9667,222.78,341.11,1,Vibration & Decoy
+1079,17.9833,222.52,350.23,1,Vibration & Decoy
+1080,18.0000,225.02,351.98,1,Vibration & Decoy
+1081,18.0167,227.03,344.33,1,Vibration & Decoy
+1082,18.0333,225.61,343.59,1,Vibration & Decoy
+1083,18.0500,216.20,336.68,1,Vibration & Decoy
+1084,18.0667,210.91,343.18,1,Vibration & Decoy
+1085,18.0833,208.37,347.30,1,Vibration & Decoy
+1086,18.1000,210.56,344.54,1,Vibration & Decoy
+1087,18.1167,214.51,346.17,1,Vibration & Decoy
+1088,18.1333,210.47,336.65,1,Vibration & Decoy
+1089,18.1500,205.37,338.03,1,Vibration & Decoy
+1090,18.1667,197.81,339.54,1,Vibration & Decoy
+1091,18.1833,194.99,339.16,1,Vibration & Decoy
+1092,18.2000,199.13,345.68,1,Vibration & Decoy
+1093,18.2167,200.49,338.54,1,Vibration & Decoy
+1094,18.2333,200.78,337.31,1,Vibration & Decoy
+1095,18.2500,193.43,333.70,1,Vibration & Decoy
+1096,18.2667,185.61,330.71,1,Vibration & Decoy
+1097,18.2833,184.77,339.62,1,Vibration & Decoy
+1098,18.3000,186.33,337.36,1,Vibration & Decoy
+1099,18.3167,192.03,338.52,1,Vibration & Decoy
+1100,18.3333,190.09,332.31,1,Vibration & Decoy
+1101,18.3500,182.50,324.20,1,Vibration & Decoy
+1102,18.3667,176.68,330.50,1,Vibration & Decoy
+1103,18.3833,173.28,330.65,1,Vibration & Decoy
+1104,18.4000,179.20,336.70,1,Vibration & Decoy
+1105,18.4167,182.69,332.88,1,Vibration & Decoy
+1106,18.4333,180.53,322.17,1,Vibration & Decoy
+1107,18.4500,174.95,323.37,1,Vibration & Decoy
+1108,18.4667,166.58,320.91,1,Vibration & Decoy
+1109,18.4833,167.55,329.36,1,Vibration & Decoy
+1110,18.5000,171.29,330.44,1,Vibration & Decoy
+1111,18.5167,174.57,322.14,1,Vibration & Decoy
+1112,18.5333,174.42,320.74,1,Vibration & Decoy
+1113,18.5500,166.31,313.18,1,Vibration & Decoy
+1114,18.5667,162.33,319.04,1,Vibration & Decoy
+1115,18.5833,161.12,322.52,1,Vibration & Decoy
+1116,18.6000,164.65,319.13,1,Vibration & Decoy
+1117,18.6167,169.96,320.14,1,Vibration & Decoy
+1118,18.6333,167.30,309.99,1,Vibration & Decoy
+1119,18.6500,163.58,310.75,1,Vibration & Decoy
+1120,18.6667,157.44,311.65,1,Vibration & Decoy
+1121,18.6833,156.03,310.67,1,Vibration & Decoy
+1122,18.7000,161.61,316.59,1,Vibration & Decoy
+1123,18.7167,164.40,308.87,1,Vibration & Decoy
+1124,18.7333,166.14,307.05,1,Vibration & Decoy
+1125,18.7500,160.26,302.87,1,Vibration & Decoy
+1126,18.7667,153.93,299.31,1,Vibration & Decoy
+1127,18.7833,154.57,307.65,1,Vibration & Decoy
+1128,18.8000,157.63,304.84,1,Vibration & Decoy
+1129,18.8167,164.84,305.45,1,Vibration & Decoy
+1130,18.8333,164.42,298.70,1,Vibration & Decoy
+1131,18.8500,158.36,290.06,1,Vibration & Decoy
+1132,18.8667,154.07,295.84,1,Vibration & Decoy
+1133,18.8833,152.21,295.46,1,Vibration & Decoy
+1134,18.9000,159.68,301.01,1,Vibration & Decoy
+1135,18.9167,164.73,296.68,1,Vibration & Decoy
+1136,18.9333,164.13,285.49,1,Vibration & Decoy
+1137,18.9500,160.11,286.20,1,Vibration & Decoy
+1138,18.9667,153.32,283.26,1,Vibration & Decoy
+1139,18.9833,155.86,291.24,1,Vibration & Decoy
+1140,19.0000,161.18,291.86,1,Vibration & Decoy
+1141,19.0167,166.04,283.11,1,Vibration & Decoy
+1142,19.0333,167.49,281.27,1,Vibration & Decoy
+1143,19.0500,160.96,273.28,1,Vibration & Decoy
+1144,19.0667,158.57,278.71,1,Vibration & Decoy
+1145,19.0833,158.96,281.78,1,Vibration & Decoy
+1146,19.1000,164.08,277.98,1,Vibration & Decoy
+1147,19.1167,170.98,278.59,1,Vibration & Decoy
+1148,19.1333,169.91,268.06,1,Vibration & Decoy
+1149,19.1500,167.79,268.44,1,Vibration & Decoy
+1150,19.1667,163.23,268.97,1,Vibration & Decoy
+1151,19.1833,163.42,267.63,1,Vibration & Decoy
+1152,19.2000,170.57,273.21,1,Vibration & Decoy
+1153,19.2167,174.95,265.14,1,Vibration & Decoy
+1154,19.2333,178.28,262.99,1,Vibration & Decoy
+1155,19.2500,173.97,258.49,1,Vibration & Decoy
+1156,19.2667,169.21,254.62,1,Vibration & Decoy
+1157,19.2833,171.41,262.67,1,Vibration & Decoy
+1158,19.3000,176.04,259.57,1,Vibration & Decoy
+1159,19.3167,184.80,259.90,1,Vibration & Decoy
+1160,19.3333,185.93,252.88,1,Vibration & Decoy
+1161,19.3500,181.40,243.98,1,Vibration & Decoy
+1162,19.3667,178.65,249.51,1,Vibration & Decoy
+1163,19.3833,178.31,248.90,1,Vibration & Decoy
+1164,19.4000,187.30,254.21,1,Vibration & Decoy
+1165,19.4167,193.85,249.67,1,Vibration & Decoy
+1166,19.4333,194.74,238.27,1,Vibration & Decoy
+1167,19.4500,192.21,238.78,1,Vibration & Decoy
+1168,19.4667,186.89,235.66,1,Vibration & Decoy
+1169,19.4833,190.91,243.47,1,Vibration & Decoy
+1170,19.5000,197.67,243.93,1,Vibration & Decoy
+1171,19.5167,203.97,235.02,1,Vibration & Decoy
+1172,19.5333,206.85,233.04,1,Vibration & Decoy
+1173,19.5500,201.73,224.92,1,Vibration & Decoy
+1174,19.5667,200.75,230.23,1,Vibration & Decoy
+1175,19.5833,202.51,233.19,1,Vibration & Decoy
+1176,19.6000,209.01,229.29,1,Vibration & Decoy
+1177,19.6167,217.27,229.81,1,Vibration & Decoy
+1178,19.6333,217.54,219.20,1,Vibration & Decoy
+1179,19.6500,216.74,219.52,1,Vibration & Decoy
+1180,19.6667,213.49,220.00,1,Vibration & Decoy
+1181,19.6833,214.97,218.62,1,Vibration & Decoy
+1182,19.7000,223.40,224.16,1,Vibration & Decoy
+1183,19.7167,229.03,216.07,1,Vibration & Decoy
+1184,19.7333,233.59,213.91,1,Vibration & Decoy
+1185,19.7500,230.51,209.41,1,Vibration & Decoy
+1186,19.7667,226.94,205.55,1,Vibration & Decoy
+1187,19.7833,230.33,213.62,1,Vibration & Decoy
+1188,19.8000,236.11,210.56,1,Vibration & Decoy
+1189,19.8167,246.02,210.93,1,Vibration & Decoy
+1190,19.8333,248.27,203.96,1,Vibration & Decoy
+1191,19.8500,244.84,195.14,1,Vibration & Decoy
+1192,19.8667,243.16,200.74,1,Vibration & Decoy
+1193,19.8833,243.88,200.22,1,Vibration & Decoy
+1194,19.9000,253.90,205.63,1,Vibration & Decoy
+1195,19.9167,261.47,201.20,1,Vibration & Decoy
+1196,19.9333,263.35,189.92,1,Vibration & Decoy
+1197,19.9500,261.79,190.57,1,Vibration & Decoy
+1198,19.9667,257.41,187.59,1,Vibration & Decoy
+1199,19.9833,262.34,195.55,1,Vibration & Decoy
+1200,20.0000,270.00,196.17,1,Vibration & Decoy
+1201,20.0167,277.18,187.44,1,Vibration & Decoy
+1202,20.0333,280.89,185.65,1,Vibration & Decoy
+1203,20.0500,276.60,177.72,1,Vibration & Decoy
+1204,20.0667,276.41,183.24,1,Vibration & Decoy
+1205,20.0833,278.95,186.42,1,Vibration & Decoy
+1206,20.1000,286.19,182.75,1,Vibration & Decoy
+1207,20.1167,295.17,183.51,1,Vibration & Decoy
+1208,20.1333,296.13,173.15,1,Vibration & Decoy
+1209,20.1500,296.00,173.73,1,Vibration & Decoy
+1210,20.1667,293.39,174.48,1,Vibration & Decoy
+1211,20.1833,295.48,173.38,1,Vibration & Decoy
+1212,20.2000,304.49,179.21,1,Vibration & Decoy
+1213,20.2167,310.69,171.42,1,Vibration & Decoy
+1214,20.2333,315.78,169.57,1,Vibration & Decoy
+1215,20.2500,313.19,165.39,1,Vibration & Decoy
+1216,20.2667,310.11,161.87,1,Vibration & Decoy
+1217,20.2833,313.94,170.27,1,Vibration & Decoy
+1218,20.3000,320.15,167.56,1,Vibration & Decoy
+1219,20.3167,330.44,168.30,1,Vibration & Decoy
+1220,20.3333,333.05,161.70,1,Vibration & Decoy
+1221,20.3500,329.96,153.25,1,Vibration & Decoy
+1222,20.3667,328.59,159.24,1,Vibration & Decoy
+1223,20.3833,329.58,159.12,1,Vibration & Decoy
+1224,20.4000,339.86,164.94,1,Vibration & Decoy
+1225,20.4167,347.64,160.93,1,Vibration & Decoy
+1226,20.4333,349.72,150.07,1,Vibration & Decoy
+1227,20.4500,348.31,151.15,1,Vibration & Decoy
+1228,20.4667,344.07,148.62,1,Vibration & Decoy
+1229,20.4833,349.10,157.03,1,Vibration & Decoy
+1230,20.5000,356.84,158.11,1,Vibration & Decoy
+1231,20.5167,364.05,149.85,1,Vibration & Decoy
+1232,20.5333,367.79,148.53,1,Vibration & Decoy
+1233,20.5500,363.48,141.10,1,Vibration & Decoy
+1234,20.5667,363.25,147.11,1,Vibration & Decoy
+1235,20.5833,365.72,150.79,1,Vibration & Decoy
+1236,20.6000,372.86,147.63,1,Vibration & Decoy
+1237,20.6167,381.70,148.91,1,Vibration & Decoy
+1238,20.6333,382.51,139.08,1,Vibration & Decoy
+1239,20.6500,382.19,140.19,1,Vibration & Decoy
+1240,20.6667,379.36,141.48,1,Vibration & Decoy
+1241,20.6833,381.20,140.92,1,Vibration & Decoy
+1242,20.7000,389.94,147.31,1,Vibration & Decoy
+1243,20.7167,395.83,140.09,1,Vibration & Decoy
+1244,20.7333,400.59,138.81,1,Vibration & Decoy
+1245,20.7500,397.65,135.21,1,Vibration & Decoy
+1246,20.7667,394.17,132.26,1,Vibration & Decoy
+1247,20.7833,397.59,141.26,1,Vibration & Decoy
+1248,20.8000,403.35,139.15,1,Vibration & Decoy
+1249,20.8167,413.17,140.49,1,Vibration & Decoy
+1250,20.8333,415.28,134.50,1,Vibration & Decoy
+1251,20.8500,411.66,126.67,1,Vibration & Decoy
+1252,20.8667,409.73,133.28,1,Vibration & Decoy
+1253,20.8833,410.14,133.78,1,Vibration & Decoy
+1254,20.9000,419.80,140.24,1,Vibration & Decoy
+1255,20.9167,426.95,136.86,1,Vibration & Decoy
+1256,20.9333,428.36,126.65,1,Vibration & Decoy
+1257,20.9500,426.27,128.38,1,Vibration & Decoy
+1258,20.9667,421.31,126.50,1,Vibration & Decoy
+1259,20.9833,425.60,135.58,1,Vibration & Decoy
+1260,21.0000,432.56,137.32,1,Vibration & Decoy
+1261,21.0167,438.99,129.73,1,Vibration & Decoy
+1262,21.0333,441.90,129.08,1,Vibration & Decoy
+1263,21.0500,436.75,122.33,1,Vibration & Decoy
+1264,21.0667,435.65,129.02,1,Vibration & Decoy
+1265,21.0833,437.22,133.39,1,Vibration & Decoy
+1266,21.1000,443.45,130.92,1,Vibration & Decoy
+1267,21.1167,451.35,132.89,1,Vibration & Decoy
+1268,21.1333,451.19,123.76,1,Vibration & Decoy
+1269,21.1500,449.88,125.57,1,Vibration & Decoy
+1270,21.1667,446.05,127.57,1,Vibration & Decoy
+1271,21.1833,446.86,127.72,1,Vibration & Decoy
+1272,21.2000,454.55,134.82,1,Vibration & Decoy
+1273,21.2167,459.36,128.31,1,Vibration & Decoy
+1274,21.2333,463.02,127.75,1,Vibration & Decoy
+1275,21.2500,458.96,124.86,1,Vibration & Decoy
+1276,21.2667,454.34,122.64,1,Vibration & Decoy
+1277,21.2833,456.60,132.36,1,Vibration & Decoy
+1278,21.3000,461.18,130.97,1,Vibration & Decoy
+1279,21.3167,469.80,133.04,1,Vibration & Decoy
+1280,21.3333,470.69,127.77,1,Vibration & Decoy
+1281,21.3500,465.84,120.67,1,Vibration & Decoy
+1282,21.3667,462.65,128.02,1,Vibration & Decoy
+1283,21.3833,461.79,129.25,1,Vibration & Decoy
+1284,21.4000,470.16,136.44,1,Vibration & Decoy
+1285,21.4167,476.00,133.80,1,Vibration & Decoy
+1286,21.4333,476.09,124.33,1,Vibration & Decoy
+1287,21.4500,472.66,126.79,1,Vibration & Decoy
+1288,21.4667,466.34,125.65,1,Vibration & Decoy
+1289,21.4833,469.26,135.46,1,Vibration & Decoy
+1290,21.5000,474.85,137.94,1,Vibration & Decoy
+1291,21.5167,479.87,131.09,1,Vibration & Decoy
+1292,21.5333,481.37,131.18,1,Vibration & Decoy
+1293,21.5500,474.80,125.15,1,Vibration & Decoy
+1294,21.5667,472.26,132.58,1,Vibration & Decoy
+1295,21.5833,472.38,137.68,1,Vibration & Decoy
+1296,21.6000,477.14,135.95,1,Vibration & Decoy
+1297,21.6167,483.57,138.65,1,Vibration & Decoy
+1298,21.6333,481.93,130.25,1,Vibration & Decoy
+1299,21.6500,479.12,132.79,1,Vibration & Decoy
+1300,21.6667,473.78,135.51,1,Vibration & Decoy
+1301,21.6833,473.08,136.39,1,Vibration & Decoy
+1302,21.7000,479.24,144.21,1,Vibration & Decoy
+1303,21.7167,482.52,138.42,1,Vibration & Decoy
+1304,21.7333,484.65,138.58,1,Vibration & Decoy
+1305,21.7500,479.04,136.41,1,Vibration & Decoy
+1306,21.7667,472.87,134.90,1,Vibration & Decoy
+1307,21.7833,473.57,145.34,1,Vibration & Decoy
+1308,21.8000,476.58,144.66,1,Vibration & Decoy
+1309,21.8167,483.63,147.43,1,Vibration & Decoy
+1310,21.8333,482.95,142.87,1,Vibration & Decoy
+1311,21.8500,476.51,136.47,1,Vibration & Decoy
+1312,21.8667,471.75,144.51,1,Vibration & Decoy
+1313,21.8833,469.30,146.44,1,Vibration & Decoy
+1314,21.9000,476.08,154.31,1,Vibration & Decoy
+1315,21.9167,480.33,152.36,1,Vibration & Decoy
+1316,21.9333,478.83,143.56,1,Vibration & Decoy
+1317,21.9500,473.80,146.70,1,Vibration & Decoy
+1318,21.9667,465.90,146.23,1,Vibration & Decoy
+1319,21.9833,467.22,156.70,1,Vibration & Decoy
+1320,22.0000,471.21,159.85,1,Vibration & Decoy
+1321,22.0167,474.65,153.65,1,Vibration & Decoy
+1322,22.0333,474.56,154.39,1,Vibration & Decoy
+1323,22.0500,466.40,149.01,1,Vibration & Decoy
+1324,22.0667,462.27,157.08,1,Vibration & Decoy
+1325,22.0833,460.82,162.82,1,Vibration & Decoy
+1326,22.1000,464.00,161.71,1,Vibration & Decoy
+1327,22.1167,468.86,165.04,1,Vibration & Decoy
+1328,22.1333,465.65,157.25,1,Vibration & Decoy
+1329,22.1500,461.28,160.41,1,Vibration & Decoy
+1330,22.1667,454.38,163.74,1,Vibration & Decoy
+1331,22.1833,452.13,165.21,1,Vibration & Decoy
+1332,22.2000,456.75,173.63,1,Vibration & Decoy
+1333,22.2167,458.50,168.42,1,Vibration & Decoy
+1334,22.2333,459.09,169.16,1,Vibration & Decoy
+1335,22.2500,451.96,167.57,1,Vibration & Decoy
+1336,22.2667,444.29,166.62,1,Vibration & Decoy
+1337,22.2833,443.49,177.62,1,Vibration & Decoy
+1338,22.3000,445.01,177.49,1,Vibration & Decoy
+1339,22.3167,450.58,180.80,1,Vibration & Decoy
+1340,22.3333,448.43,176.78,1,Vibration & Decoy
+1341,22.3500,440.54,170.90,1,Vibration & Decoy
+1342,22.3667,434.33,179.47,1,Vibration & Decoy
+1343,22.3833,430.45,181.90,1,Vibration & Decoy
+1344,22.4000,435.82,190.28,1,Vibration & Decoy
+1345,22.4167,438.66,188.83,1,Vibration & Decoy
+1346,22.4333,435.77,180.52,1,Vibration & Decoy
+1347,22.4500,429.36,184.14,1,Vibration & Decoy
+1348,22.4667,420.10,184.14,1,Vibration & Decoy
+1349,22.4833,420.08,195.08,1,Vibration & Decoy
+1350,22.5000,422.74,198.68,1,Vibration & Decoy
+1351,22.5167,424.86,192.92,1,Vibration & Decoy
+1352,22.5333,423.47,194.10,1,Vibration & Decoy
+1353,22.5500,414.03,189.15,1,Vibration & Decoy
+1354,22.5667,408.64,197.64,1,Vibration & Decoy
+1355,22.5833,405.94,203.79,1,Vibration & Decoy
+1356,22.6000,407.90,203.08,1,Vibration & Decoy
+1357,22.6167,411.55,206.80,1,Vibration & Decoy
+1358,22.6333,407.15,199.40,1,Vibration & Decoy
+1359,22.6500,401.62,202.93,1,Vibration & Decoy
+1360,22.6667,393.57,206.62,1,Vibration & Decoy
+1361,22.6833,390.19,208.45,1,Vibration & Decoy
+1362,22.7000,393.70,217.21,1,Vibration & Decoy
+1363,22.7167,394.37,212.34,1,Vibration & Decoy
+1364,22.7333,393.90,213.40,1,Vibration & Decoy
+1365,22.7500,385.73,212.12,1,Vibration & Decoy
+1366,22.7667,377.03,211.48,1,Vibration & Decoy
+1367,22.7833,375.23,222.76,1,Vibration & Decoy
+1368,22.8000,375.78,222.92,1,Vibration & Decoy
+1369,22.8167,380.40,226.50,1,Vibration & Decoy
+1370,22.8333,377.32,222.74,1,Vibration & Decoy
+1371,22.8500,368.53,217.13,1,Vibration & Decoy
+1372,22.8667,361.44,225.93,1,Vibration & Decoy
+1373,22.8833,356.71,228.60,1,Vibration & Decoy
+1374,22.9000,361.24,237.20,1,Vibration & Decoy
+1375,22.9167,363.28,235.96,1,Vibration & Decoy
+1376,22.9333,359.61,227.85,1,Vibration & Decoy
+1377,22.9500,352.45,231.66,1,Vibration & Decoy
+1378,22.9667,342.45,231.84,1,Vibration & Decoy
+1379,22.9833,341.73,242.94,1,Vibration & Decoy
+1380,23.0000,343.72,246.70,1,Vibration & Decoy
+1381,23.0167,345.19,241.09,1,Vibration & Decoy
+1382,23.0333,343.18,242.41,1,Vibration & Decoy
+1383,23.0500,333.14,237.58,1,Vibration & Decoy
+1384,23.0667,327.19,246.19,1,Vibration & Decoy
+1385,23.0833,323.94,252.44,1,Vibration & Decoy
+1386,23.1000,325.39,251.82,1,Vibration & Decoy
+1387,23.1167,328.56,255.63,1,Vibration & Decoy
+1388,23.1333,323.70,248.29,1,Vibration & Decoy
+1389,23.1500,317.73,251.88,1,Vibration & Decoy
+1390,23.1667,309.28,255.62,1,Vibration & Decoy
+1391,23.1833,305.53,257.48,1,Vibration & Decoy
+1392,23.2000,308.70,266.27,1,Vibration & Decoy
+1393,23.2167,309.04,261.41,1,Vibration & Decoy
+1394,23.2333,308.29,262.48,1,Vibration & Decoy
+1395,23.2500,299.86,261.19,1,Vibration & Decoy
+1396,23.2667,290.93,260.54,1,Vibration & Decoy
+1397,23.2833,288.93,271.79,1,Vibration & Decoy
+1398,23.3000,289.31,271.91,1,Vibration & Decoy
+1399,23.3167,293.79,275.44,1,Vibration & Decoy
+1400,23.3333,290.60,271.62,1,Vibration & Decoy
+1401,23.3500,281.72,265.93,1,Vibration & Decoy
+1402,23.3667,274.58,274.65,1,Vibration & Decoy
+1403,23.3833,269.81,277.23,1,Vibration & Decoy
+1404,23.4000,274.35,285.72,1,Vibration & Decoy
+1405,23.4167,276.42,284.36,1,Vibration & Decoy
+1406,23.4333,272.81,276.12,1,Vibration & Decoy
+1407,23.4500,265.74,279.80,1,Vibration & Decoy
+1408,23.4667,255.87,279.82,1,Vibration & Decoy
+1409,23.4833,255.29,290.77,1,Vibration & Decoy
+1410,23.5000,257.46,294.36,1,Vibration & Decoy
+1411,23.5167,259.13,288.57,1,Vibration & Decoy
+1412,23.5333,257.36,289.69,1,Vibration & Decoy
+1413,23.5500,247.59,284.66,1,Vibration & Decoy
+1414,23.5667,241.93,293.05,1,Vibration & Decoy
+1415,23.5833,239.01,299.08,1,Vibration & Decoy
+1416,23.6000,240.80,298.23,1,Vibration & Decoy
+1417,23.6167,244.35,301.79,1,Vibration & Decoy
+1418,23.6333,239.90,294.20,1,Vibration & Decoy
+1419,23.6500,234.37,297.52,1,Vibration & Decoy
+1420,23.6667,226.38,300.98,1,Vibration & Decoy
+1421,23.6833,223.12,302.56,1,Vibration & Decoy
+1422,23.7000,226.81,311.05,1,Vibration & Decoy
+1423,23.7167,227.70,305.89,1,Vibration & Decoy
+1424,23.7333,227.52,306.64,1,Vibration & Decoy
+1425,23.7500,219.69,305.02,1,Vibration & Decoy
+1426,23.7667,211.39,304.03,1,Vibration & Decoy
+1427,23.7833,210.05,314.94,1,Vibration & Decoy
+1428,23.8000,211.11,314.70,1,Vibration & Decoy
+1429,23.8167,216.29,317.87,1,Vibration & Decoy
+1430,23.8333,213.83,313.67,1,Vibration & Decoy
+1431,23.8500,205.71,307.60,1,Vibration & Decoy
+1432,23.8667,199.35,315.93,1,Vibration & Decoy
+1433,23.8833,195.40,318.10,1,Vibration & Decoy
+1434,23.9000,200.78,326.18,1,Vibration & Decoy
+1435,23.9167,203.71,324.40,1,Vibration & Decoy
+1436,23.9333,200.98,315.73,1,Vibration & Decoy
+1437,23.9500,194.82,318.97,1,Vibration & Decoy
+1438,23.9667,185.88,318.55,1,Vibration & Decoy
+1439,23.9833,186.26,329.04,1,Vibration & Decoy
+1440,24.0000,509.51,239.91,1,Fast Figure-8 Transit
+1441,24.0167,508.81,242.12,1,Fast Figure-8 Transit
+1442,24.0333,508.75,249.94,1,Fast Figure-8 Transit
+1443,24.0500,506.59,252.51,1,Fast Figure-8 Transit
+1444,24.0667,506.50,260.04,1,Fast Figure-8 Transit
+1445,24.0833,504.55,264.51,1,Fast Figure-8 Transit
+1446,24.1000,501.94,266.20,1,Fast Figure-8 Transit
+1447,24.1167,500.04,273.35,1,Fast Figure-8 Transit
+1448,24.1333,496.12,275.10,1,Fast Figure-8 Transit
+1449,24.1500,494.38,281.67,1,Fast Figure-8 Transit
+1450,24.1667,490.89,285.07,1,Fast Figure-8 Transit
+1451,24.1833,486.86,285.59,1,Fast Figure-8 Transit
+1452,24.2000,483.67,291.48,1,Fast Figure-8 Transit
+1453,24.2167,478.60,291.90,1,Fast Figure-8 Transit
+1454,24.2333,475.84,297.10,1,Fast Figure-8 Transit
+1455,24.2500,471.46,299.09,1,Fast Figure-8 Transit
+1456,24.2667,466.69,298.17,1,Fast Figure-8 Transit
+1457,24.2833,462.87,302.62,1,Fast Figure-8 Transit
+1458,24.3000,457.31,301.62,1,Fast Figure-8 Transit
+1459,24.3167,454.16,305.40,1,Fast Figure-8 Transit
+1460,24.3333,449.51,306.01,1,Fast Figure-8 Transit
+1461,24.3500,444.56,303.75,1,Fast Figure-8 Transit
+1462,24.3667,440.67,306.90,1,Fast Figure-8 Transit
+1463,24.3833,435.10,304.65,1,Fast Figure-8 Transit
+1464,24.4000,432.03,307.23,1,Fast Figure-8 Transit
+1465,24.4167,427.52,306.70,1,Fast Figure-8 Transit
+1466,24.4333,422.77,303.37,1,Fast Figure-8 Transit
+1467,24.4500,419.11,305.50,1,Fast Figure-8 Transit
+1468,24.4667,413.83,302.29,1,Fast Figure-8 Transit
+1469,24.4833,411.07,303.98,1,Fast Figure-8 Transit
+1470,24.5000,406.90,302.61,1,Fast Figure-8 Transit
+1471,24.5167,402.51,298.49,1,Fast Figure-8 Transit
+1472,24.5333,399.24,299.90,1,Fast Figure-8 Transit
+1473,24.5500,394.34,296.01,1,Fast Figure-8 Transit
+1474,24.5667,391.98,297.07,1,Fast Figure-8 Transit
+1475,24.5833,388.21,295.13,1,Fast Figure-8 Transit
+1476,24.6000,384.22,290.48,1,Fast Figure-8 Transit
+1477,24.6167,381.34,291.40,1,Fast Figure-8 Transit
+1478,24.6333,376.83,287.06,1,Fast Figure-8 Transit
+1479,24.6500,374.85,287.72,1,Fast Figure-8 Transit
+1480,24.6667,371.46,285.40,1,Fast Figure-8 Transit
+1481,24.6833,367.82,280.41,1,Fast Figure-8 Transit
+1482,24.7000,365.28,281.02,1,Fast Figure-8 Transit
+1483,24.7167,361.11,276.40,1,Fast Figure-8 Transit
+1484,24.7333,359.45,276.80,1,Fast Figure-8 Transit
+1485,24.7500,356.35,274.25,1,Fast Figure-8 Transit
+1486,24.7667,353.00,269.05,1,Fast Figure-8 Transit
+1487,24.7833,350.73,269.47,1,Fast Figure-8 Transit
+1488,24.8000,346.80,264.69,1,Fast Figure-8 Transit
+1489,24.8167,345.37,264.93,1,Fast Figure-8 Transit
+1490,24.8333,342.49,262.25,1,Fast Figure-8 Transit
+1491,24.8500,339.33,256.93,1,Fast Figure-8 Transit
+1492,24.8667,337.24,257.25,1,Fast Figure-8 Transit
+1493,24.8833,333.48,252.37,1,Fast Figure-8 Transit
+1494,24.9000,332.19,252.54,1,Fast Figure-8 Transit
+1495,24.9167,329.43,249.79,1,Fast Figure-8 Transit
+1496,24.9333,326.39,244.41,1,Fast Figure-8 Transit
+1497,24.9500,324.38,244.68,1,Fast Figure-8 Transit
+1498,24.9667,320.69,239.77,1,Fast Figure-8 Transit
+1499,24.9833,319.46,239.91,1,Fast Figure-8 Transit
+1500,25.0000,316.73,237.14,1,Fast Figure-8 Transit
+1501,25.0167,313.70,231.75,1,Fast Figure-8 Transit
+1502,25.0333,311.69,232.02,1,Fast Figure-8 Transit
+1503,25.0500,307.98,227.12,1,Fast Figure-8 Transit
+1504,25.0667,306.71,227.28,1,Fast Figure-8 Transit
+1505,25.0833,303.93,224.54,1,Fast Figure-8 Transit
+1506,25.1000,300.82,219.19,1,Fast Figure-8 Transit
+1507,25.1167,298.73,219.51,1,Fast Figure-8 Transit
+1508,25.1333,294.90,214.67,1,Fast Figure-8 Transit
+1509,25.1500,293.50,214.90,1,Fast Figure-8 Transit
+1510,25.1667,290.58,212.24,1,Fast Figure-8 Transit
+1511,25.1833,287.31,206.99,1,Fast Figure-8 Transit
+1512,25.2000,285.03,207.41,1,Fast Figure-8 Transit
+1513,25.2167,281.01,202.69,1,Fast Figure-8 Transit
+1514,25.2333,279.39,203.06,1,Fast Figure-8 Transit
+1515,25.2500,276.22,200.56,1,Fast Figure-8 Transit
+1516,25.2667,272.70,195.48,1,Fast Figure-8 Transit
+1517,25.2833,270.15,196.10,1,Fast Figure-8 Transit
+1518,25.3000,265.84,191.59,1,Fast Figure-8 Transit
+1519,25.3167,263.92,192.19,1,Fast Figure-8 Transit
+1520,25.3333,260.44,189.95,1,Fast Figure-8 Transit
+1521,25.3500,256.58,185.15,1,Fast Figure-8 Transit
+1522,25.3667,253.68,186.09,1,Fast Figure-8 Transit
+1523,25.3833,249.01,181.93,1,Fast Figure-8 Transit
+1524,25.4000,246.72,182.91,1,Fast Figure-8 Transit
+1525,25.4167,242.86,181.08,1,Fast Figure-8 Transit
+1526,25.4333,238.61,176.74,1,Fast Figure-8 Transit
+1527,25.4500,235.32,178.18,1,Fast Figure-8 Transit
+1528,25.4667,230.25,174.55,1,Fast Figure-8 Transit
+1529,25.4833,227.56,176.12,1,Fast Figure-8 Transit
+1530,25.5000,223.30,174.93,1,Fast Figure-8 Transit
+1531,25.5167,218.66,171.27,1,Fast Figure-8 Transit
+1532,25.5333,214.99,173.44,1,Fast Figure-8 Transit
+1533,25.5500,209.56,170.61,1,Fast Figure-8 Transit
+1534,25.5667,206.53,173.03,1,Fast Figure-8 Transit
+1535,25.5833,201.97,172.74,1,Fast Figure-8 Transit
+1536,25.6000,197.06,170.06,1,Fast Figure-8 Transit
+1537,25.6167,193.15,173.26,1,Fast Figure-8 Transit
+1538,25.6333,187.54,171.52,1,Fast Figure-8 Transit
+1539,25.6500,184.38,175.09,1,Fast Figure-8 Transit
+1540,25.6667,179.75,176.01,1,Fast Figure-8 Transit
+1541,25.6833,174.86,174.58,1,Fast Figure-8 Transit
+1542,25.7000,171.06,179.09,1,Fast Figure-8 Transit
+1543,25.7167,165.64,178.70,1,Fast Figure-8 Transit
+1544,25.7333,162.77,183.66,1,Fast Figure-8 Transit
+1545,25.7500,158.55,185.99,1,Fast Figure-8 Transit
+1546,25.7667,154.17,186.00,1,Fast Figure-8 Transit
+1547,25.7833,151.01,191.94,1,Fast Figure-8 Transit
+1548,25.8000,146.37,192.98,1,Fast Figure-8 Transit
+1549,25.8167,144.41,199.35,1,Fast Figure-8 Transit
+1550,25.8333,141.23,203.05,1,Fast Figure-8 Transit
+1551,25.8500,138.04,204.37,1,Fast Figure-8 Transit
+1552,25.8667,136.19,211.56,1,Fast Figure-8 Transit
+1553,25.8833,132.99,213.76,1,Fast Figure-8 Transit
+1554,25.9000,132.60,221.17,1,Fast Figure-8 Transit
+1555,25.9167,131.09,225.81,1,Fast Figure-8 Transit
+1556,25.9333,129.67,227.92,1,Fast Figure-8 Transit
+1557,25.9500,129.69,235.76,1,Fast Figure-8 Transit
+1558,25.9667,128.40,238.44,1,Fast Figure-8 Transit
+1559,25.9833,129.98,246.17,1,Fast Figure-8 Transit
+1560,26.0000,130.47,250.95,1,Fast Figure-8 Transit
+1561,26.0167,131.06,253.03,1,Fast Figure-8 Transit
+1562,26.0333,133.06,260.65,1,Fast Figure-8 Transit
+1563,26.0500,133.73,262.95,1,Fast Figure-8 Transit
+1564,26.0667,137.21,270.13,1,Fast Figure-8 Transit
+1565,26.0833,139.52,274.21,1,Fast Figure-8 Transit
+1566,26.1000,141.84,275.45,1,Fast Figure-8 Transit
+1567,26.1167,145.48,282.09,1,Fast Figure-8 Transit
+1568,26.1333,147.67,283.30,1,Fast Figure-8 Transit
+1569,26.1500,152.54,289.29,1,Fast Figure-8 Transit
+1570,26.1667,156.12,292.09,1,Fast Figure-8 Transit
+1571,26.1833,159.57,291.99,1,Fast Figure-8 Transit
+1572,26.2000,164.20,297.25,1,Fast Figure-8 Transit
+1573,26.2167,167.25,297.04,1,Fast Figure-8 Transit
+1574,26.2333,172.85,301.60,1,Fast Figure-8 Transit
+1575,26.2500,177.02,302.96,1,Fast Figure-8 Transit
+1576,26.2667,180.95,301.43,1,Fast Figure-8 Transit
+1577,26.2833,185.94,305.29,1,Fast Figure-8 Transit
+1578,26.3000,189.24,303.70,1,Fast Figure-8 Transit
+1579,26.3167,194.99,306.92,1,Fast Figure-8 Transit
+1580,26.3333,199.23,307.00,1,Fast Figure-8 Transit
+1581,26.3500,203.14,304.23,1,Fast Figure-8 Transit
+1582,26.3667,208.04,306.90,1,Fast Figure-8 Transit
+1583,26.3833,211.20,304.19,1,Fast Figure-8 Transit
+1584,26.4000,216.75,306.34,1,Fast Figure-8 Transit
+1585,26.4167,220.74,305.41,1,Fast Figure-8 Transit
+1586,26.4333,224.36,301.70,1,Fast Figure-8 Transit
+1587,26.4500,228.94,303.48,1,Fast Figure-8 Transit
+1588,26.4667,231.75,299.94,1,Fast Figure-8 Transit
+1589,26.4833,236.93,301.32,1,Fast Figure-8 Transit
+1590,26.5000,240.54,299.67,1,Fast Figure-8 Transit
+1591,26.5167,243.77,295.29,1,Fast Figure-8 Transit
+1592,26.5333,247.95,296.46,1,Fast Figure-8 Transit
+1593,26.5500,250.36,292.35,1,Fast Figure-8 Transit
+1594,26.5667,255.14,293.21,1,Fast Figure-8 Transit
+1595,26.5833,258.36,291.09,1,Fast Figure-8 Transit
+1596,26.6000,261.20,286.27,1,Fast Figure-8 Transit
+1597,26.6167,265.01,287.03,1,Fast Figure-8 Transit
+1598,26.6333,267.05,282.56,1,Fast Figure-8 Transit
+1599,26.6500,271.48,283.08,1,Fast Figure-8 Transit
+1600,26.6667,274.35,280.65,1,Fast Figure-8 Transit
+1601,26.6833,276.87,275.55,1,Fast Figure-8 Transit
+1602,26.7000,280.36,276.07,1,Fast Figure-8 Transit
+1603,26.7167,282.10,271.37,1,Fast Figure-8 Transit
+1604,26.7333,286.25,271.69,1,Fast Figure-8 Transit
+1605,26.7500,288.86,269.07,1,Fast Figure-8 Transit
+1606,26.7667,291.13,263.81,1,Fast Figure-8 Transit
+1607,26.7833,294.39,264.18,1,Fast Figure-8 Transit
+1608,26.8000,295.92,259.34,1,Fast Figure-8 Transit
+1609,26.8167,299.88,259.55,1,Fast Figure-8 Transit
+1610,26.8333,302.31,256.83,1,Fast Figure-8 Transit
+1611,26.8500,304.42,251.48,1,Fast Figure-8 Transit
+1612,26.8667,307.55,251.77,1,Fast Figure-8 Transit
+1613,26.8833,308.96,246.87,1,Fast Figure-8 Transit
+1614,26.9000,312.81,247.02,1,Fast Figure-8 Transit
+1615,26.9167,315.16,244.25,1,Fast Figure-8 Transit
+1616,26.9333,317.20,238.87,1,Fast Figure-8 Transit
+1617,26.9500,320.28,239.13,1,Fast Figure-8 Transit
+1618,26.9667,321.66,234.22,1,Fast Figure-8 Transit
+1619,26.9833,325.49,234.36,1,Fast Figure-8 Transit
+1620,27.0000,327.85,231.60,1,Fast Figure-8 Transit
+1621,27.0167,329.92,226.22,1,Fast Figure-8 Transit
+1622,27.0333,333.03,226.51,1,Fast Figure-8 Transit
+1623,27.0500,334.47,221.63,1,Fast Figure-8 Transit
+1624,27.0667,338.39,221.81,1,Fast Figure-8 Transit
+1625,27.0833,340.84,219.10,1,Fast Figure-8 Transit
+1626,27.1000,343.02,213.78,1,Fast Figure-8 Transit
+1627,27.1167,346.26,214.14,1,Fast Figure-8 Transit
+1628,27.1333,347.85,209.34,1,Fast Figure-8 Transit
+1629,27.1500,351.93,209.62,1,Fast Figure-8 Transit
+1630,27.1667,354.57,207.02,1,Fast Figure-8 Transit
+1631,27.1833,356.95,201.83,1,Fast Figure-8 Transit
+1632,27.2000,360.42,202.33,1,Fast Figure-8 Transit
+1633,27.2167,362.25,197.69,1,Fast Figure-8 Transit
+1634,27.2333,366.59,198.15,1,Fast Figure-8 Transit
+1635,27.2500,369.50,195.74,1,Fast Figure-8 Transit
+1636,27.2667,372.17,190.77,1,Fast Figure-8 Transit
+1637,27.2833,375.95,191.51,1,Fast Figure-8 Transit
+1638,27.3000,378.10,187.13,1,Fast Figure-8 Transit
+1639,27.3167,382.78,187.88,1,Fast Figure-8 Transit
+1640,27.3333,386.04,185.80,1,Fast Figure-8 Transit
+1641,27.3500,389.07,181.18,1,Fast Figure-8 Transit
+1642,27.3667,393.22,182.31,1,Fast Figure-8 Transit
+1643,27.3833,395.76,178.35,1,Fast Figure-8 Transit
+1644,27.4000,400.82,179.57,1,Fast Figure-8 Transit
+1645,27.4167,404.48,177.98,1,Fast Figure-8 Transit
+1646,27.4333,407.91,173.91,1,Fast Figure-8 Transit
+1647,27.4500,412.46,175.63,1,Fast Figure-8 Transit
+1648,27.4667,415.39,172.32,1,Fast Figure-8 Transit
+1649,27.4833,420.84,174.23,1,Fast Figure-8 Transit
+1650,27.5000,424.87,173.40,1,Fast Figure-8 Transit
+1651,27.5167,428.66,170.13,1,Fast Figure-8 Transit
+1652,27.5333,433.55,172.71,1,Fast Figure-8 Transit
+1653,27.5500,436.78,170.32,1,Fast Figure-8 Transit
+1654,27.5667,442.50,173.21,1,Fast Figure-8 Transit
+1655,27.5833,446.75,173.42,1,Fast Figure-8 Transit
+1656,27.6000,450.72,171.25,1,Fast Figure-8 Transit
+1657,27.6167,455.71,174.99,1,Fast Figure-8 Transit
+1658,27.6333,458.99,173.82,1,Fast Figure-8 Transit
+1659,27.6500,464.68,177.98,1,Fast Figure-8 Transit
+1660,27.6667,468.82,179.50,1,Fast Figure-8 Transit
+1661,27.6833,472.57,178.70,1,Fast Figure-8 Transit
+1662,27.7000,477.26,183.83,1,Fast Figure-8 Transit
+1663,27.7167,480.11,184.08,1,Fast Figure-8 Transit
+1664,27.7333,485.26,189.67,1,Fast Figure-8 Transit
+1665,27.7500,488.73,192.63,1,Fast Figure-8 Transit
+1666,27.7667,491.68,193.25,1,Fast Figure-8 Transit
+1667,27.7833,495.43,199.79,1,Fast Figure-8 Transit
+1668,27.8000,497.21,201.39,1,Fast Figure-8 Transit
+1669,27.8167,501.15,208.28,1,Fast Figure-8 Transit
+1670,27.8333,503.28,212.48,1,Fast Figure-8 Transit
+1671,27.8500,504.77,214.23,1,Fast Figure-8 Transit
+1672,27.8667,506.93,221.80,1,Fast Figure-8 Transit
+1673,27.8833,507.02,224.31,1,Fast Figure-8 Transit
+1674,27.9000,509.17,231.97,1,Fast Figure-8 Transit
+1675,27.9167,509.43,236.77,1,Fast Figure-8 Transit
+1676,27.9333,508.98,238.98,1,Fast Figure-8 Transit
+1677,27.9500,509.17,246.84,1,Fast Figure-8 Transit
+1678,27.9667,507.25,249.45,1,Fast Figure-8 Transit
+1679,27.9833,507.40,257.05,1,Fast Figure-8 Transit
+1680,28.0000,505.68,261.61,1,Fast Figure-8 Transit
+1681,28.0167,503.29,263.41,1,Fast Figure-8 Transit
+1682,28.0333,501.59,270.68,1,Fast Figure-8 Transit
+1683,28.0500,497.87,272.57,1,Fast Figure-8 Transit
+1684,28.0667,496.30,279.29,1,Fast Figure-8 Transit
+1685,28.0833,492.96,282.85,1,Fast Figure-8 Transit
+1686,28.1000,489.08,283.53,1,Fast Figure-8 Transit
+1687,28.1167,486.01,289.60,1,Fast Figure-8 Transit
+1688,28.1333,481.04,290.20,1,Fast Figure-8 Transit
+1689,28.1500,478.37,295.57,1,Fast Figure-8 Transit
+1690,28.1667,474.07,297.74,1,Fast Figure-8 Transit
+1691,28.1833,469.35,297.00,1,Fast Figure-8 Transit
+1692,28.2000,465.58,301.63,1,Fast Figure-8 Transit
+1693,28.2167,460.04,300.80,1,Fast Figure-8 Transit
+1694,28.2333,456.92,304.74,1,Fast Figure-8 Transit
+1695,28.2500,452.28,305.51,1,Fast Figure-8 Transit
+1696,28.2667,447.32,303.41,1,Fast Figure-8 Transit
+1697,28.2833,443.41,306.71,1,Fast Figure-8 Transit
+1698,28.3000,437.83,304.59,1,Fast Figure-8 Transit
+1699,28.3167,434.73,307.31,1,Fast Figure-8 Transit
+1700,28.3333,430.19,306.91,1,Fast Figure-8 Transit
+1701,28.3500,425.40,303.69,1,Fast Figure-8 Transit
+1702,28.3667,421.70,305.93,1,Fast Figure-8 Transit
+1703,28.3833,416.38,302.82,1,Fast Figure-8 Transit
+1704,28.4000,413.57,304.60,1,Fast Figure-8 Transit
+1705,28.4167,409.36,303.33,1,Fast Figure-8 Transit
+1706,28.4333,404.92,299.29,1,Fast Figure-8 Transit
+1707,28.4500,401.59,300.77,1,Fast Figure-8 Transit
+1708,28.4667,396.65,296.95,1,Fast Figure-8 Transit
+1709,28.4833,394.24,298.08,1,Fast Figure-8 Transit
+1710,28.5000,390.42,296.20,1,Fast Figure-8 Transit
+1711,28.5167,386.38,291.60,1,Fast Figure-8 Transit
+1712,28.5333,383.45,292.57,1,Fast Figure-8 Transit
+1713,28.5500,378.90,288.28,1,Fast Figure-8 Transit
+1714,28.5667,376.88,288.97,1,Fast Figure-8 Transit
+1715,28.5833,373.43,286.69,1,Fast Figure-8 Transit
+1716,28.6000,369.76,281.74,1,Fast Figure-8 Transit
+1717,28.6167,367.18,282.38,1,Fast Figure-8 Transit
+1718,28.6333,362.97,277.79,1,Fast Figure-8 Transit
+1719,28.6500,361.27,278.21,1,Fast Figure-8 Transit
+1720,28.6667,358.14,275.69,1,Fast Figure-8 Transit
+1721,28.6833,354.76,270.51,1,Fast Figure-8 Transit
+1722,28.7000,352.46,270.95,1,Fast Figure-8 Transit
+1723,28.7167,348.51,266.18,1,Fast Figure-8 Transit
+1724,28.7333,347.06,266.44,1,Fast Figure-8 Transit
+1725,28.7500,344.15,263.77,1,Fast Figure-8 Transit
+1726,28.7667,340.98,258.46,1,Fast Figure-8 Transit
+1727,28.7833,338.87,258.79,1,Fast Figure-8 Transit
+1728,28.8000,335.09,253.92,1,Fast Figure-8 Transit
+1729,28.8167,333.79,254.09,1,Fast Figure-8 Transit
+1730,28.8333,331.02,251.34,1,Fast Figure-8 Transit
+1731,28.8500,327.97,245.97,1,Fast Figure-8 Transit
+1732,28.8667,325.96,246.25,1,Fast Figure-8 Transit
+1733,28.8833,322.26,241.33,1,Fast Figure-8 Transit
+1734,28.9000,321.02,241.48,1,Fast Figure-8 Transit
+1735,28.9167,318.30,238.71,1,Fast Figure-8 Transit
+1736,28.9333,315.27,233.32,1,Fast Figure-8 Transit
+1737,28.9500,313.27,233.59,1,Fast Figure-8 Transit
+1738,28.9667,309.57,228.68,1,Fast Figure-8 Transit
+1739,28.9833,308.30,228.84,1,Fast Figure-8 Transit
+1740,29.0000,305.53,226.09,1,Fast Figure-8 Transit
+1741,29.0167,302.44,220.74,1,Fast Figure-8 Transit
+1742,29.0333,300.36,221.05,1,Fast Figure-8 Transit
+1743,29.0500,296.56,216.19,1,Fast Figure-8 Transit
+1744,29.0667,295.18,216.41,1,Fast Figure-8 Transit
+1745,29.0833,292.28,213.74,1,Fast Figure-8 Transit
+1746,29.1000,289.03,208.47,1,Fast Figure-8 Transit
+1747,29.1167,286.78,208.88,1,Fast Figure-8 Transit
+1748,29.1333,282.79,204.14,1,Fast Figure-8 Transit
+1749,29.1500,281.20,204.48,1,Fast Figure-8 Transit
+1750,29.1667,278.07,201.96,1,Fast Figure-8 Transit
+1751,29.1833,274.58,196.85,1,Fast Figure-8 Transit
+1752,29.2000,272.07,197.44,1,Fast Figure-8 Transit
+1753,29.2167,267.80,192.90,1,Fast Figure-8 Transit
+1754,29.2333,265.92,193.46,1,Fast Figure-8 Transit
+1755,29.2500,262.48,191.18,1,Fast Figure-8 Transit
+1756,29.2667,258.67,186.35,1,Fast Figure-8 Transit
+1757,29.2833,255.82,187.23,1,Fast Figure-8 Transit
+1758,29.3000,251.20,183.02,1,Fast Figure-8 Transit
+1759,29.3167,248.95,183.95,1,Fast Figure-8 Transit
+1760,29.3333,245.14,182.06,1,Fast Figure-8 Transit
+1761,29.3500,240.94,177.65,1,Fast Figure-8 Transit
+1762,29.3667,237.70,179.01,1,Fast Figure-8 Transit
+1763,29.3833,232.68,175.30,1,Fast Figure-8 Transit
+1764,29.4000,230.04,176.79,1,Fast Figure-8 Transit
+1765,29.4167,225.82,175.50,1,Fast Figure-8 Transit
+1766,29.4333,221.23,171.75,1,Fast Figure-8 Transit
+1767,29.4500,217.61,173.81,1,Fast Figure-8 Transit
+1768,29.4667,212.22,170.86,1,Fast Figure-8 Transit
+1769,29.4833,209.22,173.16,1,Fast Figure-8 Transit
+1770,29.5000,204.68,172.75,1,Fast Figure-8 Transit
+1771,29.5167,199.79,169.93,1,Fast Figure-8 Transit
+1772,29.5333,195.91,172.98,1,Fast Figure-8 Transit
+1773,29.5500,190.30,171.09,1,Fast Figure-8 Transit
+1774,29.5667,187.14,174.50,1,Fast Figure-8 Transit
+1775,29.5833,182.50,175.26,1,Fast Figure-8 Transit
+1776,29.6000,177.58,173.66,1,Fast Figure-8 Transit
+1777,29.6167,173.74,178.00,1,Fast Figure-8 Transit
+1778,29.6333,168.27,177.43,1,Fast Figure-8 Transit
+1779,29.6500,165.34,182.21,1,Fast Figure-8 Transit
+1780,29.6667,161.03,184.36,1,Fast Figure-8 Transit
+1781,29.6833,156.56,184.19,1,Fast Figure-8 Transit
+1782,29.7000,153.28,189.96,1,Fast Figure-8 Transit
+1783,29.7167,148.50,190.83,1,Fast Figure-8 Transit
+1784,29.7333,146.40,197.03,1,Fast Figure-8 Transit
+1785,29.7500,143.05,200.58,1,Fast Figure-8 Transit
+1786,29.7667,139.67,201.76,1,Fast Figure-8 Transit
+1787,29.7833,137.63,208.82,1,Fast Figure-8 Transit
+1788,29.8000,134.22,210.90,1,Fast Figure-8 Transit
+1789,29.8167,133.60,218.22,1,Fast Figure-8 Transit
+1790,29.8333,131.86,222.78,1,Fast Figure-8 Transit
+1791,29.8500,130.20,224.83,1,Fast Figure-8 Transit
+1792,29.8667,129.97,232.63,1,Fast Figure-8 Transit
+1793,29.8833,128.43,235.30,1,Fast Figure-8 Transit
+1794,29.9000,129.76,243.04,1,Fast Figure-8 Transit
+1795,29.9167,130.00,247.85,1,Fast Figure-8 Transit
+1796,29.9333,130.34,249.98,1,Fast Figure-8 Transit
+1797,29.9500,132.11,257.68,1,Fast Figure-8 Transit
+1798,29.9667,132.55,260.07,1,Fast Figure-8 Transit
+1799,29.9833,135.82,267.36,1,Fast Figure-8 Transit

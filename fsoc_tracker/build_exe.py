@@ -25,14 +25,26 @@ def build():
         subprocess.check_call([sys.executable, "-m", "pip", "install", "pyinstaller"])
 
     project_root = Path(__file__).resolve().parent
-    main_script = project_root / "src" / "fsoc" / "cli" / "main.py"
+    main_script = project_root / "launcher.py"
     config_dir = project_root / "configs"
+    src_dir = project_root / "src"
     
     # Separator for PyInstaller --add-data (';' on Windows, ':' on Unix)
     sep = ";" if sys.platform == "win32" else ":"
 
     models_dir = project_root / "models"
     web_dist_dir = project_root / "web_dist"
+
+    # Copy latest web/dist build to web_dist if present
+    source_web_dist = project_root.parent / "web" / "dist"
+    if not source_web_dist.exists():
+        source_web_dist = project_root / "web" / "dist"
+    if source_web_dist.exists():
+        import shutil
+        if web_dist_dir.exists():
+            shutil.rmtree(web_dist_dir)
+        shutil.copytree(source_web_dist, web_dist_dir)
+        print(f"[FSOC Tracker] Synced latest 3D web UI build from {source_web_dist} -> {web_dist_dir}")
 
     cmd = [
         sys.executable,
@@ -45,10 +57,12 @@ def build():
         f"--add-data={config_dir}{sep}configs",
         f"--add-data={models_dir}{sep}models",
         f"--add-data={web_dist_dir}{sep}web_dist",
+        f"--add-data={src_dir}{sep}src",
         "--hidden-import=webview",
         "--hidden-import=bottle",
         "--hidden-import=pythonnet",
-        f"--paths={project_root / 'src'}",
+        "--hidden-import=clr",
+        f"--paths={src_dir}",
         str(main_script),
     ]
 
