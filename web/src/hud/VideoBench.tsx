@@ -504,32 +504,6 @@ export function VideoBench() {
     }
   }
 
-  const loadPresetVideo = async (videoUrl: string, truthUrl: string, name: string) => {
-    try {
-      setBusy(true);
-      notify(`Loading ${name}...`);
-      const vResp = await fetch(videoUrl);
-      if (!vResp.ok) throw new Error(`Could not load ${videoUrl} (status ${vResp.status})`);
-      const vBlob = await vResp.blob();
-      const f = new File([vBlob], videoUrl.split('/').pop() || 'test_video.mp4', { type: 'video/mp4' });
-      setFile(f);
-
-      if (truthUrl) {
-        const tResp = await fetch(truthUrl);
-        if (tResp.ok) {
-          const tText = await tResp.text();
-          setTruthText(tText);
-          setTruthName(truthUrl.split('/').pop() || 'truth.csv');
-        }
-      }
-      notify(`${name} loaded! Click 'Analyse video' to run tracking.`);
-    } catch (e) {
-      notify(`Failed to load preset video: ${(e as Error).message}`);
-    } finally {
-      setBusy(false);
-    }
-  };
-
   async function runServer() {
     if (!file) return;
     setIsPlaying(false);
@@ -655,63 +629,9 @@ export function VideoBench() {
               onChange={setSource}
             />
 
-            <div className="eyebrow" style={{ margin: '12px 0 6px' }}>
-              Quick Presets (ISRO 5-Tier Test Suite)
-            </div>
-            <div className="row wrap" style={{ gap: 6, marginBottom: 10 }}>
-              <button
-                className="btn xs ghost"
-                disabled={busy}
-                onClick={() => loadPresetVideo('/test_videos/tier1_clean_90pct.mp4', '/test_videos/tier1_clean_90pct_truth.csv', 'Tier 1 (90% Clean)')}
-                title="Tier 1: 90% Clean, pristine sky, high SNR"
-              >
-                Tier 1 (90%)
-              </button>
-              <button
-                className="btn xs ghost"
-                disabled={busy}
-                onClick={() => loadPresetVideo('/test_videos/tier2_mild_70pct.mp4', '/test_videos/tier2_mild_70pct_truth.csv', 'Tier 2 (70% Mild)')}
-                title="Tier 2: 70% Mild haze, slight vibration"
-              >
-                Tier 2 (70%)
-              </button>
-              <button
-                className="btn xs ghost"
-                disabled={busy}
-                onClick={() => loadPresetVideo('/test_videos/tier3_moderate_50pct.mp4', '/test_videos/tier3_moderate_50pct_truth.csv', 'Tier 3 (50% Fog)')}
-                title="Tier 3: 50% Moderate fog & scintillation"
-              >
-                Tier 3 (50%)
-              </button>
-              <button
-                className="btn xs ghost"
-                disabled={busy}
-                onClick={() => loadPresetVideo('/test_videos/tier4_degraded_30pct.mp4', '/test_videos/tier4_degraded_30pct_truth.csv', 'Tier 4 (30% Rain)')}
-                title="Tier 4: 30% Rain streaks & platform drift"
-              >
-                Tier 4 (30%)
-              </button>
-              <button
-                className="btn xs ghost"
-                disabled={busy}
-                onClick={() => loadPresetVideo('/test_videos/tier5_extreme_10pct.mp4', '/test_videos/tier5_extreme_10pct_truth.csv', 'Tier 5 (10% Extreme)')}
-                title="Tier 5: 10% Heavy noise, jitter & dropouts"
-              >
-                Tier 5 (10%)
-              </button>
-              <button
-                className="btn xs ghost"
-                disabled={busy}
-                onClick={() => loadPresetVideo('/fsoc_test_video_30s_60fps.mp4', '/fsoc_test_video_30s_60fps_truth.csv', '30s Benchmark Baseline')}
-                title="Original 30s 60fps Benchmark Video"
-              >
-                30s Baseline
-              </button>
-            </div>
-
-            <div className="row" style={{ marginTop: 6 }}>
+            <div className="row" style={{ marginTop: 12 }}>
               <button className="btn sm" onClick={() => vidIn.current?.click()} disabled={busy}>
-                <Icon name="film" size={14} /> {file ? 'Change custom video' : 'Choose custom video (.mp4)'}
+                <Icon name="film" size={14} /> {file ? 'Change video' : 'Choose video (.mp4)'}
               </button>
               <button className="btn sm" onClick={() => truthIn.current?.click()} disabled={busy}>
                 <Icon name="upload" size={14} /> {truthText ? 'Change truth CSV' : 'Ground truth CSV (optional)'}
