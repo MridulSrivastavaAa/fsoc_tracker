@@ -60,6 +60,8 @@ class SimulatedSource(FrameSource):
         self._t: float = 0.0
         self._dt = cfg.pipeline.dt
         self._max_frames: int = int(cfg.pipeline.duration_s * cfg.pipeline.fps)
+        self.visible: bool = True
+        self.occlusion_intervals: list[tuple[float, float]] = []
 
     # ------------------------------------------------------------------
     # FrameSource interface
@@ -73,17 +75,22 @@ class SimulatedSource(FrameSource):
         # Query motion model for beacon world position
         bx, by = self._motion.position(self._t)
 
-        # Fresh copy of background (do not accumulate beacon across frames)
+        # Copy background so frame instances are independent
         canvas = self._background.copy()
 
-        # Render beacon onto canvas
-        self._target.render_onto(canvas, bx, by)
+        # Check occlusion intervals
+        is_occluded = any(t_start <= self._t <= t_end for t_start, t_end in self.occlusion_intervals)
+        is_visible = self.visible and not is_occluded
+
+        # Render beacon onto canvas if visible
+        if is_visible:
+            self._target.render_onto(canvas, bx, by)
 
         frame = FullFrame(
             image=canvas,
             frame_index=self._frame_index,
             timestamp_s=self._t,
-            ground_truth=[Point(bx, by)],
+            ground_truth=[Point(bx, by)] if is_visible else [],
         )
 
         self._frame_index += 1

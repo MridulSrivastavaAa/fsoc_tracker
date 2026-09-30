@@ -1,0 +1,162 @@
+{
+  "Scene Generation (2000x2000)": {
+    "mean_ms": 1.5884,
+    "median_ms": 1.5116,
+    "p95_ms": 2.4785,
+    "p99_ms": 3.032,
+    "max_ms": 3.3399,
+    "fps": 629.55
+  },
+  "Camera Viewport Crop (640x480)": {
+    "mean_ms": 0.5398,
+    "median_ms": 0.3544,
+    "p95_ms": 0.5354,
+    "p99_ms": 1.9747,
+    "max_ms": 22.6731,
+    "fps": 1852.66
+  },
+  "Disturbances - Fog (Atmosphere)": {
+    "mean_ms": 3.4356,
+    "median_ms": 3.2176,
+    "p95_ms": 5.2164,
+    "p99_ms": 6.1438,
+    "max_ms": 7.1482,
+    "fps": 291.07
+  },
+  "Disturbances - Jitter": {
+    "mean_ms": 0.6858,
+    "median_ms": 0.5406,
+    "p95_ms": 1.5102,
+    "p99_ms": 2.9702,
+    "max_ms": 3.3913,
+    "fps": 1458.14
+  },
+  "Disturbances - Salt & Pepper": {
+    "mean_ms": 0.3766,
+    "median_ms": 0.338,
+    "p95_ms": 0.6356,
+    "p99_ms": 0.8243,
+    "max_ms": 1.0836,
+    "fps": 2655.41
+  },
+  "Disturbances - Gaussian Noise": {
+    "mean_ms": 3.4951,
+    "median_ms": 3.0954,
+    "p95_ms": 5.5903,
+    "p99_ms": 6.6437,
+    "max_ms": 7.1243,
+    "fps": 286.11
+  },
+  "Disturbances - Poisson Noise": {
+    "mean_ms": 27.2205,
+    "median_ms": 25.2439,
+    "p95_ms": 38.0599,
+    "p99_ms": 40.3898,
+    "max_ms": 68.9355,
+    "fps": 36.74
+  },
+  "Disturbances - Combined Viewport": {
+    "mean_ms": 35.1539,
+    "median_ms": 33.465,
+    "p95_ms": 45.8283,
+    "p99_ms": 49.9543,
+    "max_ms": 59.5355,
+    "fps": 28.45
+  },
+  "Vision - Preprocessing (Median+TopHat+MAD)": {
+    "mean_ms": 7.784,
+    "median_ms": 6.8556,
+    "p95_ms": 13.0324,
+    "p99_ms": 15.2121,
+    "max_ms": 17.9968,
+    "fps": 128.47
+  },
+  "Vision - Spot Detection": {
+    "mean_ms": 19.1477,
+    "median_ms": 17.4228,
+    "p95_ms": 31.5636,
+    "p99_ms": 36.732,
+    "max_ms": 39.6357,
+    "fps": 52.23
+  },
+  "Vision - CNN Verification": {
+    "mean_ms": 24.504,
+    "median_ms": 22.8505,
+    "p95_ms": 39.1265,
+    "p99_ms": 47.6615,
+    "max_ms": 48.0275,
+    "fps": 40.81
+  },
+  "Vision - Local LK Optical Flow": {
+    "mean_ms": 3.7472,
+    "median_ms": 3.5872,
+    "p95_ms": 4.5244,
+    "p99_ms": 6.5638,
+    "max_ms": 7.2707,
+    "fps": 266.87
+  },
+  "Tracking - Adaptive Flow Gating": {
+    "mean_ms": 0.0451,
+    "median_ms": 0.0492,
+    "p95_ms": 0.0568,
+    "p99_ms": 0.067,
+    "max_ms": 0.1104,
+    "fps": 22172.3
+  },
+  "Tracking - IMM Predict": {
+    "mean_ms": 0.1636,
+    "median_ms": 0.1564,
+    "p95_ms": 0.1873,
+    "p99_ms": 0.2833,
+    "max_ms": 0.3513,
+    "fps": 6114.29
+  },
+  "Tracking - IMM Update/Coast": {
+    "mean_ms": 0.2403,
+    "median_ms": 0.3043,
+    "p95_ms": 0.3643,
+    "p99_ms": 0.5508,
+    "max_ms": 0.6367,
+    "fps": 4161.62
+  },
+  "Tracking - Particle Filter (Dormant TRACK)": {
+    "mean_ms": 0.0023,
+    "median_ms": 0.0022,
+    "p95_ms": 0.0024,
+    "p99_ms": 0.0054,
+    "max_ms": 0.0084,
+    "fps": 436555.84
+  },
+  "Tracking - Particle Filter (Active N=150)": {
+    "mean_ms": 0.1464,
+    "median_ms": 0.1164,
+    "p95_ms": 0.2822,
+    "p99_ms": 0.2989,
+    "max_ms": 0.4823,
+    "fps": 6830.6
+  },
+  "Control - Predictive PID": {
+    "mean_ms": 0.022,
+    "median_ms": 0.0214,
+    "p95_ms": 0.0224,
+    "p99_ms": 0.0344,
+    "max_ms": 0.0559,
+    "fps": 45413.25
+  },
+  "Complete Closed-Loop Step (Nominal)": {
+    "mean_ms": 15.6945,
+    "median_ms": 15.0392,
+    "p95_ms": 20.6715,
+    "p99_ms": 22.3643,
+    "max_ms": 45.6814,
+    "fps": 63.72
+  },
+  "Complete Closed-Loop Step (Combined Stress)": {
+    "mean_ms": 45.9085,
+    "median_ms": 44.8364,
+    "p95_ms": 58.1054,
+    "p99_ms": 65.0124,
+    "max_ms": 67.1787,
+    "fps": 21.78
+  }
+}

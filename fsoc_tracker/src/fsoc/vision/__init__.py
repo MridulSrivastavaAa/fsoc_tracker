@@ -17,6 +17,7 @@ from .preprocess import (
 from .detector import SpotDetector
 from .wide_search import WideAreaSearch
 from .cnn_verifier import BeaconVerifierCNN
+from .optical_flow import OpticalFlowTracker
 
 __all__ = [
     "AdaptiveMedianFilter",
@@ -26,4 +27,5 @@ __all__ = [
     "SpotDetector",
     "WideAreaSearch",
     "BeaconVerifierCNN",
+    "OpticalFlowTracker",
 ]

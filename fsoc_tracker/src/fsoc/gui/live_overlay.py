@@ -117,10 +117,14 @@ class HUDOverlayRenderer:
         fps: float,
         latency_ms: float,
         confidence: float,
+        prob_cv: float = 0.0,
+        prob_ct: float = 0.0,
+        prob_rw: float = 0.0,
+        dominant_model: str = "CV",
     ) -> None:
         """Draw right-hand semi-transparent telemetry data block."""
-        x0, y0 = self.res_x - 180, 15
-        w_box, h_box = 165, 135
+        x0, y0 = self.res_x - 195, 15
+        w_box, h_box = 180, 160
 
         # Background card
         sub = img[y0:y0 + h_box, x0:x0 + w_box]
@@ -129,19 +133,23 @@ class HUDOverlayRenderer:
         cv2.rectangle(img, (x0, y0), (x0 + w_box, y0 + h_box), (60, 70, 80), 1)
 
         err_str = f"{error_px:.2f} px" if error_px is not None else "-- px"
+        imm_str = f"CV:{prob_cv*100:.0f}% CT:{prob_ct*100:.0f}% RW:{prob_rw*100:.0f}%"
+
         lines = [
             ("TELEMETRY", COLOR_CYAN, 0.45, 1),
-            (f"PAN:  {pan_deg:+6.2f} deg", COLOR_TEXT, 0.4, 1),
-            (f"TILT: {tilt_deg:+6.2f} deg", COLOR_TEXT, 0.4, 1),
-            (f"ERR:  {err_str}", COLOR_GREEN if (error_px or 0) <= 10.0 else COLOR_RED, 0.4, 1),
-            (f"CONF: {confidence * 100:.1f} %", COLOR_TEXT, 0.4, 1),
-            (f"FPS:  {fps:5.1f} ({latency_ms:.1f}ms)", COLOR_TEXT, 0.4, 1),
+            (f"PAN:  {pan_deg:+6.2f} deg", COLOR_TEXT, 0.38, 1),
+            (f"TILT: {tilt_deg:+6.2f} deg", COLOR_TEXT, 0.38, 1),
+            (f"ERR:  {err_str}", COLOR_GREEN if (error_px or 0) <= 10.0 else COLOR_RED, 0.38, 1),
+            (f"CONF: {confidence * 100:.1f} %", COLOR_TEXT, 0.38, 1),
+            (f"FPS:  {fps:5.1f} ({latency_ms:.1f}ms)", COLOR_TEXT, 0.38, 1),
+            (f"IMM:  {dominant_model}", COLOR_AMBER if dominant_model == "CT" else (COLOR_PURPLE if dominant_model == "RW" else COLOR_CYAN), 0.38, 1),
+            (imm_str, COLOR_MUTED, 0.34, 1),
         ]
 
-        cur_y = y0 + 18
+        cur_y = y0 + 16
         for text, col, scale, thick in lines:
             cv2.putText(img, text, (x0 + 8, cur_y), cv2.FONT_HERSHEY_SIMPLEX, scale, col, thick, cv2.LINE_AA)
-            cur_y += 20
+            cur_y += 18
 
     def draw_minimap(
         self,
@@ -230,6 +238,10 @@ class HUDOverlayRenderer:
             fps=fps,
             latency_ms=metrics.proc_ms,
             confidence=metrics.confidence,
+            prob_cv=metrics.prob_cv,
+            prob_ct=metrics.prob_ct,
+            prob_rw=metrics.prob_rw,
+            dominant_model=metrics.dominant_model,
         )
 
         # 5. Radar Minimap

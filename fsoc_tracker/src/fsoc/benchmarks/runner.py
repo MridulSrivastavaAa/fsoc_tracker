@@ -25,7 +25,9 @@ from ..video.video_source import VideoFileSource
 from ..vision.preprocess import VisionPreprocessor
 from ..vision.detector import SpotDetector
 from ..vision.cnn_verifier import BeaconVerifierCNN
+from ..vision.optical_flow import OpticalFlowTracker
 from ..tracking.kalman import KalmanTracker
+from ..tracking.imm import IMMTracker
 from ..tracking.state_machine import TrackingStateMachine
 from ..core.types import FrameMetrics
 from .metrics import MetricsEvaluator, ScenarioKPIs
@@ -148,7 +150,12 @@ class BenchmarkRunner:
         preprocessor = VisionPreprocessor(cfg)
         detector = SpotDetector(cfg, preprocessor=preprocessor)
         verifier = BeaconVerifierCNN(cfg)
-        kalman = KalmanTracker(cfg, dt=1.0 / source.fps)
+        optical_flow = OpticalFlowTracker(cfg.vision.optical_flow, dt=1.0 / source.fps)
+        tracker = (
+            KalmanTracker(cfg, dt=1.0 / source.fps)
+            if cfg.tracking.tracker_type == "kalman"
+            else IMMTracker(cfg, dt=1.0 / source.fps)
+        )
         sm = TrackingStateMachine(cfg)
 
         metrics_history: list[FrameMetrics] = []
@@ -164,17 +171,25 @@ class BenchmarkRunner:
             img = full_frame.image
             # Viewport bypass: image is processed directly
             clean_img, mask, _ = preprocessor.process(img)
-            kalman.predict()
+            pred_x, pred_y = tracker.predict()
 
             candidates = detector.detect(img, mask=mask, intensity_image=clean_img)
             verified = verifier.verify_detections(img, candidates)
-            best_det = kalman.select_best_detection(verified)
+            best_det = tracker.select_best_detection(verified)
+
+            hint_pt = (best_det.x, best_det.y) if best_det is not None else (pred_x, pred_y)
+            flow_res = optical_flow.estimate_flow(
+                curr_img=img,
+                curr_pan_deg=0.0,
+                curr_tilt_deg=0.0,
+                hint_pos=hint_pt,
+            )
 
             if best_det is not None:
-                track = kalman.update(best_det.x, best_det.y, score=best_det.score)
+                track = tracker.update(best_det.x, best_det.y, score=best_det.score, flow=flow_res)
                 sm.step(True, full_frame.timestamp_s)
             else:
-                track = kalman.coast()
+                track = tracker.coast(flow=flow_res)
                 sm.step(False, full_frame.timestamp_s)
 
             proc_ms = (time.perf_counter() - t0) * 1000.0
@@ -193,6 +208,22 @@ class BenchmarkRunner:
                 proc_ms=proc_ms,
                 pan_deg=0.0,
                 tilt_deg=0.0,
+                prob_cv=track.prob_cv,
+                prob_ct=track.prob_ct,
+                prob_rw=track.prob_rw,
+                dominant_model=track.dominant_model,
+                flow_valid=track.flow_valid,
+                flow_dx=track.flow_dx,
+                flow_dy=track.flow_dy,
+                flow_speed=track.flow_speed,
+                flow_confidence=track.flow_confidence,
+                flow_feature_count=track.flow_feature_count,
+                flow_fb_error=track.flow_fb_error,
+                flow_weight=track.flow_weight,
+                flow_quality=track.flow_quality,
+                flow_innovation=track.flow_innovation,
+                jitter_score=track.jitter_score,
+                flow_gate_reason=track.flow_gate_reason,
             )
             metrics_history.append(m)
 

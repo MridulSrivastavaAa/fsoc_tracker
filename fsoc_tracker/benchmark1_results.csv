@@ -1,0 +1,11 @@
+scenario_id,description,seed,trajectory,frames,acquisition_time_s,tracking_rmse_px,mean_error_px,p95_error_px,max_error_px,lock_retention_pct,target_loss_pct,reacquisition_time_s,mean_fps,mean_latency_ms,status
+B1_01_Straight_Nominal,Straight line motion at nominal speed under clear conditions,101,line,90,0.0667,0.57,0.46,0.996,2.058,97.78,0.0,0.0,59.74,16.739,PASS
+B1_02_Circular_Clear,Circular trajectory (turn rate w=0.5 rad/s) under clear conditions,102,circle,90,0.2667,8.916,6.753,19.623,21.628,91.11,0.0,0.0,61.0,16.392,PASS
+B1_03_Figure8_Nominal,Figure-8 lemniscate trajectory with continuous curvature change,103,figure8,90,0.0667,2.68,2.162,5.137,6.387,97.78,0.0,0.0,62.06,16.114,PASS
+B1_04_Random_Walk,Random walk trajectory with stochastic acceleration steps,104,random,90,0.0667,1.153,1.089,1.804,2.003,97.78,0.0,0.0,62.71,15.945,PASS
+B1_05_HighSpeed_Maneuver,"High speed straight trajectory (vx=90 px/s, vy=60 px/s)",105,line,90,0.0667,1.363,0.954,2.912,4.131,97.78,0.0,0.0,59.83,16.714,PASS
+B1_06_Camera_Jitter_Stress,Figure-8 motion under +/-15 px/frame high-frequency camera jitter,106,figure8,90,0.0667,4.916,4.538,7.069,8.061,97.78,0.0,0.0,58.66,17.048,PASS
+B1_07_Atmosphere_Fog,Circular motion under heavy fog / haze atmosphere (strength 0.65),107,circle,90,0.2667,8.918,6.749,19.712,21.627,91.11,0.0,0.0,51.04,19.594,PASS
+B1_08_Salt_Pepper_Noise,Figure-8 motion under 10% Salt & Pepper noise density,108,figure8,90,0.0667,2.502,2.015,4.599,6.005,97.78,0.0,0.0,54.04,18.506,PASS
+B1_09_Gaussian_Noise,Circular motion under additive Gaussian noise (sigma=15.0),109,circle,90,0.3,10.062,7.202,23.559,25.381,90.0,0.0,0.0,38.05,26.284,MARGINAL/FAIL
+B1_10_Combined_Stress,Maximum Combined Stress: Figure-8 + Jitter + Fog + S&P + Gaussian noise,110,figure8,90,0.0667,6.022,5.002,11.22,13.933,97.78,0.0,0.0,22.87,43.728,PASS
