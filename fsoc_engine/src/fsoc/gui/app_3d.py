@@ -97,24 +97,58 @@ def _launch_app_window(url: str, title: str = "ISRO FSOC 3D Workstation") -> boo
     return True
 
 
+def _is_port_in_use(port: int) -> bool:
+    """Check if a local port is already open/bound."""
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.settimeout(0.5)
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
+def _start_fastapi_server(port: int = 8000) -> bool:
+    """Start uvicorn FastAPI backend server in a background daemon thread."""
+    try:
+        import uvicorn
+        from fsoc.server.app import app
+        config = uvicorn.Config(app=app, host="127.0.0.1", port=port, log_level="error", loop="asyncio")
+        server = uvicorn.Server(config)
+        server_thread = threading.Thread(target=server.run, daemon=True)
+        server_thread.start()
+        return True
+    except Exception as e:
+        print(f"[FSOC Server] FastAPI background server launch notice: {e}")
+        return False
+
+
 def launch_3d_desktop(title: str = "ISRO / SAC PS 26169 — FSOC 3D Virtual Camera Tracking Workstation") -> None:
     """
-    Launch the native 3D desktop application window.
+    Launch the native 3D desktop application window with embedded FastAPI server.
     """
     dist_dir = _find_web_dist_dir()
     if dist_dir is None:
         print("[ERROR] 3D assets not found. Please run 'npm run build' inside web/ directory.")
         return
 
-    # Start loopback HTTP server on random free port
-    handler = lambda *args, **kwargs: QuietHTTPHandler(*args, directory=str(dist_dir), **kwargs)
-    httpd = socketserver.TCPServer(("127.0.0.1", 0), handler)
-    port = httpd.server_address[1]
+    # Start FastAPI server on port 8000 so OpenCV VideoBench, Telemetry, and Presets are active
+    httpd = None
+    if not _is_port_in_use(8000):
+        _start_fastapi_server(8000)
+        import time
+        for _ in range(25):
+            if _is_port_in_use(8000):
+                break
+            time.sleep(0.1)
 
-    server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
-    server_thread.start()
-
-    url = f"http://127.0.0.1:{port}/"
+    if _is_port_in_use(8000):
+        url = "http://127.0.0.1:8000/"
+    else:
+        # Fallback to local loopback HTTP server
+        handler = lambda *args, **kwargs: QuietHTTPHandler(*args, directory=str(dist_dir), **kwargs)
+        httpd = socketserver.TCPServer(("127.0.0.1", 0), handler)
+        port = httpd.server_address[1]
+        server_thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+        server_thread.start()
+        url = f"http://127.0.0.1:{port}/"
 
     # 1. Try PyWebView if environment supports it without pythonnet crash
     webview_success = False
@@ -143,5 +177,6 @@ def launch_3d_desktop(title: str = "ISRO / SAC PS 26169 — FSOC 3D Virtual Came
             while True:
                 time.sleep(1.0)
         except (KeyboardInterrupt, SystemExit):
-            httpd.shutdown()
+            if httpd:
+                httpd.shutdown()
 

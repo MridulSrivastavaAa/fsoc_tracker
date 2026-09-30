@@ -726,6 +726,12 @@ async def websocket_telemetry(websocket: WebSocket):
 # ---------------------------------------------------------------------------
 # Attempt to find compiled 3D web UI build
 def _find_dist():
+    import sys
+    if hasattr(sys, "_MEIPASS"):
+        meipass = Path(sys._MEIPASS)
+        for sub in [meipass / "web_dist", meipass / "web" / "dist", meipass]:
+            if sub.exists() and (sub / "index.html").exists():
+                return sub
     candidates = [
         Path(__file__).resolve().parents[3] / "web" / "dist",
         Path(__file__).resolve().parents[3] / "web_dist",
@@ -733,15 +739,36 @@ def _find_dist():
         Path(__file__).resolve().parents[4] / "web_dist",
         Path.cwd() / "web" / "dist",
         Path.cwd() / "web_dist",
+        Path.cwd() / "dist" / "FSOCTracker" / "_internal" / "web_dist",
     ]
     for c in candidates:
         if c.exists() and (c / "index.html").exists():
             return c
     return None
 
+def _find_test_videos():
+    import sys
+    if hasattr(sys, "_MEIPASS"):
+        tv = Path(sys._MEIPASS) / "test_videos"
+        if tv.exists():
+            return tv
+    candidates = [
+        Path(__file__).resolve().parents[2] / "test_videos",
+        Path(__file__).resolve().parents[3] / "test_videos",
+        Path.cwd() / "test_videos",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    return None
+
 DIST_DIR = _find_dist()
 if DIST_DIR is not None and (DIST_DIR / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(DIST_DIR / "assets")), name="assets")
+
+TV_DIR = _find_test_videos()
+if TV_DIR is not None and TV_DIR.exists():
+    app.mount("/test_videos", StaticFiles(directory=str(TV_DIR)), name="test_videos")
 
 @app.get("/")
 async def root():
@@ -759,3 +786,16 @@ async def root():
             "/ws/telemetry",
         ]
     }
+
+@app.get("/{file_name:path}")
+async def serve_static(file_name: str):
+    if file_name.startswith("api/") or file_name.startswith("ws/"):
+        raise HTTPException(status_code=404, detail="API route not found")
+    if DIST_DIR is not None:
+        target = DIST_DIR / file_name
+        if target.is_file():
+            return FileResponse(str(target))
+        index = DIST_DIR / "index.html"
+        if index.is_file():
+            return FileResponse(str(index))
+    raise HTTPException(status_code=404, detail="Not found")
