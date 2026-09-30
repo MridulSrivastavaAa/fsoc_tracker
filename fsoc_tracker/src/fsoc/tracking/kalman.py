@@ -154,6 +154,7 @@ class KalmanTracker:
         meas_x: float,
         meas_y: float,
         score: float = 1.0,
+        flow: Optional[FlowResult] = None,
     ) -> TrackState:
         """
         Update Kalman filter with observation z = [meas_x, meas_y].
@@ -194,7 +195,7 @@ class KalmanTracker:
 
         return self.get_state()
 
-    def coast(self) -> TrackState:
+    def coast(self, flow: Optional[FlowResult] = None) -> TrackState:
         """
         Coast track forward when measurement is missing (temporary occlusion).
         Uses estimated velocity to extrapolate position while decaying confidence.

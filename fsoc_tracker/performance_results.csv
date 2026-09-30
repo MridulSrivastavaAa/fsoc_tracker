@@ -1,0 +1,21 @@
+Component,Mean (ms),Median (ms),P95 (ms),P99 (ms),Max (ms),FPS
+Scene Generation (2000x2000),1.5884,1.5116,2.4785,3.032,3.3399,629.55
+Camera Viewport Crop (640x480),0.5398,0.3544,0.5354,1.9747,22.6731,1852.66
+Disturbances - Fog (Atmosphere),3.4356,3.2176,5.2164,6.1438,7.1482,291.07
+Disturbances - Jitter,0.6858,0.5406,1.5102,2.9702,3.3913,1458.14
+Disturbances - Salt & Pepper,0.3766,0.338,0.6356,0.8243,1.0836,2655.41
+Disturbances - Gaussian Noise,3.4951,3.0954,5.5903,6.6437,7.1243,286.11
+Disturbances - Poisson Noise,27.2205,25.2439,38.0599,40.3898,68.9355,36.74
+Disturbances - Combined Viewport,35.1539,33.465,45.8283,49.9543,59.5355,28.45
+Vision - Preprocessing (Median+TopHat+MAD),7.784,6.8556,13.0324,15.2121,17.9968,128.47
+Vision - Spot Detection,19.1477,17.4228,31.5636,36.732,39.6357,52.23
+Vision - CNN Verification,24.504,22.8505,39.1265,47.6615,48.0275,40.81
+Vision - Local LK Optical Flow,3.7472,3.5872,4.5244,6.5638,7.2707,266.87
+Tracking - Adaptive Flow Gating,0.0451,0.0492,0.0568,0.067,0.1104,22172.3
+Tracking - IMM Predict,0.1636,0.1564,0.1873,0.2833,0.3513,6114.29
+Tracking - IMM Update/Coast,0.2403,0.3043,0.3643,0.5508,0.6367,4161.62
+Tracking - Particle Filter (Dormant TRACK),0.0023,0.0022,0.0024,0.0054,0.0084,436555.84
+Tracking - Particle Filter (Active N=150),0.1464,0.1164,0.2822,0.2989,0.4823,6830.6
+Control - Predictive PID,0.022,0.0214,0.0224,0.0344,0.0559,45413.25
+Complete Closed-Loop Step (Nominal),15.6945,15.0392,20.6715,22.3643,45.6814,63.72
+Complete Closed-Loop Step (Combined Stress),45.9085,44.8364,58.1054,65.0124,67.1787,21.78

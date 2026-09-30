@@ -112,6 +112,14 @@ class CameraConfig(BaseModel):
     def half_h(self) -> float:
         return self.res_y / 2.0
 
+    @property
+    def viewport_w(self) -> float:
+        return float(self.res_x)
+
+    @property
+    def viewport_h(self) -> float:
+        return float(self.res_y)
+
 
 class PipelineConfig(BaseModel):
     fps: float = Field(30.0, ge=20.0)
@@ -146,10 +154,37 @@ class WideSearchConfig(BaseModel):
 
 
 class CNNVerifierConfig(BaseModel):
+    enabled: bool = True
     model_path: str = "models/beacon_verifier.onnx"
     patch_size: int = Field(32, ge=8)
     min_confidence: float = Field(0.5, ge=0.0, le=1.0)
+
+
+class AdaptiveFlowConfig(BaseModel):
     enabled: bool = True
+    min_weight_threshold: float = Field(0.05, ge=0.0, le=0.5)
+    nis_gate: float = Field(9.0, ge=1.0, le=50.0)
+    nis_scale: float = Field(4.0, ge=0.5, le=20.0)
+    fb_error_scale_px: float = Field(1.0, ge=0.1, le=5.0)
+    min_features_full_weight: int = Field(8, ge=2, le=30)
+    jitter_history_len: int = Field(5, ge=3, le=20)
+    jitter_threshold_px: float = Field(5.0, ge=1.0, le=30.0)
+    jitter_suppression_factor: float = Field(0.8, ge=0.1, le=2.0)
+
+
+class OpticalFlowConfig(BaseModel):
+    enabled: bool = True
+    roi_size_px: int = Field(40, ge=10, le=120)
+    max_corners: int = Field(25, ge=5, le=100)
+    quality_level: float = Field(0.05, ge=0.001, le=0.5)
+    min_distance: float = Field(3.0, ge=1.0, le=20.0)
+    win_size: int = Field(15, ge=3, le=51)
+    max_pyramid_level: int = Field(3, ge=0, le=5)
+    min_valid_features: int = Field(3, ge=1, le=20)
+    fb_threshold_px: float = Field(1.0, ge=0.1, le=10.0)
+    max_displacement_px: float = Field(50.0, ge=5.0)
+    r_vel_base: float = Field(4.0, ge=0.1)
+    adaptive: AdaptiveFlowConfig = AdaptiveFlowConfig()
 
 
 class VisionConfig(BaseModel):
@@ -157,6 +192,25 @@ class VisionConfig(BaseModel):
     detector: DetectorConfig = DetectorConfig()
     wide_search: WideSearchConfig = WideSearchConfig()
     cnn: CNNVerifierConfig = CNNVerifierConfig()
+    optical_flow: OpticalFlowConfig = OpticalFlowConfig()
+
+
+class ParticleFilterConfig(BaseModel):
+    enabled: bool = True
+    num_particles: int = Field(150, ge=20, le=2000)
+    init_pos_std_px: float = Field(15.0, ge=1.0, le=100.0)
+    init_vel_std_px_s: float = Field(30.0, ge=1.0, le=300.0)
+    process_pos_noise_std: float = Field(2.0, ge=0.1, le=50.0)
+    process_vel_noise_std: float = Field(10.0, ge=0.1, le=100.0)
+    meas_pos_sigma_px: float = Field(12.0, ge=1.0, le=50.0)
+    resample_threshold_ratio: float = Field(0.50, ge=0.1, le=1.0)
+    reacquire_confirm_frames: int = Field(2, ge=1, le=10)
+    reacquire_cluster_std_thresh: float = Field(20.0, ge=2.0, le=100.0)
+    min_candidate_score: float = Field(0.35, ge=0.0, le=1.0)
+    activation_coast_frames: int = Field(3, ge=1, le=30)
+    activation_confidence_thresh: float = Field(0.40, ge=0.0, le=1.0)
+    activation_uncertainty_px: float = Field(25.0, ge=1.0, le=200.0)
+    max_spatial_spread_px: float = Field(120.0, ge=20.0, le=500.0)
 
 
 class TrackingConfig(BaseModel):
@@ -168,6 +222,21 @@ class TrackingConfig(BaseModel):
     consecutive_lost_frames: int = Field(10, ge=1)
     reacquire_timeout_frames: int = Field(45, ge=5)
     max_coast_frames: int = Field(15, ge=1)
+    # IMM (Interacting Multiple Model) Settings
+    tracker_type: Literal["imm", "kalman"] = "imm"
+    imm_init_probs: list[float] = Field(default_factory=lambda: [0.60, 0.25, 0.15])
+    # Transition matrix rows [CV, CT, RW]
+    imm_transition_matrix: list[list[float]] = Field(
+        default_factory=lambda: [
+            [0.85, 0.10, 0.05],
+            [0.10, 0.85, 0.05],
+            [0.15, 0.15, 0.70],
+        ]
+    )
+    imm_q_ct_omega: float = Field(0.8, ge=0.01)
+    imm_q_rw_factor: float = Field(20.0, ge=1.0)
+    adaptive_flow: AdaptiveFlowConfig = AdaptiveFlowConfig()
+    particle_filter: ParticleFilterConfig = ParticleFilterConfig()
 
 
 class ControlConfig(BaseModel):

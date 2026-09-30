@@ -165,6 +165,15 @@ class BeaconVerifierCNN:
         self.model = BeaconCNNModel()
         self.onnx_session = None
 
+        # Precompute static 32x32 radial and moment grids for ultra-fast verification
+        center = 16.0
+        y_grid, x_grid = np.indices((32, 32), dtype=np.float32)
+        self._x_grid = x_grid
+        self._y_grid = y_grid
+        self._r_grid = np.sqrt((x_grid - center) ** 2 + (y_grid - center) ** 2)
+        self._mask_inner = self._r_grid <= 4.0
+        self._mask_outer = self._r_grid > 10.0
+
         # Attempt to export or load ONNX model if onnxruntime is available
         self._init_onnx_model()
 
@@ -178,23 +187,32 @@ class BeaconVerifierCNN:
             import onnx
             from onnx import helper, TensorProto, numpy_helper
 
+            # If model doesn't exist or is incompatible IR, re-export with IR version 10
+            re_export = False
             if not model_path.exists():
+                re_export = True
+            else:
+                try:
+                    import onnxruntime as ort
+                    self.onnx_session = ort.InferenceSession(
+                        str(model_path), providers=["CPUExecutionProvider"]
+                    )
+                except Exception:
+                    re_export = True
+
+            if re_export:
                 model_path.parent.mkdir(parents=True, exist_ok=True)
                 self._export_onnx(model_path)
-
-            try:
                 import onnxruntime as ort
                 self.onnx_session = ort.InferenceSession(
                     str(model_path), providers=["CPUExecutionProvider"]
                 )
-            except Exception:
-                self.onnx_session = None
         except Exception:
-            # Gracefully fallback to internal NumPy engine
+            # Gracefully fallback to internal vectorized NumPy engine
             self.onnx_session = None
 
     def _export_onnx(self, out_path: Path) -> None:
-        """Export lightweight verification ONNX computational graph."""
+        """Export lightweight verification ONNX computational graph with max compatibility."""
         import onnx
         from onnx import helper, TensorProto, numpy_helper
 
@@ -240,7 +258,12 @@ class BeaconVerifierCNN:
             [output_tensor],
             initializer=[w1_init, b1_init, w_d_init, b_d_init],
         )
-        model = helper.make_model(graph, producer_name="fsoc_tracker")
+        model = helper.make_model(
+            graph,
+            producer_name="fsoc_tracker",
+            opset_imports=[helper.make_opsetid("", 17)],
+            ir_version=10,
+        )
         onnx.save(model, str(out_path))
 
     def extract_patch(
@@ -271,7 +294,7 @@ class BeaconVerifierCNN:
             crop = padded[py0:py0 + patch_size, px0:px0 + patch_size].astype(np.float32)
 
         # Normalize patch to [0, 1] range
-        min_v, max_v = np.min(crop), np.max(crop)
+        min_v, max_v = float(np.min(crop)), float(np.max(crop))
         if max_v - min_v > 1e-4:
             norm_crop = (crop - min_v) / (max_v - min_v)
         else:
@@ -288,26 +311,19 @@ class BeaconVerifierCNN:
         if patch.shape != (32, 32):
             patch = cv2.resize(patch, (32, 32))
 
-        # Check radial symmetry and compactness explicitly
-        # True beacon PSF has maximum near center and drops radially
-        center = 16
-        y, x = np.indices((32, 32))
-        r = np.sqrt((x - center) ** 2 + (y - center) ** 2)
-
-        inner_energy = float(np.mean(patch[r <= 4.0]))
-        outer_energy = float(np.mean(patch[r > 10.0]))
-        
-        # Energy concentration ratio
+        # Fast precomputed radial energy concentration ratio
+        inner_energy = float(np.mean(patch[self._mask_inner]))
+        outer_energy = float(np.mean(patch[self._mask_outer]))
         conc_ratio = (inner_energy + 1e-3) / (outer_energy + 1e-3)
-        
+
         # Moment-based elongation (rotation-invariant streak detection)
         total_p = float(np.sum(patch))
         if total_p > 1e-4:
-            cx = float(np.sum(x * patch) / total_p)
-            cy = float(np.sum(y * patch) / total_p)
-            mu20 = float(np.sum(((x - cx) ** 2) * patch) / total_p)
-            mu02 = float(np.sum(((y - cy) ** 2) * patch) / total_p)
-            mu11 = float(np.sum((x - cx) * (y - cy) * patch) / total_p)
+            cx = float(np.sum(self._x_grid * patch) / total_p)
+            cy = float(np.sum(self._y_grid * patch) / total_p)
+            mu20 = float(np.sum(((self._x_grid - cx) ** 2) * patch) / total_p)
+            mu02 = float(np.sum(((self._y_grid - cy) ** 2) * patch) / total_p)
+            mu11 = float(np.sum((self._x_grid - cx) * (self._y_grid - cy) * patch) / total_p)
             det_diff = float(np.sqrt(max(0.0, (mu20 - mu02) ** 2 + 4.0 * (mu11 ** 2))))
             lam1 = (mu20 + mu02 + det_diff) / 2.0
             lam2 = max(0.0, (mu20 + mu02 - det_diff) / 2.0)

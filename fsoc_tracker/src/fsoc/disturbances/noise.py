@@ -12,6 +12,7 @@ Each model:
   - Exposes `enabled` flag and `strength` scalar (0.0–1.0) for GUI sliders.
 """
 from __future__ import annotations
+import cv2
 import numpy as np
 from dataclasses import dataclass, field
 
@@ -40,24 +41,21 @@ class SaltPepperNoise:
         self._rng = np.random.default_rng(self.seed)
 
     def apply(self, img: np.ndarray) -> np.ndarray:
-        """Apply salt & pepper noise in-place and return the result."""
+        """Apply salt & pepper noise and return the result."""
         if not self.enabled or self.density <= 0.0:
             return img
         out = img.copy()
         H, W = out.shape[:2]
         n_pixels = H * W
         n_affected = int(n_pixels * self.density)
-
-        # Salt (white)
-        ys = self._rng.integers(0, H, n_affected // 2)
-        xs = self._rng.integers(0, W, n_affected // 2)
-        out[ys, xs] = 255
-
-        # Pepper (black)
-        ys = self._rng.integers(0, H, n_affected // 2)
-        xs = self._rng.integers(0, W, n_affected // 2)
-        out[ys, xs] = 0
-
+        if n_affected <= 0:
+            return out
+        flat = out.ravel()
+        half_n = n_affected // 2
+        salt_idx = self._rng.integers(0, n_pixels, half_n)
+        pepp_idx = self._rng.integers(0, n_pixels, half_n)
+        flat[salt_idx] = 255
+        flat[pepp_idx] = 0
         return out
 
 
@@ -85,9 +83,10 @@ class GaussianNoise:
         """Add Gaussian noise. Result is clipped to [0, 255] uint8."""
         if not self.enabled or self.sigma <= 0.0:
             return img
-        noise = self._rng.normal(0.0, self.sigma, img.shape)
-        out = img.astype(np.float32) + noise
-        return np.clip(out, 0, 255).astype(np.uint8)
+        noise = np.empty(img.shape, dtype=np.float32)
+        cv2.randn(noise, 0.0, float(self.sigma))
+        out = cv2.add(img.astype(np.float32), noise)
+        return np.clip(out, 0.0, 255.0, out=out).astype(np.uint8)
 
 
 @dataclass
@@ -116,8 +115,7 @@ class PoissonNoise:
         """Apply Poisson (shot) noise and return uint8 result."""
         if not self.enabled or self.gain <= 0.0:
             return img
-        scaled = img.astype(np.float32) * self.gain
-        # Poisson draw
-        noisy = self._rng.poisson(np.maximum(scaled, 0)).astype(np.float32)
-        out = noisy / self.gain
-        return np.clip(out, 0, 255).astype(np.uint8)
+        scaled = img.astype(np.float32) * float(self.gain)
+        noisy = self._rng.poisson(scaled).astype(np.float32)
+        noisy /= float(self.gain)
+        return np.clip(noisy, 0.0, 255.0, out=noisy).astype(np.uint8)

@@ -28,7 +28,10 @@ from ..vision.preprocess import VisionPreprocessor
 from ..vision.detector import SpotDetector
 from ..vision.wide_search import WideAreaSearch
 from ..vision.cnn_verifier import BeaconVerifierCNN
+from ..vision.optical_flow import OpticalFlowTracker
 from ..tracking.kalman import KalmanTracker
+from ..tracking.imm import IMMTracker
+from ..tracking.particle_filter import ParticleFilter
 from ..tracking.state_machine import TrackingStateMachine, State
 from ..control.pid_controller import PIDController
 
@@ -63,9 +66,23 @@ class ClosedLoopEngine:
         self.detector = SpotDetector(self.cfg, preprocessor=self.preprocessor)
         self.wide_search = WideAreaSearch(self.cfg, camera_cfg=self.cfg.camera)
         self.verifier = BeaconVerifierCNN(self.cfg)
+        self.optical_flow = OpticalFlowTracker(self.cfg.vision.optical_flow, dt=self.cfg.pipeline.dt)
 
-        # 5. Tracking & control
-        self.kalman = KalmanTracker(self.cfg, dt=self.cfg.pipeline.dt)
+        # 5. Tracking & control (IMM multi-model estimator or single Kalman baseline)
+        if self.cfg.tracking.tracker_type == "kalman":
+            self.kalman = KalmanTracker(self.cfg, dt=self.cfg.pipeline.dt)
+        else:
+            self.kalman = IMMTracker(self.cfg, dt=self.cfg.pipeline.dt)
+
+        # 5b. Particle Filter recovery mechanism (Step 4)
+        self.particle_filter = ParticleFilter(
+            self.cfg,
+            dt=self.cfg.pipeline.dt,
+            viewport_w=self.cfg.camera.viewport_w,
+            viewport_h=self.cfg.camera.viewport_h,
+            seed=self.cfg.pipeline.seed,
+        )
+
         self.state_machine = TrackingStateMachine(self.cfg)
         self.controller = PIDController(self.cfg, camera_cfg=self.cfg.camera, dt=self.cfg.pipeline.dt)
 
@@ -91,7 +108,6 @@ class ClosedLoopEngine:
         if full_frame is None:
             return None
 
-
         frame_idx = full_frame.frame_index
         timestamp_s = full_frame.timestamp_s
 
@@ -109,6 +125,7 @@ class ClosedLoopEngine:
         curr_state = self.state_machine.state
         best_det = None
         cmd = CameraCommand(0.0, 0.0)
+        reacquired_this_frame = False
 
         # 4. Processing based on current tracking state
         if curr_state == State.SEARCH:
@@ -118,6 +135,16 @@ class ClosedLoopEngine:
             if verified:
                 best_det = verified[0]
                 self.kalman.init_track(best_det.x, best_det.y, confidence=best_det.score)
+                self.particle_filter.reset()
+                self.optical_flow.reset()
+                self.optical_flow.estimate_flow(
+                    curr_img=disturbed_img,
+                    curr_pan_deg=self.camera.pan_deg,
+                    curr_tilt_deg=self.camera.tilt_deg,
+                    hint_pos=(best_det.x, best_det.y),
+                    px_per_deg_x=self.cfg.camera.px_per_deg_x,
+                    px_per_deg_y=self.cfg.camera.px_per_deg_y,
+                )
                 self.state_machine.step(True, timestamp_s)
             else:
                 # Wide area search on full scene if available
@@ -138,7 +165,6 @@ class ClosedLoopEngine:
                     # Slew camera towards target
                     d_pan = pan - self.camera.pan_deg
                     d_tilt = tilt - self.camera.tilt_deg
-                    scale = self.cfg.camera.px_per_deg_x
                     cmd = CameraCommand(
                         pan_rate_deg_per_s=float(np.clip(d_pan * 3.0, -self.cfg.camera.max_pan_deg_per_s, self.cfg.camera.max_pan_deg_per_s)),
                         tilt_rate_deg_per_s=float(np.clip(d_tilt * 3.0, -self.cfg.camera.max_tilt_deg_per_s, self.cfg.camera.max_tilt_deg_per_s)),
@@ -147,7 +173,7 @@ class ClosedLoopEngine:
 
         else:  # ACQUIRE, TRACK, LOST, REACQUIRE
             # Predict Kalman forward
-            self.kalman.predict()
+            pred_x, pred_y = self.kalman.predict()
 
             # Preprocess and detect
             clean_img, mask, _ = self.preprocessor.process(disturbed_img)
@@ -157,12 +183,67 @@ class ClosedLoopEngine:
             # Association gating
             best_det = self.kalman.select_best_detection(verified)
 
-            if best_det is not None:
-                track = self.kalman.update(best_det.x, best_det.y, score=best_det.score)
-                self.state_machine.step(True, timestamp_s)
-            else:
-                track = self.kalman.coast()
-                self.state_machine.step(False, timestamp_s)
+            # Local sparse optical flow estimation
+            hint_pt = (best_det.x, best_det.y) if best_det is not None else (pred_x, pred_y)
+            flow_res = self.optical_flow.estimate_flow(
+                curr_img=disturbed_img,
+                curr_pan_deg=self.camera.pan_deg,
+                curr_tilt_deg=self.camera.tilt_deg,
+                hint_pos=hint_pt,
+                px_per_deg_x=self.cfg.camera.px_per_deg_x,
+                px_per_deg_y=self.cfg.camera.px_per_deg_y,
+            )
+
+            # Step 4: Particle Filter Reacquisition / Recovery Pipeline
+            pf_cfg = self.cfg.tracking.particle_filter
+            if pf_cfg.enabled and self.particle_filter.is_active:
+                # 1. Propagate particles forward
+                self.particle_filter.predict()
+                # 2. Update weights using all candidate spots / verified detections in viewport
+                pf_candidates = verified if verified else candidates
+                reacquired, pf_state = self.particle_filter.update(pf_candidates)
+                if reacquired:
+                    reacquired_this_frame = True
+                    # Confirmed recovery: hand off recovered state to IMM
+                    self.kalman.init_track(
+                        pf_state.x,
+                        pf_state.y,
+                        vx=pf_state.vx,
+                        vy=pf_state.vy,
+                        confidence=pf_state.confidence,
+                    )
+                    self.particle_filter.reset()
+                    self.state_machine.transition_to(State.TRACK, timestamp_s)
+                    track = self.kalman.get_state()
+
+            if not reacquired_this_frame:
+                if best_det is not None:
+                    track = self.kalman.update(best_det.x, best_det.y, score=best_det.score, flow=flow_res)
+                    self.state_machine.step(True, timestamp_s)
+                    # If normal confident tracking resumed, ensure PF is reset/inactive
+                    if self.particle_filter.is_active and track.confidence >= pf_cfg.activation_confidence_thresh:
+                        self.particle_filter.reset()
+                else:
+                    track = self.kalman.coast(flow=flow_res)
+                    self.state_machine.step(False, timestamp_s)
+
+                    # Trigger Particle Filter activation on signal loss / drop / high uncertainty
+                    if pf_cfg.enabled:
+                        should_activate_pf = (
+                            self.state_machine.state in (State.LOST, State.REACQUIRE) or
+                            self.state_machine.miss_streak >= pf_cfg.activation_coast_frames or
+                            track.confidence < pf_cfg.activation_confidence_thresh or
+                            track.uncertainty > pf_cfg.activation_uncertainty_px
+                        )
+                        if should_activate_pf and not self.particle_filter.is_active:
+                            self.particle_filter.initialize(
+                                center_x=track.x,
+                                center_y=track.y,
+                                vx=track.vx,
+                                vy=track.vy,
+                                pos_std=pf_cfg.init_pos_std_px,
+                                vel_std=pf_cfg.init_vel_std_px_s,
+                            )
 
             # Closed-loop actuator control
             if self.state_machine.is_locked:
@@ -172,6 +253,9 @@ class ClosedLoopEngine:
                     tilt_rate_px_s=self.camera._tilt_rate * self.cfg.camera.px_per_deg_y,
                 )
                 cmd = self.controller.compute(track.x, track.y, track.vx, track.vy, state=self.state_machine.state.value)
+            elif self.particle_filter.is_active:
+                pf_st = self.particle_filter.get_state()
+                cmd = self.controller.compute(pf_st.x, pf_st.y, pf_st.vx * 0.5, pf_st.vy * 0.5, state=self.state_machine.state.value)
             elif self.state_machine.state == State.LOST:
                 # Coast control command with velocity damping
                 cmd = self.controller.compute(track.x, track.y, track.vx * 0.5, track.vy * 0.5, state=self.state_machine.state.value)
@@ -192,9 +276,9 @@ class ClosedLoopEngine:
 
         t_proc_ms = (time.perf_counter() - t_start) * 1000.0
 
-
-        # 6. Compute Ground Truth comparison and metrics
+        # 7. Compute Ground Truth comparison and metrics
         track_state = self.kalman.get_state()
+        pf_info = self.particle_filter.get_state()
         est_screen_x: Optional[float] = None
         est_screen_y: Optional[float] = None
         gt_screen_x: Optional[float] = None
@@ -208,7 +292,6 @@ class ClosedLoopEngine:
             est_screen_x = float(sx)
             est_screen_y = float(sy)
 
-
         if full_frame.ground_truth:
             gt_pt = full_frame.ground_truth[0]
             gt_screen_x = gt_pt.x
@@ -218,7 +301,6 @@ class ClosedLoopEngine:
                 gt_vp = vp_frame.ground_truth_viewport[0]
 
                 # Centroiding accuracy: how well Kalman tracks beacon in sensor space.
-                # This does NOT directly represent R14 compliance — it measures estimator quality.
                 if self.kalman.is_initialized:
                     error_px = float(np.hypot(track_state.x - gt_vp.x, track_state.y - gt_vp.y))
                 else:
@@ -227,7 +309,6 @@ class ClosedLoopEngine:
 
                 # ISRO R14 boresight alignment error: distance of actual beacon
                 # from the optical axis (centre of viewport = boresight).
-                # R14 compliance requires this to be ≤ 10 px in steady-state tracking.
                 boresight_px = float(np.hypot(
                     gt_vp.x - self.cfg.camera.half_w,
                     gt_vp.y - self.cfg.camera.half_h,
@@ -251,6 +332,27 @@ class ClosedLoopEngine:
             proc_ms=t_proc_ms,
             pan_deg=self.camera.pan_deg,
             tilt_deg=self.camera.tilt_deg,
+            prob_cv=track_state.prob_cv,
+            prob_ct=track_state.prob_ct,
+            prob_rw=track_state.prob_rw,
+            dominant_model=track_state.dominant_model,
+            flow_valid=track_state.flow_valid,
+            flow_dx=track_state.flow_dx,
+            flow_dy=track_state.flow_dy,
+            flow_speed=track_state.flow_speed,
+            flow_confidence=track_state.flow_confidence,
+            flow_feature_count=track_state.flow_feature_count,
+            flow_fb_error=track_state.flow_fb_error,
+            flow_weight=track_state.flow_weight,
+            flow_quality=track_state.flow_quality,
+            flow_innovation=track_state.flow_innovation,
+            jitter_score=track_state.jitter_score,
+            flow_gate_reason=track_state.flow_gate_reason,
+            pf_active=pf_info.pf_active,
+            pf_particles=pf_info.pf_particles,
+            pf_cluster_std=pf_info.pf_cluster_std,
+            pf_n_eff=pf_info.pf_n_eff,
+            pf_reacquired=reacquired_this_frame,
         )
 
         self.metrics_history.append(metric)
@@ -297,12 +399,43 @@ class ClosedLoopEngine:
         err_max = float(np.max(eval_errors)) if eval_errors else 0.0
         err_rmse = float(np.sqrt(np.mean(np.square(eval_errors)))) if eval_errors else 0.0
 
+        # Reacquisition and target loss metrics
+        reacq_times = list(self.state_machine.reacquisition_times)
+        lost_count = sum(1 for t, f, to in self.state_machine.transitions if to == State.LOST.value)
+        reacq_count = len(reacq_times)
+
+        if lost_count > 0:
+            reacq_success_pct = float(min(100.0, 100.0 * reacq_count / lost_count))
+        elif reacq_count > 0:
+            reacq_success_pct = 100.0
+        else:
+            reacq_success_pct = 100.0 if self.state_machine.target_loss_pct == 0.0 else 0.0
+
+        reacq_mean = float(np.mean(reacq_times)) if reacq_times else None
+        reacq_p95 = float(np.percentile(reacq_times, 95)) if reacq_times else None
+        reacq_max = float(np.max(reacq_times)) if reacq_times else None
+
+        # False reacquisition count: check frames where reacquisition occurred with large error > 30 px
+        reacq_frame_indices = [
+            i for i, m in enumerate(self.metrics_history)
+            if m.pf_reacquired or (i > 0 and self.metrics_history[i-1].state in ("LOST", "REACQUIRE") and m.state in ("TRACK", "ACQUIRE"))
+        ]
+        false_reacq_count = sum(
+            1 for idx in reacq_frame_indices
+            if self.metrics_history[idx].error_px is not None and self.metrics_history[idx].error_px > 30.0
+        )
+
         return RunSummary(
             duration_s=float(duration_s),
             fps_mean=fps_mean,
             fps_min=fps_min,
             acquisition_time_s=self.state_machine.acquisition_time_s,
-            reacquisition_times_s=list(self.state_machine.reacquisition_times),
+            reacquisition_times_s=reacq_times,
+            reacquisition_success_pct=reacq_success_pct,
+            reacquisition_time_mean_s=reacq_mean,
+            reacquisition_time_p95_s=reacq_p95,
+            reacquisition_time_max_s=reacq_max,
+            false_reacquisition_count=false_reacq_count,
             error_mean_px=err_mean,
             error_max_px=err_max,
             error_rmse_px=err_rmse,
@@ -322,9 +455,12 @@ class ClosedLoopEngine:
         )
         self.disturbances.reset()
         self.kalman.reset()
+        self.particle_filter.reset()
+        self.optical_flow.reset()
         self.state_machine.reset()
         self.controller.reset()
         self.turbulence_comp.reset()
         self.metrics_history.clear()
         self.last_viewport = None
+
 
