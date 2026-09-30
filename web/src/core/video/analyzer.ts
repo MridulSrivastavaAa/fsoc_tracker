@@ -308,13 +308,13 @@ export class VideoAnalyzer {
       frames: n,
       detectionRate: n ? detected / n : 0,
       acquisitionS: this.tAcq,
-      lossPct: after.length ? (100 * (after.length - tracked)) / after.length : null,
+      lossPct: after.length ? (100 * (after.length - tracked)) / after.length : (this.tAcq === null ? 100 : null),
       reacqMaxS: this.reacq.length ? Math.max(...this.reacq) : null,
       centroidRmsePx: ce.length ? Math.sqrt(ce.reduce((a, b) => a + b * b, 0) / ce.length) : null,
       centroidMaxPx: ce.length ? Math.max(...ce) : null,
       procMeanMs: n ? proc / n : 0,
       processingFps: n && proc > 0 ? (1000 * n) / proc : 0,
-      lockRetentionPct: after.length ? (100 * tracked) / after.length : null,
+      lockRetentionPct: after.length ? (100 * tracked) / after.length : 0,
       truthProvided,
     };
   }

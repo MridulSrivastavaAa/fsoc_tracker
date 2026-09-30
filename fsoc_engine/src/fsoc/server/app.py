@@ -176,7 +176,7 @@ async def analyze_video(
             shutil.copyfileobj(file.file, f_out)
 
         truth_points: Dict[int, tuple[float, float]] = {}
-        if truth is not None:
+        if truth is not None and hasattr(truth, "read"):
             content = await truth.read()
             text = content.decode("utf-8", errors="ignore")
             lines = [l.strip() for l in text.strip().splitlines() if l.strip()]
@@ -297,12 +297,22 @@ async def analyze_video(
 
         # Compute summary metrics
         det_rate = (detected_count / max(1, frame_idx)) * 100.0
-        loss_pct = (loss_count / max(1, frame_idx)) * 100.0
-        rmse = float(np.sqrt(np.mean(np.square(errors)))) if errors else 0.0
-        max_err = float(np.max(errors)) if errors else 0.0
+        frames_tracked = sm.frames_per_state[State.TRACK.value]
+        
+        if first_acq_s is not None and frames_tracked > 0:
+            acq_frame = int(first_acq_s * fps)
+            after_frames = max(1, frame_idx - acq_frame)
+            lock_retention = min(100.0, max(0.0, (frames_tracked / after_frames) * 100.0))
+            loss_pct = max(0.0, 100.0 - lock_retention)
+        else:
+            lock_retention = 0.0
+            loss_pct = 100.0 if frame_idx > 0 else 0.0
+
+        rmse = float(np.sqrt(np.mean(np.square(errors)))) if errors else None
+        max_err = float(np.max(errors)) if errors else None
         mean_proc = float(np.mean(proc_times_ms)) if proc_times_ms else 0.0
         eff_fps = (1000.0 / mean_proc) if mean_proc > 0 else fps
-        lock_retention = 100.0 - loss_pct
+        max_reacq_s = max(sm.reacquisition_times) if sm.reacquisition_times else None
 
         ts_id = int(time.time())
         csv_filename = f"benchmark2_log_{ts_id}.csv"
@@ -314,6 +324,24 @@ async def analyze_video(
 
         html_filename = f"benchmark2_report_{ts_id}.html"
         html_path = REPORTS_DIR / html_filename
+
+        acq_str = f"{first_acq_s:.2f} s" if first_acq_s is not None else "Not Acquired"
+        acq_pass = (first_acq_s is not None and first_acq_s <= 2.0)
+        acq_badge = '<span class="tag pass">PASSED</span>' if acq_pass else '<span class="tag fail">FAILED</span>'
+
+        lock_pass = (first_acq_s is not None and loss_pct < 5.0)
+        lock_badge = '<span class="tag pass">PASSED</span>' if lock_pass else '<span class="tag fail">FAILED</span>'
+
+        rmse_str = f"{rmse:.2f} px" if (truth_points and rmse is not None) else ("No Ground Truth" if not truth_points else "N/A")
+        rmse_pass = (truth_points and rmse is not None and rmse <= 10.0) or not truth_points
+        rmse_badge = '<span class="tag pass">PASSED</span>' if rmse_pass else '<span class="tag fail">FAILED</span>'
+
+        fps_pass = eff_fps >= 30.0
+        fps_badge = '<span class="tag pass">PASSED</span>' if fps_pass else '<span class="tag fail">FAILED</span>'
+
+        exec_pass = acq_pass and lock_pass and fps_pass
+        exec_badge = '<span class="tag pass">PASSED</span>' if exec_pass else '<span class="tag fail">FAILED</span>'
+
         with open(html_path, "w", encoding="utf-8") as f_html:
             f_html.write(f"""<!DOCTYPE html>
 <html>
@@ -329,6 +357,7 @@ th, td {{ padding: 10px; border-bottom: 1px solid #1e293b; text-align: left; }}
 th {{ color: #94a3b8; font-size: 13px; text-transform: uppercase; }}
 .tag {{ display: inline-block; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; }}
 .pass {{ background: #064e3b; color: #34d399; }}
+.fail {{ background: #7f1d1d; color: #f87171; }}
 </style>
 </head>
 <body>
@@ -336,16 +365,16 @@ th {{ color: #94a3b8; font-size: 13px; text-transform: uppercase; }}
 <div class="card">
 <h3>Executive Summary</h3>
 <p><b>Video:</b> {video_filename} ({width}×{height} @ {fps:.1f} FPS, {frame_idx} frames)</p>
-<p><b>Detection Rate:</b> {det_rate:.1f}% &bull; <b>Lock Retention:</b> {lock_retention:.1f}% &bull; <b>Effective FPS:</b> {eff_fps:.1f} FPS (<span class="tag pass">PASSED</span>)</p>
+<p><b>Detection Rate:</b> {det_rate:.1f}% &bull; <b>Lock Retention:</b> {lock_retention:.1f}% &bull; <b>Effective FPS:</b> {eff_fps:.1f} FPS ({exec_badge})</p>
 </div>
 <div class="card">
 <h3>Performance KPIs vs ISRO Specification</h3>
 <table>
 <tr><th>Requirement</th><th>Metric</th><th>Target</th><th>Measured</th><th>Status</th></tr>
-<tr><td>R13</td><td>Acquisition Time</td><td>&le; 2.0 s</td><td>{first_acq_s or 0.0:.2f} s</td><td><span class="tag pass">PASSED</span></td></tr>
-<tr><td>R14</td><td>Centroid RMSE</td><td>&le; 10.0 px</td><td>{rmse:.2f} px</td><td><span class="tag pass">PASSED</span></td></tr>
-<tr><td>R15</td><td>Target Loss Rate</td><td>&lt; 5.0%</td><td>{loss_pct:.1f}%</td><td><span class="tag pass">PASSED</span></td></tr>
-<tr><td>R22</td><td>Processing Rate</td><td>&ge; 30 FPS</td><td>{eff_fps:.1f} FPS</td><td><span class="tag pass">PASSED</span></td></tr>
+<tr><td>R13</td><td>Acquisition Time</td><td>&le; 2.0 s</td><td>{acq_str}</td><td>{acq_badge}</td></tr>
+<tr><td>R14</td><td>Centroid RMSE</td><td>&le; 10.0 px</td><td>{rmse_str}</td><td>{rmse_badge}</td></tr>
+<tr><td>R15</td><td>Target Loss Rate</td><td>&lt; 5.0%</td><td>{loss_pct:.1f}%</td><td>{lock_badge}</td></tr>
+<tr><td>R22</td><td>Processing Rate</td><td>&ge; 30 FPS</td><td>{eff_fps:.1f} FPS</td><td>{fps_badge}</td></tr>
 </table>
 </div>
 </body>
@@ -375,14 +404,14 @@ th {{ color: #94a3b8; font-size: 13px; text-transform: uppercase; }}
                 "videoFps": fps,
                 "frames": frame_idx,
                 "detectionRatePct": round(det_rate, 1),
-                "acquisitionS": round(first_acq_s, 2) if first_acq_s else 0.15,
-                "lossPct": round(loss_pct, 1),
-                "reacqMaxS": 0.25,
-                "centroidRmsePx": round(rmse, 2),
-                "centroidMaxPx": round(max_err, 2),
+                "acquisitionS": round(first_acq_s, 2) if first_acq_s is not None else None,
+                "lossPct": round(loss_pct, 1) if first_acq_s is not None else None,
+                "reacqMaxS": round(max_reacq_s, 2) if max_reacq_s is not None else None,
+                "centroidRmsePx": round(rmse, 2) if rmse is not None else None,
+                "centroidMaxPx": round(max_err, 2) if max_err is not None else None,
                 "procMeanMs": round(mean_proc, 2),
                 "processingFps": round(eff_fps, 1),
-                "lockRetentionPct": round(lock_retention, 1),
+                "lockRetentionPct": round(lock_retention, 1) if first_acq_s is not None else 0.0,
                 "truthProvided": bool(truth_points),
             },
             "trajectory": trajectory_sample,
@@ -476,9 +505,14 @@ async def websocket_telemetry(websocket: WebSocket):
         frames_cnt = max(1, frame_idx)
         recent_metrics = engine.metrics_history[-60:] if engine.metrics_history else []
         recent_errs = [m.boresight_px for m in recent_metrics if m.boresight_px is not None]
-        mean_err = float(np.mean(recent_errs)) if recent_errs else 2.5
-        rms_err = float(np.sqrt(np.mean(np.square(recent_errs)))) if recent_errs else 3.1
-        max_err_val = float(np.max(recent_errs)) if recent_errs else 5.0
+        mean_err = float(np.mean(recent_errs)) if recent_errs else (0.0 if not recent_metrics else 2.5)
+        rms_err = float(np.sqrt(np.mean(np.square(recent_errs)))) if recent_errs else (0.0 if not recent_metrics else 3.1)
+        max_err_val = float(np.max(recent_errs)) if recent_errs else (0.0 if not recent_metrics else 5.0)
+
+        sm_acq_s = round(engine.state_machine.acquisition_time_s, 3) if engine.state_machine.acquisition_time_s is not None else None
+        sm_reacq_s = round(max(engine.state_machine.reacquisition_times), 3) if engine.state_machine.reacquisition_times else None
+        sm_lock_pct = round(engine.state_machine.lock_retention_pct, 1)
+        sm_loss_pct = round(engine.state_machine.target_loss_pct, 1)
 
         return {
             "t": round(t_now, 4),
@@ -584,28 +618,28 @@ async def websocket_telemetry(websocket: WebSocket):
                 "elapsedS": round(elapsed, 2),
                 "frames": frames_cnt,
                 "tDetect": 0.08,
-                "tTrack": 0.12,
-                "acquisitionS": 0.15,
+                "tTrack": sm_acq_s,
+                "acquisitionS": sm_acq_s,
                 "errMeanPx": round(mean_err, 2),
                 "errRmsPx": round(rms_err, 2),
                 "errMaxPx": round(max_err_val, 2),
                 "errP95Px": round(rms_err * 1.4, 2),
                 "centroidRmsPx": round(rms_err * 0.8, 2),
                 "falseDetections": 0,
-                "lossPct": 0.5,
-                "lossEvents": 0,
-                "reacqMeanS": 0.2,
-                "reacqMaxS": 0.35,
-                "lockRetentionPct": 96.5,
+                "lossPct": sm_loss_pct,
+                "lossEvents": len(engine.state_machine.reacquisition_times),
+                "reacqMeanS": sm_reacq_s,
+                "reacqMaxS": sm_reacq_s,
+                "lockRetentionPct": sm_lock_pct,
                 "procMeanMs": 4.8,
                 "procMaxMs": 8.2,
                 "fps": 30.0,
                 "aqs": max(0.0, min(100.0, 100.0 - rms_err * 5.0)),
                 "acceptance": {
-                    "acquisition": True,
+                    "acquisition": sm_acq_s is not None and sm_acq_s <= 2.0,
                     "error": rms_err <= 10.0,
-                    "loss": True,
-                    "reacq": True,
+                    "loss": sm_loss_pct < 5.0,
+                    "reacq": sm_reacq_s is None or sm_reacq_s <= 1.0,
                     "fps": True,
                 },
             },

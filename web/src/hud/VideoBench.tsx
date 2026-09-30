@@ -800,11 +800,27 @@ export function VideoBench() {
               <>
                 <div className="vb-cards" style={{ marginTop: 10 }}>
                   <Card label="Frames" value={`${s.frames} · ${s.width}×${s.height}`} />
-                  <Card label="Detection rate" value={fmtVal(100 * s.detectionRate, 1, '%')} />
-                  <Card label="Acquisition" value={fmtVal(s.acquisitionS, 2, 's')} ok={s.acquisitionS !== null && s.acquisitionS <= 2} />
-                  <Card label="Lock retention" value={fmtVal(s.lockRetentionPct, 1, '%')} />
-                  <Card label="Re-acquisition (worst)" value={fmtVal(s.reacqMaxS, 2, 's')} ok={s.reacqMaxS === null ? undefined : s.reacqMaxS <= 1} />
-                  <Card label="Centroid RMSE" value={s.truthProvided ? fmtVal(s.centroidRmsePx, 3, 'px') : 'no truth'} />
+                  <Card label="Detection rate" value={fmtVal(100 * s.detectionRate, 1, '%')} ok={s.detectionRate >= 0.8} />
+                  <Card
+                    label="Acquisition"
+                    value={s.acquisitionS !== null ? fmtVal(s.acquisitionS, 2, 's') : 'Not Acquired'}
+                    ok={s.acquisitionS !== null && s.acquisitionS <= 2}
+                  />
+                  <Card
+                    label="Lock retention"
+                    value={s.acquisitionS !== null ? fmtVal(s.lockRetentionPct, 1, '%') : '0.0 %'}
+                    ok={s.acquisitionS !== null && (s.lockRetentionPct ?? 0) >= 90}
+                  />
+                  <Card
+                    label="Re-acquisition (worst)"
+                    value={s.reacqMaxS !== null ? fmtVal(s.reacqMaxS, 2, 's') : 'None'}
+                    ok={s.reacqMaxS === null ? undefined : s.reacqMaxS <= 1}
+                  />
+                  <Card
+                    label="Centroid RMSE"
+                    value={s.truthProvided ? fmtVal(s.centroidRmsePx, 3, 'px') : 'no truth'}
+                    ok={s.truthProvided ? (s.centroidRmsePx !== null && s.centroidRmsePx <= 10) : undefined}
+                  />
                   <Card label="Processing speed" value={fmtVal(s.processingFps, 1, 'FPS')} ok={s.processingFps >= 20} />
                   <Card label="Time per frame" value={fmtVal(s.procMeanMs, 1, 'ms')} />
                 </div>
