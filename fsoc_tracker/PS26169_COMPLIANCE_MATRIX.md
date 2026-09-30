@@ -1,6 +1,6 @@
 # ISRO PS 26169 — Full Compliance & Verification Matrix
 
-This compliance matrix provides a requirement-by-requirement verification audit of the **NATRA FSOC Virtual Camera Tracking System** against all 33 specifications mandated by **ISRO Problem Statement 26169**.
+This compliance matrix provides a requirement-by-requirement verification audit of the **NETRA FSOC Virtual Camera Tracking System** against all 33 specifications mandated by **ISRO Problem Statement 26169**.
 
 Every requirement includes the active implementation reference, validation test methodology, measured results, compliance status (**PASS / PARTIALLY VERIFIED / NOT VERIFIED**), and supporting evidence files.
 

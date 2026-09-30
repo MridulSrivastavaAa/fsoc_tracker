@@ -1,4 +1,4 @@
-/** Hash-based 3D value noise + fBm (GLSL), written for NATRA's procedural surfaces. */
+/** Hash-based 3D value noise + fBm (GLSL), written for NETRA's procedural surfaces. */
 export const NOISE_GLSL = /* glsl */ `
 float aq_hash(vec3 p) {
   p = fract(p * 0.3183099 + vec3(0.71, 0.113, 0.419));

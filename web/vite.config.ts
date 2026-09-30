@@ -2,13 +2,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-// NATRA web client. The simulation engine runs in a Web Worker (src/engine/worker.ts),
+// NETRA web client. The simulation engine runs in a Web Worker (src/engine/worker.ts),
 // so no backend is required for the demo. The optional FastAPI engine is reached via
-// VITE_NATRA_SERVER (default http://localhost:8000).
+// VITE_NETRA_SERVER (default http://localhost:8000).
 declare const process: { env: Record<string, string | undefined> };
-// NATRA_BASE sets the public path, e.g. '/NATRA/' for GitHub Pages project sites.
+// NETRA_BASE sets the public path, e.g. '/NETRA/' for GitHub Pages project sites.
 export default defineConfig({
-  base: process.env.NATRA_BASE ?? '/',
+  base: process.env.NETRA_BASE ?? '/',
   plugins: [react()],
   server: { port: 5173, host: true },
   preview: { port: 4173, host: true },

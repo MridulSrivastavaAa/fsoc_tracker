@@ -144,7 +144,7 @@ const GUARD_ON = typeof window === 'undefined' || new URLSearchParams(window.loc
 function downgrade(q: string, why: string) {
   const st = useApp.getState();
   const next = q === 'high' ? 'medium' : 'low';
-  console.warn(`NATRA render guard: ${why}; switching to ${next}.`);
+  console.warn(`NETRA render guard: ${why}; switching to ${next}.`);
   st.setQuality(next);
   st.notify(`Render quality set to ${next === 'medium' ? 'Medium' : 'Low'}: ${why}. You can switch back in View ▸ Render quality.`, 9000);
 }

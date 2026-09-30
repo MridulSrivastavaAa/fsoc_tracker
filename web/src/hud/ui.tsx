@@ -88,7 +88,7 @@ export function Readout({ label, value, unit, color }: { label: string; value: s
   );
 }
 
-/** Line icons drawn for NATRA (24 px grid, 1.5 px stroke). */
+/** Line icons drawn for NETRA (24 px grid, 1.5 px stroke). */
 export function Icon({ name, size = 18 }: { name: string; size?: number }) {
   const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   const paths: Record<string, ReactNode> = {

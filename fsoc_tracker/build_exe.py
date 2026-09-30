@@ -46,6 +46,8 @@ def build():
         shutil.copytree(source_web_dist, web_dist_dir)
         print(f"[FSOC Tracker] Synced latest 3D web UI build from {source_web_dist} -> {web_dist_dir}")
 
+    test_videos_dir = project_root / "test_videos"
+
     cmd = [
         sys.executable,
         "-m",
@@ -58,6 +60,7 @@ def build():
         f"--add-data={models_dir}{sep}models",
         f"--add-data={web_dist_dir}{sep}web_dist",
         f"--add-data={src_dir}{sep}src",
+        f"--add-data={test_videos_dir}{sep}test_videos",
         "--hidden-import=webview",
         "--hidden-import=bottle",
         "--hidden-import=pythonnet",

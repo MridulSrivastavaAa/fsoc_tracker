@@ -85,7 +85,7 @@ export function Help() {
       <div className="help-card glass" onClick={(e) => e.stopPropagation()}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
           <div>
-            <h2>NATRA</h2>
+            <h2>NETRA</h2>
             <div className="muted">Autonomous Spatial Tracking &amp; Alignment for Optical Links — coarse pointing of a mobile free-space optical terminal.</div>
           </div>
           <button className="btn icon ghost" onClick={() => set({ helpOpen: false })}>

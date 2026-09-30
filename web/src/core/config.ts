@@ -1,8 +1,8 @@
 /**
- * NATRA simulation configuration: one typed object, defaults taken from the
+ * NETRA simulation configuration: one typed object, defaults taken from the
  * SIH26169 / PS169 parameter table where the problem statement fixes a value.
  *
- * The Python engine (server/natra_engine/config.py) mirrors these field names so a
+ * The Python engine (server/netra_engine/config.py) mirrors these field names so a
  * config JSON can be sent to either engine unchanged.
  */
 

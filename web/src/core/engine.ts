@@ -1,5 +1,5 @@
 /**
- * NATRA simulation engine — one closed-loop coarse-pointing system.
+ * NETRA simulation engine — one closed-loop coarse-pointing system.
  *
  * Per camera frame (default 30 Hz):
  *   1. control   the gimbal servo loop runs at controlRateHz (default 60 Hz) over the

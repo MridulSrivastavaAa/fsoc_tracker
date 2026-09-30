@@ -191,7 +191,7 @@ export function CameraRig() {
 
   useEffect(() => {
     // Test/debug handle (used by the automated UI checks in TEST_REPORT.md).
-    (window as unknown as { __NATRA_CAM__: unknown }).__NATRA_CAM__ = { camera, controls: ref };
+    (window as unknown as { __NETRA_CAM__: unknown }).__NETRA_CAM__ = { camera, controls: ref };
   }, [camera]);
   return (
     <CameraControls

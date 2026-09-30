@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 /**
- * Local engine host: runs the NATRA simulation engine in a Web Worker at the
+ * Local engine host: runs the NETRA simulation engine in a Web Worker at the
  * configured camera frame rate, so the 3D view never blocks the tracking loop.
  * Posts one snapshot per frame and the rendered sensor image at `imageRate` Hz.
  */

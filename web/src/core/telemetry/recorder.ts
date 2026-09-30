@@ -7,7 +7,7 @@ import { SimConfig } from '../config';
 import { Snapshot, TransitionEvent } from './types';
 
 export interface Recording {
-  format: 'natra-recording';
+  format: 'netra-recording';
   version: 1;
   name: string;
   createdAt: string;
@@ -130,7 +130,7 @@ export class Recorder {
 
   toRecording(name: string, config: SimConfig | null, source: string): Recording {
     return {
-      format: 'natra-recording',
+      format: 'netra-recording',
       version: 1,
       name,
       createdAt: this.startedAt || new Date().toISOString(),
@@ -143,5 +143,5 @@ export class Recorder {
 }
 
 export function isRecording(x: unknown): x is Recording {
-  return !!x && typeof x === 'object' && (x as Recording).format === 'natra-recording' && Array.isArray((x as Recording).frames);
+  return !!x && typeof x === 'object' && (x as Recording).format === 'netra-recording' && Array.isArray((x as Recording).frames);
 }

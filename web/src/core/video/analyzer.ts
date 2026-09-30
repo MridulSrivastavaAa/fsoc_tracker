@@ -5,7 +5,7 @@
  *   frame → grey → CentroidDetector (+ learned verifier) → pixel-space Kalman
  *         → track state → per-frame centroid log + summary + performance report
  *
- * Mirror of server/natra_engine/video.py. Works on any frame size (e.g. a full
+ * Mirror of server/netra_engine/video.py. Works on any frame size (e.g. a full
  * 2000×2000 "screen" video). If the spot size is not given (0), it is estimated from
  * the first confident detections.
  */

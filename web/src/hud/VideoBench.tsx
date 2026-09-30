@@ -570,7 +570,7 @@ export function VideoBench() {
       config: null,
       video: s,
     });
-    saveReport(rep, fmt, 'natra-video-report');
+    saveReport(rep, fmt, 'netra-video-report');
   };
 
   return (
@@ -792,7 +792,7 @@ export function VideoBench() {
 
                 <div className="row" style={{ marginTop: 8 }}>
                   {result?.analyzer && (
-                    <button className="btn sm" onClick={() => download('natra-video-centroid-log.csv', result.analyzer!.csv(), 'text/csv')}>
+                    <button className="btn sm" onClick={() => download('netra-video-centroid-log.csv', result.analyzer!.csv(), 'text/csv')}>
                       <Icon name="download" size={14} /> Centroid log (CSV)
                     </button>
                   )}

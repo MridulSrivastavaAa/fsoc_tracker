@@ -1,5 +1,5 @@
 /**
- * Unit tests for the NATRA simulation core (run: npm test).
+ * Unit tests for the NETRA simulation core (run: npm test).
  */
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_CONFIG, cloneConfig, intrinsics, mergeConfig } from './config';

@@ -161,7 +161,7 @@ describe('automatic performance report', () => {
     for (const k of ['duration', 'fps', 'acq', 'errMean', 'errMax', 'retention', 'proc']) expect(keys).toContain(k);
     expect(rep.acceptance.length).toBeGreaterThanOrEqual(4);
     expect(reportMarkdown(rep)).toContain('| Metric | Value | PS169 limit | Result |');
-    expect(reportHtml(rep)).toContain('<title>NATRA performance report');
+    expect(reportHtml(rep)).toContain('<title>NETRA performance report');
   });
   it('aggregates a batch', () => {
     const rows = [1, 2].map((seed) => ({ seed, finalState: 'LOCKED', metrics: run(mergeConfig(DEFAULT_CONFIG, { seed }), 4).s.metrics }));
