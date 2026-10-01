@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['C:/SIH/final_2/fsoc_tracker/fsoc_engine/launcher.py'],
-    pathex=['C:/SIH/final_2/fsoc_tracker/fsoc_engine/src'],
+    ['C:/Users/mridu/OneDrive/Desktop/new project/fsoc_engine/launcher.py'],
+    pathex=['C:/Users/mridu/OneDrive/Desktop/new project/fsoc_engine/src'],
     binaries=[],
-    datas=[('C:/SIH/final_2/fsoc_tracker/fsoc_engine/configs', 'configs'), ('C:/SIH/final_2/fsoc_tracker/fsoc_engine/models', 'models'), ('C:/SIH/final_2/fsoc_tracker/fsoc_engine/web_dist', 'web_dist'), ('C:/SIH/final_2/fsoc_tracker/fsoc_engine/src', 'src'), ('C:/SIH/final_2/fsoc_tracker/fsoc_engine/test_videos', 'test_videos')],
+    datas=[('C:/Users/mridu/OneDrive/Desktop/new project/fsoc_engine/configs', 'configs'), ('C:/Users/mridu/OneDrive/Desktop/new project/fsoc_engine/models', 'models'), ('C:/Users/mridu/OneDrive/Desktop/new project/fsoc_engine/web_dist', 'web_dist'), ('C:/Users/mridu/OneDrive/Desktop/new project/fsoc_engine/src', 'src'), ('C:/Users/mridu/OneDrive/Desktop/new project/fsoc_engine/test_videos', 'test_videos')],
     hiddenimports=['webview', 'bottle', 'pythonnet', 'clr', 'uvicorn', 'uvicorn.logging', 'uvicorn.loops', 'uvicorn.loops.auto', 'uvicorn.protocols', 'uvicorn.protocols.http', 'uvicorn.protocols.http.auto', 'uvicorn.protocols.websockets', 'uvicorn.protocols.websockets.auto', 'uvicorn.lifespan', 'uvicorn.lifespan.on', 'fastapi', 'fastapi.middleware.cors', 'fastapi.staticfiles', 'starlette', 'starlette.routing', 'starlette.middleware.cors', 'starlette.staticfiles', 'multipart', 'multipart.multipart', 'pydantic', 'websockets'],
     hookspath=[],
     hooksconfig={},
