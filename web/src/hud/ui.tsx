@@ -218,19 +218,34 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
 }
 
 export function BrandMark() {
-  // Aperture diamond with a beam passing through its centre.
+  // NETRA electro-optical eye logo with precision laser targeting beam
   return (
     <svg className="brand-mark" viewBox="0 0 32 32" aria-hidden>
       <defs>
-        <linearGradient id="aqg" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0" stopColor="#4f9fc7" />
-          <stop offset="1" stopColor="#dff5ff" />
+        <linearGradient id="netra-eye-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#8fdcff" />
+          <stop offset="100%" stopColor="#38bdf8" />
         </linearGradient>
       </defs>
-      <path d="M16 2.5 29.5 16 16 29.5 2.5 16Z" fill="none" stroke="url(#aqg)" strokeWidth="1.4" />
-      <path style={{ fill: 'rgba(var(--accent-rgb),0.12)', stroke: 'rgba(var(--accent-rgb),0.55)' }} d="M16 8.5 23.5 16 16 23.5 8.5 16Z" strokeWidth="1" />
-      <path d="M4 28 28 4" stroke="#ffb547" strokeWidth="1.3" strokeLinecap="round" />
-      <circle style={{ fill: 'var(--text-strong)' }} cx="16" cy="16" r="2.2" />
+      {/* Outer Eye / Aperture Silhouette */}
+      <path
+        d="M 3 16 C 9 6, 23 6, 29 16 C 23 26, 9 26, 3 16 Z"
+        fill="rgba(var(--accent-rgb),0.08)"
+        stroke="url(#netra-eye-grad)"
+        strokeWidth="1.6"
+      />
+      {/* Optical Reticle / Iris Ring */}
+      <circle
+        cx="16"
+        cy="16"
+        r="7.5"
+        fill="rgba(var(--accent-rgb),0.12)"
+        stroke="rgba(var(--accent-rgb),0.65)"
+        strokeWidth="1.1"
+      />
+      {/* Boresight Pupil / Core Beacon */}
+      <circle cx="16" cy="16" r="3" fill="#ffffff" />
+      <circle cx="16" cy="16" r="1.3" fill="#ffb547" />
     </svg>
   );
 }

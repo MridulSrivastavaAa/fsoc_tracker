@@ -89,7 +89,7 @@ export function historySlice(key: SeriesKey, seconds: number): { t: Float32Array
 }
 
 // ───────────────────────── React-facing store ─────────────────────────
-export type DrawerId = 'scenario' | 'target' | 'disturbance' | 'tracking' | 'experiment' | 'optics' | 'view' | null;
+export type DrawerId = 'scenario' | 'target' | 'disturbance' | 'tracking' | 'experiment' | 'optics' | null;
 export type ViewPreset = 'overview' | 'terminal' | 'link' | 'sensor' | 'orbit' | 'free' | 'follow';
 export type FollowKey = 'sat3';
 export type Quality = 'low' | 'medium' | 'high';
@@ -105,12 +105,6 @@ export function applyTheme(t: ThemeId) {
   if (typeof document === 'undefined') return;
   if (t === 'deep-space') delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = t;
-}
-export interface MeasureTarget {
-  id: string;
-  name: string;
-  /** True position, km, site ENU frame. */
-  pos: [number, number, number];
 }
 
 interface AppState {
@@ -141,7 +135,6 @@ interface AppState {
   analysisOpen: boolean;
   analysisTab: string;
   helpOpen: boolean;
-  measure: { enabled: boolean; picks: MeasureTarget[] };
   recording: { active: boolean; frames: number };
   replay: { name: string; length: number; position: number; playing: boolean } | null;
   toast: string | null;
@@ -274,7 +267,6 @@ export const useApp = create<AppState>((set, get) => {
     analysisOpen: false,
     analysisTab: 'error',
     helpOpen: false,
-    measure: { enabled: false, picks: [] },
     recording: { active: false, frames: 0 },
     replay: null,
     toast: null,

@@ -198,7 +198,7 @@ export function Satellite() {
 
   return (
     <>
-      <group ref={root} userData={{ measure: 'satellite' }}>
+      <group ref={root}>
         <group ref={body}>
           {/* ═══ DISTINCT CENTRAL CYLINDRICAL FUSELAGE WITH GOLD MLI CORE ═══ */}
           <mesh material={m.paint} position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>

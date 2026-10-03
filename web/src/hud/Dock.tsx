@@ -115,9 +115,9 @@ export function AlignmentChain({ s }: { s: Snapshot | null }) {
     {
       num: '02',
       k: 'DETECTION',
-      v: d ? `${(d.confidence * 100).toFixed(0)} %` : s?.state === 'SEARCHING' ? 'Scanning' : '—',
+      v: d ? `${(d.confidence * 100).toFixed(1)} %` : s?.state === 'SEARCHING' ? 'Scanning' : '—',
       s: d ? `(${d.x.toFixed(0)}, ${d.y.toFixed(0)}) px` : 'Centroid Fix',
-      tag: d ? 'SNR 85' : 'CNN',
+      tag: d ? `SNR ${d.snr.toFixed(0)}` : 'CNN',
     },
     {
       num: '03',
@@ -209,157 +209,6 @@ export function AlignmentChain({ s }: { s: Snapshot | null }) {
   );
 }
 
-/** Field-of-regard map: search field, camera footprint, target, estimate, scan trace. */
-function FieldMap({ s }: { s: Snapshot }) {
-  const cfg = useApp((st) => st.config.logic);
-  const hu = cfg.searchHalfUDeg;
-  const hv = cfg.searchHalfVDeg;
-  const W = 110;
-  const H = 76;
-  const sc = Math.min((W - 10) / (2 * hu), (H - 10) / (2 * hv));
-  const X = (u: number) => W / 2 + u * sc;
-  const Y = (v: number) => H / 2 - v * sc;
-  const bu = s.gimbal.boresightU;
-  const bv = s.gimbal.boresightV;
-  const fw = s.camera.hfovDeg * sc;
-  const fh = s.camera.vfovDeg * sc;
-  return (
-    <div className="instrument-wrap" title="Field of Regard & Boresight Search Footprint">
-      <svg className="instrument-svg" viewBox={`0 0 ${W} ${H}`}>
-        <defs>
-          <radialGradient id="radar-glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="rgba(var(--accent-rgb), 0.12)" />
-            <stop offset="100%" stopColor="rgba(var(--accent-rgb), 0.0)" />
-          </radialGradient>
-        </defs>
-        {/* Radar background grid */}
-        <rect x="2" y="2" width={W - 4} height={H - 4} rx="4" fill="#04070c" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" />
-        <circle cx={W / 2} cy={H / 2} r={Math.min(W, H) * 0.42} fill="url(#radar-glow)" stroke="rgba(255, 255, 255, 0.08)" strokeDasharray="2 3" />
-        
-        {/* Search FOV bounds */}
-        <rect
-          x={X(-hu)}
-          y={Y(hv)}
-          width={2 * hu * sc}
-          height={2 * hv * sc}
-          fill="none"
-          stroke="rgba(var(--accent-rgb), 0.35)"
-          strokeWidth="1"
-          strokeDasharray="2 3"
-        />
-        <line x1={X(0)} y1="4" x2={X(0)} y2={H - 4} stroke="rgba(255, 255, 255, 0.1)" strokeDasharray="1 2" />
-        <line x1="4" y1={Y(0)} x2={W - 4} y2={Y(0)} stroke="rgba(255, 255, 255, 0.1)" strokeDasharray="1 2" />
-
-        {/* Camera footprint */}
-        <rect
-          x={X(bu) - fw / 2}
-          y={Y(bv) - fh / 2}
-          width={fw}
-          height={fh}
-          fill="rgba(var(--accent-rgb), 0.12)"
-          stroke={stateColor(s.state)}
-          strokeWidth="1.2"
-          rx="1"
-        />
-
-        {/* Target position */}
-        <circle cx={X(s.target.u)} cy={Y(s.target.v)} r="2.5" fill="var(--text-strong)" />
-        <circle cx={X(s.target.u)} cy={Y(s.target.v)} r="5.5" fill="none" stroke="var(--accent)" strokeWidth="1" />
-        <line x1={X(s.target.u) - 7} y1={Y(s.target.v)} x2={X(s.target.u) + 7} y2={Y(s.target.v)} stroke="var(--accent)" strokeWidth="0.8" opacity="0.6" />
-        <line x1={X(s.target.u)} y1={Y(s.target.v) - 7} x2={X(s.target.u)} y2={Y(s.target.v) + 7} stroke="var(--accent)" strokeWidth="0.8" opacity="0.6" />
-      </svg>
-      <span className="inst-tag">RADAR FOR</span>
-    </div>
-  );
-}
-
-/** Pan compass + tilt arc with commanded-rate indicators. */
-function GimbalDial({ s }: { s: Snapshot }) {
-  const pan = (s.gimbal.pan * Math.PI) / 180;
-  const tilt = (s.gimbal.tilt * Math.PI) / 180;
-  const R = 27;
-  const cx = 35;
-  const cy = 38;
-  const px = cx + R * Math.sin(pan);
-  const py = cy - R * Math.cos(pan);
-  const tx = 80 + 24 * Math.cos(tilt);
-  const ty = 64 - 24 * Math.sin(tilt);
-  return (
-    <div className="instrument-wrap" title="Gimbal Azimuth Compass & Elevation Angle">
-      <svg className="instrument-svg" viewBox="0 0 110 76">
-        <rect x="2" y="2" width="106" height="72" rx="4" fill="#04070c" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" />
-        
-        {/* Azimuth Compass */}
-        <circle cx={cx} cy={cy} r={R} fill="none" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1" />
-        {Array.from({ length: 8 }).map((_, i) => {
-          const a = (i * Math.PI) / 4;
-          return (
-            <line
-              key={i}
-              x1={cx + (R - 3) * Math.sin(a)}
-              y1={cy - (R - 3) * Math.cos(a)}
-              x2={cx + R * Math.sin(a)}
-              y2={cy - R * Math.cos(a)}
-              stroke="rgba(255, 255, 255, 0.25)"
-              strokeWidth="1"
-            />
-          );
-        })}
-        <text x={cx} y={cy - R + 7} fontSize="6.5" fill="var(--accent)" textAnchor="middle" fontFamily="var(--f-mono)" fontWeight="700">
-          N
-        </text>
-        <line x1={cx} y1={cy} x2={px} y2={py} stroke="var(--ice)" strokeWidth="1.8" strokeLinecap="round" />
-        <circle cx={cx} cy={cy} r="2.5" fill="var(--ice)" />
-
-        {/* Tilt Arc */}
-        <path d="M80 64 A24 24 0 0 1 104 64" transform="rotate(-90 80 64)" fill="none" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1.2" />
-        <line x1="80" y1="64" x2="104" y2="64" stroke="rgba(255, 255, 255, 0.2)" strokeWidth="1" />
-        <line x1="80" y1="64" x2={tx} y2={ty} stroke="var(--amber-hi)" strokeWidth="1.8" strokeLinecap="round" />
-        <circle cx="80" cy="64" r="2" fill="var(--amber-hi)" />
-        <text x="80" y="71" fontSize="6.5" fill="var(--text-3)" fontFamily="var(--f-mono)" fontWeight="600">
-          EL {s.gimbal.tilt.toFixed(0)}°
-        </text>
-      </svg>
-      <span className="inst-tag">AZ / EL DIAL</span>
-    </div>
-  );
-}
-
-/** Alignment Quality Score arc. */
-function AqsGauge({ s }: { s: Snapshot }) {
-  const v = Math.max(0, Math.min(100, s.metrics.aqs));
-  const a0 = Math.PI * 0.8;
-  const a1 = Math.PI * 2.2;
-  const a = a0 + (a1 - a0) * (v / 100);
-  const R = 26;
-  const cx = 55;
-  const cy = 37;
-  const arc = (from: number, to: number) => {
-    const x0 = cx + R * Math.cos(from);
-    const y0 = cy + R * Math.sin(from);
-    const x1 = cx + R * Math.cos(to);
-    const y1 = cy + R * Math.sin(to);
-    return `M${x0} ${y0} A${R} ${R} 0 ${to - from > Math.PI ? 1 : 0} 1 ${x1} ${y1}`;
-  };
-  const col = v > 75 ? 'var(--lock)' : v > 45 ? 'var(--ice)' : 'var(--amber)';
-  return (
-    <div className="instrument-wrap" title="Alignment Quality Score (0–100)">
-      <svg className="instrument-svg" viewBox="0 0 110 76">
-        <rect x="2" y="2" width="106" height="72" rx="4" fill="#04070c" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" />
-        <path d={arc(a0, a1)} stroke="rgba(255, 255, 255, 0.1)" strokeWidth="4.5" fill="none" strokeLinecap="round" />
-        <path d={arc(a0, Math.max(a0 + 0.01, a))} stroke={col} strokeWidth="4.5" fill="none" strokeLinecap="round" />
-        <text x={cx} y={cy + 4} textAnchor="middle" fontSize="15" fill="var(--text-strong)" fontFamily="var(--f-mono)" fontWeight="700">
-          {v.toFixed(0)}
-        </text>
-        <text x={cx} y={cy + 15} textAnchor="middle" fontSize="6.5" fill="var(--text-3)" fontFamily="var(--f-cond)" letterSpacing="0.08em">
-          AQS QUALITY
-        </text>
-      </svg>
-      <span className="inst-tag">QUALITY INDEX</span>
-    </div>
-  );
-}
-
 export function Dock() {
   const s = useApp((st) => st.hud);
   const analysisOpen = useApp((st) => st.analysisOpen);
@@ -411,9 +260,6 @@ export function Dock() {
                 </span>
               </div>
             </div>
-            <div className="tp-instrument">
-              {s && <FieldMap s={s} />}
-            </div>
           </div>
         </section>
 
@@ -439,6 +285,12 @@ export function Dock() {
                 <span className="tp-val">{fmt(s?.gimbal.tilt, 3)}<small>°</small></span>
               </div>
               <div className="tp-cell">
+                <span className="tp-label">PIXEL ERROR</span>
+                <span className="tp-val" style={{ color: s && (s.error.magPx ?? 99) < lockPx ? 'var(--lock)' : undefined }}>
+                  {fmt(s?.error.magPx, 1)}<small>px</small>
+                </span>
+              </div>
+              <div className="tp-cell">
                 <span className="tp-label">PAN RATE</span>
                 <span className="tp-val">{fmtSigned(s?.gimbal.panRate, 3)}<small>°/s</small></span>
               </div>
@@ -447,18 +299,9 @@ export function Dock() {
                 <span className="tp-val">{fmtSigned(s?.gimbal.tiltRate, 3)}<small>°/s</small></span>
               </div>
               <div className="tp-cell">
-                <span className="tp-label">PIXEL ERROR</span>
-                <span className="tp-val" style={{ color: s && (s.error.magPx ?? 99) < lockPx ? 'var(--lock)' : undefined }}>
-                  {fmt(s?.error.magPx, 1)}<small>px</small>
-                </span>
-              </div>
-              <div className="tp-cell">
                 <span className="tp-label">FOV DIM</span>
                 <span className="tp-val">{s ? `${s.camera.hfovDeg.toFixed(2)}×${s.camera.vfovDeg.toFixed(2)}` : '—'}<small>°</small></span>
               </div>
-            </div>
-            <div className="tp-instrument">
-              {s && <GimbalDial s={s} />}
             </div>
           </div>
         </section>
@@ -483,12 +326,6 @@ export function Dock() {
                 </span>
               </div>
               <div className="tp-cell">
-                <span className="tp-label">FINE HAND-OVER</span>
-                <span className="tp-val" style={{ color: s?.link.fineHandover ? 'var(--lock)' : undefined }}>
-                  {s?.link.fineHandover ? 'READY' : 'NO'}
-                </span>
-              </div>
-              <div className="tp-cell">
                 <span className="tp-label">RX POWER</span>
                 <span className="tp-val">{fmt(s?.link.prDbm, 1)}<small>dBm</small></span>
               </div>
@@ -499,16 +336,19 @@ export function Dock() {
                 </span>
               </div>
               <div className="tp-cell">
-                <span className="tp-label">P(ACQ ≤ 2 S)</span>
-                <span className="tp-val">{s ? `${(s.link.pAcquire2s * 100).toFixed(0)}` : '—'}<small>%</small></span>
+                <span className="tp-label">FINE HAND-OVER</span>
+                <span className="tp-val" style={{ color: s?.link.fineHandover ? 'var(--lock)' : undefined }}>
+                  {s?.link.fineHandover ? 'READY' : 'NO'}
+                </span>
               </div>
               <div className="tp-cell">
                 <span className="tp-label">LOCK RETENTION</span>
                 <span className="tp-val">{fmt(s?.metrics.lockRetentionPct, 1)}<small>%</small></span>
               </div>
-            </div>
-            <div className="tp-instrument">
-              {s && <AqsGauge s={s} />}
+              <div className="tp-cell">
+                <span className="tp-label">P(ACQ ≤ 2 S)</span>
+                <span className="tp-val">{s ? `${(s.link.pAcquire2s * 100).toFixed(0)}` : '—'}<small>%</small></span>
+              </div>
             </div>
           </div>
         </section>

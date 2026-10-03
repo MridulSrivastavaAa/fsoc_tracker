@@ -10,7 +10,7 @@ import { SensorView } from '../hud/Sensor';
 import { Dock } from '../hud/Dock';
 import { Analysis } from '../hud/Analysis';
 import { RightNavbar } from '../hud/Drawers';
-import { Help, MeasurePanel } from '../hud/Overlays';
+import { Help } from '../hud/Overlays';
 import { ThemePopover } from '../hud/Theme';
 import { VideoBench } from '../hud/VideoBench';
 import { vis } from '../scene/vis';
@@ -107,7 +107,6 @@ export default function App() {
       <DemoCaption />
       <ReplayBar />
       <RightNavbar />
-      <MeasurePanel />
       <div className="leftcol">
         <SensorView />
         <ViewSwitch />

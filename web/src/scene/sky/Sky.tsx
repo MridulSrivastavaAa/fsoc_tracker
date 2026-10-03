@@ -172,7 +172,7 @@ export function Moon({ sunDir }: { sunDir: THREE.Vector3 }) {
   const pos = useMemo(() => azElVec(MOON_AZ, MOON_EL, MOON_DISTANCE_KM), []);
   useFrame(() => mat.uniforms.sunDir.value.copy(sunDir));
   return (
-    <mesh position={pos} material={mat} userData={{ measure: 'moon' }}>
+    <mesh position={pos} material={mat}>
       <sphereGeometry args={[MOON_RADIUS_KM * 3, 64, 32]} />
     </mesh>
   );
