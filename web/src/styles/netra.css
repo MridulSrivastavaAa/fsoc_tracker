@@ -150,13 +150,14 @@ button {
   width: 30px;
   height: 30px;
   flex: none;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.4));
 }
 
 .brand-word {
   font-family: var(--f-cond);
-  font-weight: 600;
-  font-size: 21px;
-  letter-spacing: 0.34em;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.36em;
   color: var(--text-strong);
   line-height: 1;
 }
@@ -971,34 +972,35 @@ select {
 .preset-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 5px;
+  gap: 6px;
 }
 
 .preset-chip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 7px;
+  padding: 7px 9px;
   border-radius: 6px;
-  border: 1px solid var(--line);
-  background: rgba(var(--panel-rgb), 0.5);
-  color: var(--text);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(18, 24, 32, 0.6);
+  color: var(--text-2);
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-  min-height: 32px;
+  transition: all 0.15s ease;
+  min-height: 34px;
 }
 
 .preset-chip:hover {
-  background: rgba(var(--panel-rgb), 0.8);
+  background: rgba(28, 38, 50, 0.7);
   border-color: rgba(var(--accent-rgb), 0.35);
+  color: var(--text-strong);
 }
 
 .preset-chip.on {
-  border-color: rgba(var(--accent-rgb), 0.7);
-  background: rgba(var(--accent-rgb), 0.14);
+  border-color: rgba(245, 185, 66, 0.55);
+  background: rgba(245, 185, 66, 0.1);
   color: var(--text-strong);
-  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb), 0.4);
+  box-shadow: 0 0 12px rgba(245, 185, 66, 0.12), inset 0 0 0 1px rgba(245, 185, 66, 0.3);
 }
 
 .preset-dot {
@@ -1007,13 +1009,13 @@ select {
   border-radius: 50%;
   background: var(--text-3);
   flex: none;
-  transition: background 0.15s, transform 0.15s;
+  transition: all 0.15s ease;
 }
 
 .preset-chip.on .preset-dot {
-  background: var(--ice);
-  box-shadow: 0 0 6px var(--ice);
-  transform: scale(1.3);
+  background: var(--amber-hi);
+  box-shadow: 0 0 8px var(--amber);
+  transform: scale(1.35);
 }
 
 .preset-title {
@@ -1023,12 +1025,15 @@ select {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: 0.02em;
 }
 
 .preset-tag {
   font-family: var(--f-mono);
-  font-size: 8.5px;
-  padding: 1px 4px;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 1.5px 4.5px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-3);
@@ -1036,22 +1041,25 @@ select {
 }
 
 .preset-chip.on .preset-tag {
-  background: rgba(var(--accent-rgb), 0.22);
-  color: var(--ice);
+  background: rgba(245, 185, 66, 0.2);
+  color: var(--amber-hi);
+  border: 1px solid rgba(245, 185, 66, 0.3);
 }
 
 .preset-detail {
-  margin-top: 6px;
-  padding: 6px 8px;
-  background: rgba(var(--panel-rgb), 0.45);
-  border: 1px solid var(--hair);
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: rgba(14, 20, 28, 0.7);
+  border: 1px solid rgba(var(--accent-rgb), 0.2);
   border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  position: relative;
 }
 
 .preset-desc {
   font-size: 11px;
-  color: var(--text-2);
-  line-height: 1.35;
+  color: var(--text);
+  line-height: 1.45;
   display: block;
 }
 
@@ -1750,16 +1758,16 @@ select {
 
 .tp-body {
   display: flex;
-  gap: 8px;
   flex: 1;
   min-width: 0;
   align-items: center;
+  padding: 2px 0;
 }
 
 .tp-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px 14px;
   flex: 1;
   min-width: 0;
 }
@@ -1784,7 +1792,7 @@ select {
 
 .tp-val {
   font-family: var(--f-mono);
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
   color: var(--text-strong);
   white-space: nowrap;
@@ -2008,15 +2016,6 @@ select {
   z-index: 60;
   animation: slideup .2s ease-out;
   max-width: 70vw;
-}
-
-.measure {
-  position: absolute;
-  right: 66px;
-  top: 108px;
-  width: 300px;
-  z-index: 18;
-  padding: 12px 14px;
 }
 
 .help {
