@@ -22,8 +22,7 @@ local WebSockets) to a **real FastAPI backend** (`ClosedLoopEngine` over WebSock
   (`fsoc_engine/build_exe.py`). PyInstaller packs `web/dist` → `web_dist` → `_internal/web_dist` inside the exe.
 - `fsoc_tracker/web_dist/` — bundled web UI embedded in the exe (PyInstaller `datas`).
 - `fsoc_tracker/configs/`, `fsoc_tracker/models/`, `fsoc_tracker/test_videos/` — defaults, ONNX models, benchmark frames.
-- `fsoc_tracker/01_PROJECT_STRUCTURE.md`, `02_DESIGN_DOCUMENT.md`, `03_PDR_...`, `04_DATA_GENERATION_PLAN.md`,
-  `DEBUG_PLAN.md`, `changes.md` — design/planning docs.
+- `fsoc_tracker/01_PROJECT_STRUCTURE.md`, `02_DESIGN_DOCUMENT.md`, `03_PDR_...`, `04_DATA_GENERATION_PLAN.md` — design/planning docs.
 
 ## Architecture
 - **Web UI** (`web/src/services/providers.ts`): 3 providers —
