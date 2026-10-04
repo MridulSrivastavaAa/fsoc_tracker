@@ -3,22 +3,23 @@
  * and the three readout groups TARGET · CAMERA/GIMBAL · LINK.
  */
 import { useEffect, useRef } from 'react';
-import { history, historySlice, live, stateColor, useApp } from '../state/store';
+import { history, historySlice, live, useApp } from '../state/store';
 import type { Snapshot, TrackState } from '../core/telemetry/types';
-import { Icon, cssVar, fmt, fmtSigned } from './ui';
+import { cssVar, fmt, fmtSigned } from './ui';
+import { Chart, TABS } from './Analysis';
 
 const ACTIVE: Record<TrackState, number> = {
   IDLE: 0,
   SEARCHING: 0,
   DETECTED: 2,
-  ACQUIRING: 5,
-  TRACKING: 6,
-  LOCKED: 7,
-  LOST: 5,
-  REACQUIRING: 5,
+  ACQUIRING: 4,
+  TRACKING: 5,
+  LOCKED: 5,
+  LOST: 3,
+  REACQUIRING: 3,
 };
 
-function Spark() {
+function Spark({ isLocked = false }: { isLocked?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const lockPx = useApp((s) => s.config.logic.lockPx);
   useEffect(() => {
@@ -30,7 +31,7 @@ function Spark() {
       last = history.head;
       const c = ref.current;
       if (!c) return;
-      const w = (c.width = 200);
+      const w = (c.width = 240);
       const h = (c.height = 40);
       const ctx = c.getContext('2d')!;
       ctx.clearRect(0, 0, w, h);
@@ -48,8 +49,8 @@ function Spark() {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Error curve
-      ctx.strokeStyle = cssVar('--ser-a');
+      // Error curve - transitions to emerald green when locked
+      ctx.strokeStyle = isLocked ? '#3fb950' : cssVar('--ser-a');
       ctx.lineWidth = 1.6;
       ctx.beginPath();
       let started = false;
@@ -71,8 +72,13 @@ function Spark() {
       // Subtle gradient fill under curve
       if (points.length > 1) {
         const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, 'rgba(245, 185, 66, 0.22)');
-        grad.addColorStop(1, 'rgba(245, 185, 66, 0)');
+        if (isLocked) {
+          grad.addColorStop(0, 'rgba(63, 185, 80, 0.28)');
+          grad.addColorStop(1, 'rgba(63, 185, 80, 0)');
+        } else {
+          grad.addColorStop(0, 'rgba(245, 185, 66, 0.22)');
+          grad.addColorStop(1, 'rgba(245, 185, 66, 0)');
+        }
         ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.moveTo(points[0][0], points[0][1]);
@@ -87,8 +93,18 @@ function Spark() {
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [lockPx]);
+  }, [lockPx, isLocked]);
   return <canvas ref={ref} className="chain-spark" />;
+}
+
+import type { ReactNode } from 'react';
+
+interface ChainNode {
+  k: string;
+  v: ReactNode;
+  s: ReactNode;
+  spark?: boolean;
+  isLockNode?: boolean;
 }
 
 export function AlignmentChain({ s }: { s: Snapshot | null }) {
@@ -104,56 +120,44 @@ export function AlignmentChain({ s }: { s: Snapshot | null }) {
   const ex = est ? est[0] - cx : d ? d.x - cx : null;
   const ey = est ? est[1] - cy : d ? d.y - cy : null;
 
-  const nodes = [
+  const nodes: ChainNode[] = [
     {
-      num: '01',
       k: 'INITIAL ERROR',
-      v: fmt(live.initialErrPx, 0, ' px'),
-      s: 'First Acquisition',
-      tag: 'REF',
+      v: live.initialErrPx ? <>{fmt(live.initialErrPx, 0)}<small>px</small></> : '—',
+      s: 'Acquisition T₀',
     },
     {
-      num: '02',
       k: 'DETECTION',
-      v: d ? `${(d.confidence * 100).toFixed(1)} %` : s?.state === 'SEARCHING' ? 'Scanning' : '—',
-      s: d ? `(${d.x.toFixed(0)}, ${d.y.toFixed(0)}) px` : 'Centroid Fix',
-      tag: d ? `SNR ${d.snr.toFixed(0)}` : 'CNN',
+      v: d ? <>{(d.confidence * 100).toFixed(1)}<small>%</small></> : s?.state === 'SEARCHING' ? 'Scanning' : '—',
+      s: d ? <>Centroid ({d.x.toFixed(0)}, {d.y.toFixed(0)})<small>px</small></> : 'Centroid Fix',
     },
     {
-      num: '03',
       k: 'ERROR ESTIMATE',
-      v: ex !== null && ey !== null ? `${fmtSigned(ex)}, ${fmtSigned(ey)}` : '—',
-      s: ex !== null && ey !== null ? `${(Math.hypot(ex, ey) * ifov).toFixed(3)}° · Kalman` : 'State Est.',
-      tag: 'KF',
+      v: ex !== null && ey !== null ? (
+        <span className="mono-subgrid">
+          <span>ΔX {fmtSigned(ex, 1)}</span>
+          <span className="dot-sep">·</span>
+          <span>ΔY {fmtSigned(ey, 1)}</span>
+        </span>
+      ) : '—',
+      s: ex !== null && ey !== null ? <>{(Math.hypot(ex, ey) * ifov).toFixed(3)}° · Kalman KF</> : 'State Est.',
     },
     {
-      num: '04',
-      k: 'PAN / TILT CMD',
-      v: s ? `${fmtSigned(s.gimbal.panCmd, 2)}, ${fmtSigned(s.gimbal.tiltCmd, 2)}` : '—',
-      s: 'PID + Feedforward',
-      tag: '°/s',
+      k: 'PAN-TILT / GIMBAL',
+      v: s ? (
+        <span className="mono-subgrid">
+          <span>Az {s.gimbal.pan.toFixed(1)}°</span>
+          <span className="dot-sep">·</span>
+          <span>El {s.gimbal.tilt.toFixed(1)}°</span>
+        </span>
+      ) : '—',
+      s: s ? <>Rate: {fmtSigned(s.gimbal.panCmd, 2)}, {fmtSigned(s.gimbal.tiltCmd, 2)}<small>°/s</small></> : 'PID + Encoders',
     },
     {
-      num: '05',
-      k: 'GIMBAL MOTION',
-      v: s ? `${s.gimbal.pan.toFixed(2)}°, ${s.gimbal.tilt.toFixed(2)}°` : '—',
-      s: 'Encoder Feedback',
-      tag: 'AZ/EL',
-    },
-    {
-      num: '06',
       k: 'PIXEL ERROR',
-      v: fmt(s?.error.magPx, 1, ' px'),
-      s: 'Realtime Trace',
+      v: <>{fmt(s?.error.magPx, 1)}<small>px</small></>,
+      s: isLocked ? 'Optical Lock' : isTracking ? 'Tracking Active' : 'Realtime Trace',
       spark: true,
-      tag: 'RT',
-    },
-    {
-      num: '07',
-      k: 'OPTICAL LOCK',
-      v: isLocked ? 'LOCKED' : isTracking ? 'TRACKING' : s?.metrics.acquisitionS !== null && s?.metrics.acquisitionS !== undefined ? 'RELOCKING' : 'SEARCHING',
-      s: s?.metrics.acquisitionS !== null && s?.metrics.acquisitionS !== undefined ? `Lock: ${s.metrics.acquisitionS.toFixed(2)}s` : 'Coarse Alignment',
-      tag: 'STATUS',
       isLockNode: true,
     },
   ];
@@ -164,32 +168,34 @@ export function AlignmentChain({ s }: { s: Snapshot | null }) {
         {nodes.map((node, i) => {
           const isActive = i < n;
           const isHot = i === n - 1;
+          const isConnectorLocked = isLocked && i === nodes.length - 2;
           return (
             <div key={node.k} className="chain-segment">
               <div
                 className={`chain-card ${isActive ? 'active' : ''} ${isHot ? 'hot' : ''} ${node.isLockNode ? (isLocked ? 'locked-card' : 'acquiring-card') : ''}`}
               >
                 <div className="chain-card-top">
-                  <span className="chain-num">{node.num}</span>
                   <span className="chain-label">{node.k}</span>
-                  <span className="chain-tag">{node.tag}</span>
                 </div>
                 <div
                   className="chain-val"
                   style={
                     node.isLockNode && isLocked
                       ? { color: 'var(--lock)' }
-                      : coasting && i >= 2 && i <= 4
+                      : coasting && i >= 2 && i <= 3
                       ? { color: 'var(--warn)' }
                       : undefined
                   }
                 >
-                  {node.v}
+                  <span className="chain-val-inner">{node.v}</span>
+                  {node.isLockNode && isLocked && (
+                    <span className="chain-lock-badge">LOCKED</span>
+                  )}
                 </div>
-                {node.spark ? <Spark /> : <div className="chain-sub">{node.s}</div>}
+                {node.spark ? <Spark isLocked={isLocked} /> : <div className="chain-sub">{node.s}</div>}
               </div>
               {i < nodes.length - 1 && (
-                <div className={`chain-connector ${i < n - 1 ? 'flowing' : ''}`}>
+                <div className={`chain-connector ${i < n - 1 ? 'flowing' : ''} ${isConnectorLocked ? 'flowing-lock' : ''}`}>
                   <svg width="14" height="12" viewBox="0 0 14 12" fill="none">
                     <path
                       d="M1 6H10M10 6L6.5 2.5M10 6L6.5 9.5"
@@ -211,9 +217,11 @@ export function AlignmentChain({ s }: { s: Snapshot | null }) {
 
 export function Dock() {
   const s = useApp((st) => st.hud);
-  const analysisOpen = useApp((st) => st.analysisOpen);
   const set = useApp((st) => st.set);
   const lockPx = useApp((st) => st.config.logic.lockPx);
+  const analysisTab = useApp((st) => st.analysisTab);
+  const m = s?.metrics;
+  const currentTab = TABS.find((t) => t.id === analysisTab) ?? TABS[0];
 
   return (
     <div className="dock">
@@ -228,7 +236,8 @@ export function Dock() {
               <h4 className="tp-title">TARGET · REMOTE BEACON</h4>
             </div>
             <div className={`tp-badge ${s?.target.inFov ? 'badge-active' : 'badge-warn'}`}>
-              <span>{s?.target.inFov ? 'IN FOV' : 'OUT FOV'}</span>
+              <span className="tp-badge-dot" />
+              <span>{s?.target.inFov ? 'IN FOV' : 'OUT OF FOV'}</span>
             </div>
           </div>
           <div className="tp-body">
@@ -246,123 +255,114 @@ export function Dock() {
                 <span className="tp-val">{fmt(s?.target.rangeKm, 1)}<small>km</small></span>
               </div>
               <div className="tp-cell">
-                <span className="tp-label">ANGULAR RATE</span>
+                <span className="tp-label">SLEW RATE</span>
                 <span className="tp-val">{fmt(s?.target.angRateDegS, 3)}<small>°/s</small></span>
               </div>
               <div className="tp-cell">
-                <span className="tp-label">TRANSVERSE V</span>
+                <span className="tp-label">TRANS. VEL</span>
                 <span className="tp-val">{fmt(s?.target.transverseKmS, 2)}<small>km/s</small></span>
               </div>
               <div className="tp-cell">
-                <span className="tp-label">FOV LOCK</span>
-                <span className="tp-val" style={{ color: s?.target.inFov ? 'var(--lock)' : 'var(--amber)' }}>
-                  {s ? (s.target.inFov ? 'YES' : 'NO') : '—'}
+                <span className="tp-label">FOV STATUS</span>
+                <span className="tp-val">
+                  {s?.target.inFov ? (
+                    <span className="tp-status-pill locked"><span className="tp-status-dot" />LOCKED</span>
+                  ) : (
+                    <span className="tp-status-pill search"><span className="tp-status-dot" />ACQ SCAN</span>
+                  )}
                 </span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Panel 2: Camera & Pan/Tilt Gimbal */}
-        <section className="telemetry-panel gimbal-panel">
+        {/* Panel 2: Error Analysis & Metric Options (replaces Camera) */}
+        <section className="telemetry-panel analysis-opt-panel">
           <div className="tp-header">
             <div className="tp-title-group">
-              <span className="tp-dot gimbal-dot" />
-              <h4 className="tp-title">CAMERA · PAN/TILT GIMBAL</h4>
+              <span className="tp-dot analysis-dot" />
+              <h4 className="tp-title">ERROR ANALYSIS · OPTIONS</h4>
             </div>
-            <div className="tp-badge badge-info">
-              <span>{s?.mode === 'manual' ? 'MANUAL' : 'CLOSED LOOP'}</span>
-            </div>
-          </div>
-          <div className="tp-body">
-            <div className="tp-grid">
-              <div className="tp-cell">
-                <span className="tp-label">PAN (AZ)</span>
-                <span className="tp-val">{fmt(s?.gimbal.pan, 3)}<small>°</small></span>
-              </div>
-              <div className="tp-cell">
-                <span className="tp-label">TILT (EL)</span>
-                <span className="tp-val">{fmt(s?.gimbal.tilt, 3)}<small>°</small></span>
-              </div>
-              <div className="tp-cell">
-                <span className="tp-label">PIXEL ERROR</span>
-                <span className="tp-val" style={{ color: s && (s.error.magPx ?? 99) < lockPx ? 'var(--lock)' : undefined }}>
-                  {fmt(s?.error.magPx, 1)}<small>px</small>
-                </span>
-              </div>
-              <div className="tp-cell">
-                <span className="tp-label">PAN RATE</span>
-                <span className="tp-val">{fmtSigned(s?.gimbal.panRate, 3)}<small>°/s</small></span>
-              </div>
-              <div className="tp-cell">
-                <span className="tp-label">TILT RATE</span>
-                <span className="tp-val">{fmtSigned(s?.gimbal.tiltRate, 3)}<small>°/s</small></span>
-              </div>
-              <div className="tp-cell">
-                <span className="tp-label">FOV DIM</span>
-                <span className="tp-val">{s ? `${s.camera.hfovDeg.toFixed(2)}×${s.camera.vfovDeg.toFixed(2)}` : '—'}<small>°</small></span>
-              </div>
+            <div className="tp-badge badge-active">
+              <span className="tp-badge-dot" />
+              <span>RMS {fmt(m?.errRmsPx, 2)} px</span>
             </div>
           </div>
-        </section>
-
-        {/* Panel 3: Optical Link Budget */}
-        <section className="telemetry-panel link-panel">
-          <div className="tp-header">
-            <div className="tp-title-group">
-              <span className="tp-dot link-dot" />
-              <h4 className="tp-title">OPTICAL LINK BUDGET</h4>
+          <div className="tp-body analysis-opt-body">
+            {/* Chart Selection Buttons */}
+            <div className="analysis-tabs-row">
+              {TABS.map((t) => (
+                <button
+                  key={t.id}
+                  className={`analysis-tab-chip ${currentTab.id === t.id ? 'active' : ''}`}
+                  onClick={() => set({ analysisTab: t.id })}
+                  title={t.label}
+                >
+                  {t.label}
+                </button>
+              ))}
             </div>
-            <div className={`tp-badge ${s?.state === 'LOCKED' ? 'badge-active' : s?.state === 'TRACKING' ? 'badge-info' : 'badge-warn'}`}>
-              <span>{s ? (s.state === 'LOCKED' ? 'LOCKED' : s.state === 'TRACKING' ? 'TRACKING' : 'ACQUIRING') : '—'}</span>
-            </div>
-          </div>
-          <div className="tp-body">
-            <div className="tp-grid">
+            {/* Key Error Metrics */}
+            <div className="tp-grid analysis-metrics-grid">
               <div className="tp-cell">
-                <span className="tp-label">LINK STATUS</span>
-                <span className="tp-val" style={{ color: s ? stateColor(s.state) : undefined }}>
-                  {s ? (s.state === 'LOCKED' ? 'Acquired' : s.state === 'TRACKING' ? 'Tracking' : 'Scanning') : '—'}
+                <span className="tp-label">RMS ERROR</span>
+                <span className="tp-val" style={{ color: (m?.errRmsPx ?? 99) < lockPx ? 'var(--lock)' : undefined }}>
+                  {fmt(m?.errRmsPx, 2)}<small>px</small>
                 </span>
               </div>
               <div className="tp-cell">
-                <span className="tp-label">RX POWER</span>
-                <span className="tp-val">{fmt(s?.link.prDbm, 1)}<small>dBm</small></span>
+                <span className="tp-label">MEAN ERROR</span>
+                <span className="tp-val">{fmt(m?.errMeanPx, 2)}<small>px</small></span>
               </div>
               <div className="tp-cell">
-                <span className="tp-label">LINK MARGIN</span>
-                <span className="tp-val" style={{ color: s && s.link.marginDb < 0 ? 'var(--lost)' : 'var(--lock)' }}>
-                  {fmtSigned(s?.link.marginDb, 1)}<small>dB</small>
-                </span>
+                <span className="tp-label">MAX ERROR</span>
+                <span className="tp-val">{fmt(m?.errMaxPx, 2)}<small>px</small></span>
               </div>
               <div className="tp-cell">
-                <span className="tp-label">FINE HAND-OVER</span>
-                <span className="tp-val" style={{ color: s?.link.fineHandover ? 'var(--lock)' : undefined }}>
-                  {s?.link.fineHandover ? 'READY' : 'NO'}
-                </span>
+                <span className="tp-label">P95 ERROR</span>
+                <span className="tp-val">{fmt(m?.errP95Px, 2)}<small>px</small></span>
+              </div>
+              <div className="tp-cell">
+                <span className="tp-label">CENTROID RMS</span>
+                <span className="tp-val">{fmt(m?.centroidRmsPx, 2)}<small>px</small></span>
               </div>
               <div className="tp-cell">
                 <span className="tp-label">LOCK RETENTION</span>
-                <span className="tp-val">{fmt(s?.metrics.lockRetentionPct, 1)}<small>%</small></span>
-              </div>
-              <div className="tp-cell">
-                <span className="tp-label">P(ACQ ≤ 2 S)</span>
-                <span className="tp-val">{s ? `${(s.link.pAcquire2s * 100).toFixed(0)}` : '—'}<small>%</small></span>
+                <span className="tp-val" style={{ color: (m?.lockRetentionPct ?? 0) >= 95 ? 'var(--lock)' : undefined }}>
+                  {fmt(m?.lockRetentionPct, 1)}<small>%</small>
+                </span>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Action Controls */}
-        <section className="telemetry-actions-card">
-          <button className={`tp-action-btn ${analysisOpen ? 'active' : ''}`} onClick={() => set({ analysisOpen: !analysisOpen })} title="Telemetry graphs & metrics (A)">
-            <Icon name="analysis" size={15} />
-            <span>Analysis</span>
-          </button>
-          <button className="tp-action-btn" onClick={() => useApp.getState().setDrawer('experiment')} title="Record, export, replay, batch experiments">
-            <Icon name="experiment" size={15} />
-            <span>Experiment</span>
-          </button>
+        {/* Panel 3: Live Interactive Telemetry Chart (replaces Optical Link + Actions) */}
+        <section className="telemetry-panel analysis-chart-panel">
+          <div className="tp-header">
+            <div className="tp-title-group">
+              <span className="tp-dot chart-dot" />
+              <h4 className="tp-title">LIVE CHART · {currentTab.label.toUpperCase()}</h4>
+            </div>
+            <div className="chart-legend-inline">
+              {currentTab.series.map((ser) => (
+                <span key={ser.key} className="chart-leg-item">
+                  <i style={{ background: cssVar(ser.color) }} />
+                  <span>{ser.label}</span>
+                </span>
+              ))}
+              {currentTab.threshold && (
+                <span className="chart-leg-item thr">
+                  <i style={{ background: 'var(--lock)' }} />
+                  <span>Lock ≤ {currentTab.unit === 'px' ? `${lockPx} px` : `${(lockPx * (s?.camera.ifovDeg ?? 0.00625)).toFixed(3)}°`}</span>
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="tp-body chart-panel-body">
+            <div className="tp-chart-canvas-wrap">
+              <Chart tab={currentTab} compact />
+            </div>
+          </div>
         </section>
       </div>
     </div>

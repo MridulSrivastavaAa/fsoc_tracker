@@ -3,21 +3,19 @@
  * lives here, hidden until needed).
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DrawerId, recorder, useApp } from '../state/store';
+import { DrawerId, recorder, saveReport, stateColor, useApp } from '../state/store';
 import { SCENARIO_PRESETS, presetConfig } from '../core/presets';
 import { buildReport } from '../core/analysis/report';
-import { saveReport } from '../state/store';
 import { SimConfig, TrajectoryKind } from '../core/config';
 import { isRecording } from '../core/telemetry/recorder';
 import type { BatchMessage, BatchRunResult } from '../engine/batch.worker';
 import { Icon, Section, Seg, Slider, Toggle, fmt } from './ui';
 
 const TOOLS: { id: Exclude<DrawerId, null>; icon: string; label: string }[] = [
-  { id: 'scenario', icon: 'scenario', label: 'Test Cases' },
   { id: 'target', icon: 'target', label: 'Kinematics' },
-  { id: 'disturbance', icon: 'disturbance', label: 'Noise Injection' },
   { id: 'tracking', icon: 'tracking', label: 'Detection, Kalman & Servo Loop' },
-  { id: 'optics', icon: 'optics', label: 'Optical Sensor & Link Budget' },
+  { id: 'disturbance', icon: 'disturbance', label: 'Noise Injection' },
+  { id: 'scenario', icon: 'scenario', label: 'Test Cases' },
   { id: 'experiment', icon: 'experiment', label: 'Analysis' },
 ];
 
@@ -91,21 +89,7 @@ function ScenarioDrawer() {
           </div>
         )}
       </Section>
-      <Section title="Simulation Clock & Speed">
-        <div className="row compact-row">
-          <span className="muted" style={{ fontSize: 11.5 }}>
-            Noise seed
-          </span>
-          <input
-            type="number"
-            value={cfg.seed}
-            style={{ width: 75, height: 24, fontSize: 11 }}
-            onChange={(e) => replace({ ...cfg, seed: parseInt(e.target.value || '0', 10) })}
-          />
-          <button className="btn sm" style={{ height: 24, padding: '0 8px', fontSize: 11 }} onClick={() => replace({ ...cfg, seed: cfg.seed + 1 })}>
-            Shuffle seed
-          </button>
-        </div>
+      <Section title="Simulation Speed">
         <div className="field" style={{ margin: '4px 0' }}>
           <label style={{ fontSize: 11.5 }}>Playback rate</label>
           <div style={{ gridColumn: '1 / -1' }}>
@@ -229,6 +213,7 @@ function WaypointEditor({ cfg, onChange }: { cfg: SimConfig; onChange: (w: [numb
 function TargetDrawer() {
   const { cfg, patch } = useCfg();
   const t = cfg.target;
+  const cam = cfg.camera;
   const periodic = ['circular', 'sinusoidal', 'figure8', 'spiral'].includes(t.trajectory);
   return (
     <>
@@ -264,6 +249,30 @@ function TargetDrawer() {
             <p className="note">Circular orbit at {cfg.scene.altitudeKm} km. Sensor field scans the predicted overpass track.</p>
           </>
         )}
+      </Section>
+
+      <Section title="Optical Payload & Sensor">
+        <Slider label="Horizontal FOV (tracking)" value={cam.hfovDeg} min={1} max={12} step={0.1} digits={1} unit="°" onChange={(v) => patch({ camera: { hfovDeg: v } })} />
+        <Toggle label="Wide-field acquisition (zoom in after detection)" on={cam.wideAcquisition} onChange={(v) => patch({ camera: { wideAcquisition: v } })} />
+        {cam.wideAcquisition && (
+          <>
+            <Slider label="Acquisition FOV" value={cam.wideHfovDeg} min={cam.hfovDeg} max={20} step={0.5} digits={1} unit="°" onChange={(v) => patch({ camera: { wideHfovDeg: v } })} />
+            <Slider label="Zoom rate" value={cam.zoomRateDegS} min={2} max={30} step={1} digits={0} unit=" °/s" onChange={(v) => patch({ camera: { zoomRateDegS: v } })} />
+          </>
+        )}
+        <Seg
+          value={`${cam.width}x${cam.height}`}
+          options={[
+            { v: '640x480', label: '640×480 (PS)' },
+            { v: '800x600', label: '800×600' },
+            { v: '1024x768', label: '1024×768' },
+          ]}
+          onChange={(v) => {
+            const [w, h] = v.split('x').map(Number);
+            patch({ camera: { width: w, height: h } });
+          }}
+        />
+        <Slider label="Frame rate (PS ≥ 30)" value={cam.frameRateHz} min={15} max={60} step={5} digits={0} unit=" Hz" onChange={(v) => patch({ camera: { frameRateHz: v } })} />
       </Section>
     </>
   );
@@ -355,36 +364,6 @@ function TrackingDrawer() {
   );
 }
 
-function OpticsDrawer() {
-  const { cfg, patch } = useCfg();
-  const cam = cfg.camera;
-  return (
-    <div className="section">
-      <Slider label="Horizontal FOV (tracking)" value={cam.hfovDeg} min={1} max={12} step={0.1} digits={1} unit="°" onChange={(v) => patch({ camera: { hfovDeg: v } })} />
-      <Toggle label="Wide-field acquisition (zoom in after detection)" on={cam.wideAcquisition} onChange={(v) => patch({ camera: { wideAcquisition: v } })} />
-      {cam.wideAcquisition && (
-        <>
-          <Slider label="Acquisition FOV" value={cam.wideHfovDeg} min={cam.hfovDeg} max={20} step={0.5} digits={1} unit="°" onChange={(v) => patch({ camera: { wideHfovDeg: v } })} />
-          <Slider label="Zoom rate" value={cam.zoomRateDegS} min={2} max={30} step={1} digits={0} unit=" °/s" onChange={(v) => patch({ camera: { zoomRateDegS: v } })} />
-        </>
-      )}
-      <Seg
-        value={`${cam.width}x${cam.height}`}
-        options={[
-          { v: '640x480', label: '640×480 (PS)' },
-          { v: '800x600', label: '800×600' },
-          { v: '1024x768', label: '1024×768' },
-        ]}
-        onChange={(v) => {
-          const [w, h] = v.split('x').map(Number);
-          patch({ camera: { width: w, height: h } });
-        }}
-      />
-      <Slider label="Frame rate (PS ≥ 30)" value={cam.frameRateHz} min={15} max={60} step={5} digits={0} unit=" Hz" onChange={(v) => patch({ camera: { frameRateHz: v } })} />
-    </div>
-  );
-}
-
 function BatchPanel() {
   const cfg = useApp((s) => s.config);
   const [runs, setRuns] = useState(10);
@@ -430,54 +409,88 @@ function BatchPanel() {
     a.click();
   };
   return (
-    <Section title="Monte Carlo Batch Trials" right={<span className="dim">headless worker</span>}>
-      <Slider label="Runs" value={runs} min={2} max={50} step={1} digits={0} onChange={setRuns} />
-      <Slider label="Duration per run" value={dur} min={5} max={60} step={1} digits={0} unit=" s" onChange={setDur} />
-      <div className="row">
-        <button className="btn sm primary" onClick={start} disabled={busy}>
-          {busy ? `Running ${results.length}/${runs}…` : 'Run batch'}
-        </button>
-        <button className="btn sm" onClick={exportCsv} disabled={!results.length}>
-          <Icon name="download" size={14} /> CSV
-        </button>
-        <button
-          className="btn sm"
-          disabled={!results.length || busy}
-          onClick={() => saveReport(buildReport({ kind: 'batch', source: 'Browser engine (batch worker)', config: cfg, batch: results }), 'html', `netra-batch-report-${cfg.scenarioId}`)}
-        >
-          <Icon name="report" size={14} /> Report
-        </button>
+    <Section title="Monte Carlo Batch Trials" right={<span className="analysis-badge-sub">HEADLESS WORKER</span>}>
+      <div className="analysis-card">
+        <Slider label="Trial runs" value={runs} min={2} max={50} step={1} digits={0} onChange={setRuns} />
+        <Slider label="Duration per run" value={dur} min={5} max={60} step={1} digits={0} unit=" s" onChange={setDur} />
+        <div className="analysis-btn-row">
+          <button className="btn sm primary" onClick={start} disabled={busy} style={{ flex: 1.2 }}>
+            <Icon name="play" size={13} /> {busy ? `Running ${results.length}/${runs}…` : 'Run Batch'}
+          </button>
+          <button className="btn sm" onClick={exportCsv} disabled={!results.length} style={{ flex: 1 }}>
+            <Icon name="download" size={13} /> CSV
+          </button>
+          <button
+            className="btn sm"
+            disabled={!results.length || busy}
+            onClick={() => saveReport(buildReport({ kind: 'batch', source: 'Browser engine (batch worker)', config: cfg, batch: results }), 'html', `netra-batch-report-${cfg.scenarioId}`)}
+            style={{ flex: 1 }}
+          >
+            <Icon name="report" size={13} /> Report
+          </button>
+        </div>
       </div>
       {summary && (
-        <p className="note">
-          Locked <b>{summary.locked}/{results.length}</b> · passing acquisition+error+loss <b>{summary.pass}/{results.length}</b> · acquisition mean <b>{fmt(summary.acqMean, 2, ' s')}</b> (max {fmt(summary.acqMax, 2, ' s')}) · RMS error mean <b>{fmt(summary.rmsMean, 2, ' px')}</b>
-        </p>
+        <div className="batch-scorecard">
+          <div className="scorecard-grid">
+            <div className="score-tile">
+              <span className="score-label">Lock Success</span>
+              <span className="score-val" style={{ color: summary.locked === results.length ? 'var(--lock)' : 'var(--amber)' }}>
+                {summary.locked}<small>/{results.length}</small>
+              </span>
+            </div>
+            <div className="score-tile">
+              <span className="score-label">PS-169 Pass</span>
+              <span className="score-val" style={{ color: summary.pass === results.length ? 'var(--lock)' : 'var(--ice)' }}>
+                {summary.pass}<small>/{results.length}</small>
+              </span>
+            </div>
+            <div className="score-tile">
+              <span className="score-label">Mean Acq Time</span>
+              <span className="score-val">
+                {fmt(summary.acqMean, 2)}<small>s (max {fmt(summary.acqMax, 2)}s)</small>
+              </span>
+            </div>
+            <div className="score-tile">
+              <span className="score-label">Mean RMS Error</span>
+              <span className="score-val">
+                {fmt(summary.rmsMean, 2)}<small>px</small>
+              </span>
+            </div>
+          </div>
+        </div>
       )}
       {results.length > 0 && (
-        <table className="batch-table">
-          <thead>
-            <tr>
-              <th>seed</th>
-              <th>acq s</th>
-              <th>rms px</th>
-              <th>loss %</th>
-              <th>re-acq</th>
-              <th>end</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.slice(-12).map((r) => (
-              <tr key={r.seed}>
-                <td>{r.seed}</td>
-                <td>{fmt(r.metrics.acquisitionS, 2)}</td>
-                <td>{fmt(r.metrics.errRmsPx, 2)}</td>
-                <td>{fmt(r.metrics.lossPct, 1)}</td>
-                <td>{fmt(r.metrics.reacqMaxS, 2)}</td>
-                <td>{r.finalState.slice(0, 4)}</td>
+        <div className="batch-table-wrap">
+          <table className="batch-table">
+            <thead>
+              <tr>
+                <th>SEED</th>
+                <th>ACQ (S)</th>
+                <th>RMS (PX)</th>
+                <th>LOSS %</th>
+                <th>RE-ACQ</th>
+                <th>STATE</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {results.slice(-12).map((r) => (
+                <tr key={r.seed}>
+                  <td className="mono">{r.seed}</td>
+                  <td className="mono">{fmt(r.metrics.acquisitionS, 2)}</td>
+                  <td className="mono">{fmt(r.metrics.errRmsPx, 2)}</td>
+                  <td className="mono">{fmt(r.metrics.lossPct, 1)}%</td>
+                  <td className="mono">{fmt(r.metrics.reacqMaxS, 2)}s</td>
+                  <td>
+                    <span className={`state-chip-xs ${r.finalState.toLowerCase().includes('track') || r.finalState.toLowerCase().includes('fine') ? 'lock' : 'warn'}`}>
+                      {r.finalState.slice(0, 5)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </Section>
   );
@@ -488,38 +501,42 @@ function ReportPanel() {
   const { downloadReport, set } = useApp.getState();
   const rec = useApp((s) => s.recording);
   return (
-    <Section title="Mission Performance Analysis" right={<span className="tag ai">auto</span>}>
-      <p className="note" style={{ marginTop: 0 }}>
-        Duration, FPS, acquisition time, average / max tracking error, lock retention, loss, re-acquisition, processing time, PS169 pass/fail, configuration and the state log.
-      </p>
-      <div className="row">
-        <button className="btn sm primary" onClick={() => downloadReport('live', 'html')}>
-          <Icon name="report" size={14} /> Report (live run)
-        </button>
-        <button className="btn sm" onClick={() => downloadReport('live', 'md')}>
-          Markdown
-        </button>
-        <button className="btn sm" onClick={() => downloadReport('live', 'json')}>
-          JSON
-        </button>
+    <Section title="Mission Performance Analysis" right={<span className="analysis-badge-sub">AUDIT READY</span>}>
+      <div className="analysis-card">
+        <p className="analysis-card-desc">
+          Telemetry audit of link duration, tracking FPS, acquisition latency, RMS/peak pointing error, PS169 compliance & flight state history.
+        </p>
+        <div className="report-action-group">
+          <button className="btn sm primary report-main-btn" onClick={() => downloadReport('live', 'html')}>
+            <Icon name="report" size={14} /> Full Audit Report (Live Run)
+          </button>
+          <div className="report-alt-row">
+            <button className="btn sm" onClick={() => downloadReport('live', 'md')}>
+              Markdown
+            </button>
+            <button className="btn sm" onClick={() => downloadReport('live', 'json')}>
+              JSON Data
+            </button>
+            <button className="btn sm" onClick={() => downloadReport('recording', 'html')} disabled={!rec.frames}>
+              Rec Report
+            </button>
+          </div>
+        </div>
+        <div className="analysis-toggle-wrap">
+          <Toggle
+            label="Auto-export report when recording finishes"
+            on={autoReport}
+            onChange={(v) => {
+              try {
+                localStorage.setItem('netra.autoReport', v ? '1' : '0');
+              } catch {
+                /* storage unavailable */
+              }
+              set({ autoReport: v });
+            }}
+          />
+        </div>
       </div>
-      <div className="row" style={{ marginTop: 6 }}>
-        <button className="btn sm" onClick={() => downloadReport('recording', 'html')} disabled={!rec.frames}>
-          <Icon name="report" size={14} /> Report (recording)
-        </button>
-      </div>
-      <Toggle
-        label="Save a report automatically when a recording stops"
-        on={autoReport}
-        onChange={(v) => {
-          try {
-            localStorage.setItem('netra.autoReport', v ? '1' : '0');
-          } catch {
-            /* storage unavailable */
-          }
-          set({ autoReport: v });
-        }}
-      />
     </Section>
   );
 }
@@ -535,68 +552,116 @@ function ExperimentDrawer() {
   const running = useApp((s) => s.running);
   const [url, setUrl] = useState(serverUrl);
   const file = useRef<HTMLInputElement>(null);
+
+  const statusTone = status;
+
   return (
     <>
-      <Section title="Execution Backend & Connectivity">
-        <Seg
-          value={kind === 'replay' ? 'local' : kind}
-          options={[
-            { v: 'local', label: 'Local (browser)' },
-            { v: 'remote', label: 'FastAPI server' },
-          ]}
-          onChange={(v) => connect(v, v === 'remote' ? { url } : undefined)}
-        />
-        <div className="row" style={{ marginTop: 8 }}>
-          <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} style={{ flex: 1 }} />
-          <button className="btn sm" onClick={() => connect('remote', { url })}>
-            Connect
-          </button>
-        </div>
-        <p className="note">
-          Status: <b>{status}</b> · source <b>{kind}</b>
+      <Section
+        title="Execution Backend & Connectivity"
+        right={
+          <span className={`status-indicator-pill ${statusTone}`}>
+            <span className="rec-dot-pulse" />
+            {status.toUpperCase()}
+          </span>
+        }
+      >
+        <div className="analysis-card">
+          <Seg
+            value={kind === 'replay' ? 'local' : kind}
+            options={[
+              { v: 'local', label: 'Local (Browser)' },
+              { v: 'remote', label: 'FastAPI Server' },
+            ]}
+            onChange={(v) => connect(v, v === 'remote' ? { url } : undefined)}
+          />
+          <div className="remote-connect-box">
+            <span className="remote-label">FastAPI Endpoint</span>
+            <div className="remote-input-row">
+              <input
+                type="text"
+                className="remote-input"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="http://127.0.0.1:8000"
+              />
+              <button className="btn sm" onClick={() => connect('remote', { url })}>
+                Connect
+              </button>
+            </div>
+          </div>
           {err && (
-            <>
-              <br />
-              <span style={{ color: 'var(--lost)' }}>{err}</span>
-            </>
+            <div className="backend-err-box">
+              <Icon name="warn" size={13} />
+              <span>{err}</span>
+            </div>
           )}
-        </p>
-      </Section>
-      <Section title="Live Session & Recording">
-        <div className="row">
-          <button className="btn sm" onClick={() => send({ type: running ? 'pause' : 'start' })}>
-            {running ? 'Stop' : 'Start'}
-          </button>
-          <button className="btn sm" onClick={() => send({ type: 'reset' })} disabled={kind === 'replay'}>
-            Reset
-          </button>
-          <button className={`btn sm rec ${rec.active ? 'on' : ''}`} onClick={() => (rec.active ? stopRecording() : startRecording())}>
-            <span className="led" />
-            {rec.active ? 'Stop recording' : 'Record'}
-          </button>
         </div>
-        <p className="note">
-          Recorded: <b>{rec.frames}</b> frames ({(rec.frames / 30).toFixed(1)} s). Every snapshot is kept (no images) for CSV / JSON export and replay.
-        </p>
-        <div className="row">
-          <button className="btn sm" onClick={exportCsv}>
-            <Icon name="download" size={14} /> CSV
-          </button>
-          <button className="btn sm" onClick={exportJson}>
-            <Icon name="download" size={14} /> JSON
-          </button>
-          <button
-            className="btn sm"
-            onClick={() => {
-              if (!recorder.frames.length) return notify('Nothing recorded yet');
-              connect('replay', { recording: recorder.toRecording('In-memory recording', useApp.getState().config, kind) });
-            }}
-          >
-            <Icon name="play" size={14} /> Replay
-          </button>
-          <button className="btn sm" onClick={() => file.current?.click()}>
-            <Icon name="upload" size={14} /> Load JSON
-          </button>
+      </Section>
+
+      <Section
+        title="Live Session & Recording"
+        right={
+          <span className={`rec-status-pill ${rec.active ? 'active' : ''}`}>
+            {rec.active && <span className="rec-dot-pulse" />}
+            {rec.active ? 'REC ACTIVE' : 'IDLE'}
+          </span>
+        }
+      >
+        <div className="analysis-card">
+          <div className="analysis-btn-row">
+            <button className={`btn sm ${running ? '' : 'primary'}`} onClick={() => send({ type: running ? 'pause' : 'start' })} style={{ flex: 1 }}>
+              <Icon name={running ? 'pause' : 'play'} size={13} /> {running ? 'Pause Sim' : 'Start Sim'}
+            </button>
+            <button className="btn sm" onClick={() => send({ type: 'reset' })} disabled={kind === 'replay'} style={{ flex: 1 }}>
+              <Icon name="reset" size={13} /> Reset
+            </button>
+            <button
+              className={`btn sm rec ${rec.active ? 'on' : ''}`}
+              onClick={() => (rec.active ? stopRecording() : startRecording())}
+              style={{ flex: 1.2 }}
+            >
+              <span className="led" />
+              {rec.active ? 'Stop Rec' : 'Record'}
+            </button>
+          </div>
+
+          <div className="rec-stats-bar">
+            <div className="rec-stat-col">
+              <span className="stat-sub">Buffer</span>
+              <span className="stat-val mono">{rec.frames}<small> pts</small></span>
+            </div>
+            <div className="rec-stat-col">
+              <span className="stat-sub">Duration</span>
+              <span className="stat-val mono">{(rec.frames / 30).toFixed(1)}<small> s</small></span>
+            </div>
+            <div className="rec-stat-col">
+              <span className="stat-sub">Rate</span>
+              <span className="stat-val mono">30<small> Hz</small></span>
+            </div>
+          </div>
+
+          <div className="rec-tools-grid">
+            <button className="btn sm" onClick={exportCsv}>
+              <Icon name="download" size={13} /> CSV Export
+            </button>
+            <button className="btn sm" onClick={exportJson}>
+              <Icon name="download" size={13} /> JSON Export
+            </button>
+            <button
+              className="btn sm"
+              onClick={() => {
+                if (!recorder.frames.length) return notify('Nothing recorded yet');
+                connect('replay', { recording: recorder.toRecording('In-memory recording', useApp.getState().config, kind) });
+              }}
+            >
+              <Icon name="play" size={13} /> Replay
+            </button>
+            <button className="btn sm" onClick={() => file.current?.click()}>
+              <Icon name="upload" size={13} /> Load JSON
+            </button>
+          </div>
+
           <input
             ref={file}
             type="file"
@@ -617,21 +682,39 @@ function ExperimentDrawer() {
           />
         </div>
       </Section>
+
       <ReportPanel />
       <BatchPanel />
-      <Section title="Flight State Transition Log" right={<span className="dim">{events.length}</span>}>
-        <div style={{ maxHeight: 220, overflowY: 'auto', fontSize: 11.5 }}>
-          {[...events].reverse().slice(0, 80).map((e, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, padding: '3px 0', borderBottom: '1px solid var(--hair)' }}>
-              <span className="mono dim" style={{ flex: 'none', width: 48 }}>
-                {e.t.toFixed(2)}
-              </span>
-              <span className="muted">
-                {e.to && <b style={{ color: 'var(--text)' }}>{e.to} </b>}
-                {e.message}
-              </span>
-            </div>
-          ))}
+
+      <Section title="Flight State Transition Log" right={<span className="analysis-badge-sub">{events.length} EVENTS</span>}>
+        <div className="telemetry-log-console">
+          {events.length === 0 ? (
+            <div className="log-empty">No state transitions recorded yet</div>
+          ) : (
+            [...events].reverse().slice(0, 80).map((e, i) => {
+              const col = e.to ? stateColor(e.to) : 'var(--text-3)';
+              return (
+                <div key={i} className="log-entry">
+                  <span className="log-time mono">T+{e.t.toFixed(2)}s</span>
+                  {e.to && (
+                    <span
+                      className="log-state-tag"
+                      style={{
+                        color: col,
+                        background: `color-mix(in srgb, ${col} 15%, transparent)`,
+                        borderColor: `color-mix(in srgb, ${col} 35%, transparent)`,
+                      }}
+                    >
+                      {e.to}
+                    </span>
+                  )}
+                  <span className="log-msg" title={e.message}>
+                    {e.message}
+                  </span>
+                </div>
+              );
+            })
+          )}
         </div>
       </Section>
     </>
@@ -643,12 +726,12 @@ const TITLES: Record<Exclude<DrawerId, null>, string> = {
   target: 'Kinematics',
   disturbance: 'Noise Injection',
   tracking: 'Acquisition & Tracking',
-  optics: 'Optical Payload & Link',
+  optics: 'Kinematics',
   experiment: 'Analysis',
 };
 
 export function RightNavbar() {
-  const activeDrawer = useApp((s) => s.drawer) || 'scenario';
+  const activeDrawer = useApp((s) => s.drawer) || 'target';
   const setDrawer = useApp((s) => s.setDrawer);
   const set = useApp((s) => s.set);
 
@@ -657,14 +740,13 @@ export function RightNavbar() {
       {/* Embedded Drawer Content Pane */}
       <aside className="drawer-panel glass">
         <div className="drawer-head">
-          <h3>{TITLES[activeDrawer] || 'Scenario'}</h3>
+          <h3>{TITLES[activeDrawer] || 'Kinematics'}</h3>
         </div>
         <div className="drawer-body">
-          {activeDrawer === 'scenario' && <ScenarioDrawer />}
-          {activeDrawer === 'target' && <TargetDrawer />}
-          {activeDrawer === 'disturbance' && <DisturbanceDrawer />}
+          {(activeDrawer === 'target' || activeDrawer === 'optics') && <TargetDrawer />}
           {activeDrawer === 'tracking' && <TrackingDrawer />}
-          {activeDrawer === 'optics' && <OpticsDrawer />}
+          {activeDrawer === 'disturbance' && <DisturbanceDrawer />}
+          {activeDrawer === 'scenario' && <ScenarioDrawer />}
           {activeDrawer === 'experiment' && <ExperimentDrawer />}
         </div>
       </aside>
