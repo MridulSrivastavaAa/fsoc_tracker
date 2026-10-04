@@ -164,8 +164,16 @@ export function CameraRig() {
       }
     }
     lastSat.current = vis.sat.clone();
+    // Shift 3D simulation approx 100px topward on default to match GUI bottom dock
+    if (view !== 'sensor') {
+      const oy = 100;
+      const v = camera.view;
+      if (!v || !v.enabled || v.offsetY !== oy || v.offsetX !== 0 || v.fullWidth !== size.width || v.fullHeight !== size.height) {
+        camera.setViewOffset(size.width, size.height, 0, oy, size.width, size.height);
+      }
+      return;
+    }
     if (camera.view?.enabled) camera.clearViewOffset();
-    if (view !== 'sensor') return;
     // Sensor POV: the 3D camera sits just in front of the terminal's lens, looks along
     // the actual optical axis and uses the terminal camera's vertical FOV.
     const b = basisFromAzEl(vis.axisAz, vis.axisEl);

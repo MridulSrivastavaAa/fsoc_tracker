@@ -13,6 +13,7 @@ export function TopBar() {
   const status = useApp((s) => s.providerStatus);
   const fps = useApp((s) => s.engineFps);
   const rec = useApp((s) => s.recording);
+  const themeOpen = useApp((s) => s.themeOpen);
   const { send, setDrawer, startRecording, stopRecording, set } = useApp.getState();
   const preset = SCENARIO_PRESETS.find((p) => p.id === cfg.scenarioId);
   const state = hud?.state ?? 'IDLE';
@@ -25,7 +26,7 @@ export function TopBar() {
       <div className="brand">
         <BrandMark />
         <div>
-          <div className="brand-word">ISRO FSOC 3D</div>
+          <div className="brand-word">NETRA</div>
           <div className="brand-sub">PS 26169 · Virtual Camera Tracking System</div>
         </div>
       </div>
@@ -63,7 +64,7 @@ export function TopBar() {
         <button className="btn primary" onClick={() => send({ type: 'demo', on: !demo })} disabled={isReplay} title="90 s guided demonstration (D)">
           {demo ? 'End demo' : 'Run demo'}
         </button>
-        <button className={`btn icon ghost ${useApp.getState().themeOpen ? 'on' : ''}`} onClick={() => set({ themeOpen: !useApp.getState().themeOpen })} title="Theme">
+        <button className={`btn icon ghost ${themeOpen ? 'on' : ''}`} onClick={() => set({ themeOpen: !themeOpen })} title="Interface Themes (T)" aria-label="Themes">
           <Icon name="palette" />
         </button>
         <button className="btn icon ghost" onClick={() => set({ helpOpen: true })} title="What am I looking at? (?)">

@@ -8,6 +8,7 @@ PHASE*_REPORT.html
 FINAL_TECHNICAL_REPORT.html
 00_PROJECT_ROADMAP.html
 *.html
+!web/index.html
 
 # Problem Statement & Raw Reference PDFs
 Problem Statement ID.txt

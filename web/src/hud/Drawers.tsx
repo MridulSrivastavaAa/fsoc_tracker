@@ -1,36 +1,24 @@
-/**
- * Tool rail + contextual drawers (progressive disclosure: every advanced parameter
- * lives here, hidden until needed).
- */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { DrawerId, recorder, useApp } from '../state/store';
+import { DrawerId, recorder, saveReport, stateColor, useApp } from '../state/store';
 import { SCENARIO_PRESETS, presetConfig } from '../core/presets';
-import { DETECTION_PROVIDERS } from '../core/detection/registry';
-import { VERIFIER } from '../core/detection/verifier';
 import { buildReport } from '../core/analysis/report';
-import { saveReport } from '../state/store';
-import { intrinsics, SimConfig, TrajectoryKind } from '../core/config';
-import { acquisitionProbability } from '../core/analysis/link';
+import { SimConfig, TrajectoryKind } from '../core/config';
 import { isRecording } from '../core/telemetry/recorder';
 import type { BatchMessage, BatchRunResult } from '../engine/batch.worker';
 import { Icon, Section, Seg, Slider, Toggle, fmt } from './ui';
-import { ThemeList } from './Theme';
 
 const TOOLS: { id: Exclude<DrawerId, null>; icon: string; label: string }[] = [
-  { id: 'scenario', icon: 'scenario', label: 'Mission Profile & Orbital Geometry' },
-  { id: 'target', icon: 'target', label: 'Target Kinematics & Beacon' },
-  { id: 'disturbance', icon: 'disturbance', label: 'Atmosphere, Noise & Channel Dynamics' },
+  { id: 'target', icon: 'target', label: 'Kinematics' },
   { id: 'tracking', icon: 'tracking', label: 'Detection, Kalman & Servo Loop' },
-  { id: 'optics', icon: 'optics', label: 'Sensor Calibration & Link Budget' },
-  { id: 'experiment', icon: 'experiment', label: 'Telemetry, Batch & Analysis' },
-  { id: 'plugin', icon: 'code', label: 'Algorithm Plugin Playground' },
-  { id: 'view', icon: 'view', label: 'Viewport, Overlays & Graphics' },
+  { id: 'disturbance', icon: 'disturbance', label: 'Noise Injection' },
+  { id: 'scenario', icon: 'scenario', label: 'Test Cases' },
+  { id: 'experiment', icon: 'experiment', label: 'Analysis' },
+  { id: 'plugin', icon: 'code', label: 'Algorithm Plugins' },
 ];
 
 export function ToolRail() {
   const drawer = useApp((s) => s.drawer);
-  const measure = useApp((s) => s.measure);
   const setDrawer = useApp((s) => s.setDrawer);
   const set = useApp((s) => s.set);
   return (
@@ -48,11 +36,7 @@ export function ToolRail() {
       </button>
       <button onClick={() => fetch('http://localhost:8000/api/plugins/playground')} aria-label="Plugin Playground">
         <Icon name="code" />
-        <span className="tip">⚡ ALGORITHM PLUGIN PLAYGROUND</span>
-      </button>
-      <button className={measure.enabled ? 'on' : ''} onClick={() => set({ measure: { enabled: !measure.enabled, picks: [] } })} aria-label="Measure">
-        <Icon name="measure" />
-        <span className="tip">3D measurement — click objects or the Earth</span>
+        <span className="tip">⚡ Algorithm Plugin Playground (GUI) · P</span>
       </button>
     </nav>
   );
@@ -67,7 +51,7 @@ function useCfg() {
 const PRESET_TAGS: Record<string, string> = {
   'open-sky': 'REF',
   'ps-baseline': 'PS169',
-  'moving-platform': 'MOTION',
+  'moving-platform': 'MOBILE',
   'high-jitter': 'JITTER',
   'weak-beacon': 'HAZE',
   'fast-target': 'SPEED',
@@ -86,7 +70,7 @@ function ScenarioDrawer() {
 
   return (
     <>
-      <Section title="Operational Profiles & Presets">
+      <Section title="Operational Presets">
         <div className="preset-grid">
           {SCENARIO_PRESETS.map((p) => (
             <button
@@ -107,21 +91,7 @@ function ScenarioDrawer() {
           </div>
         )}
       </Section>
-      <Section title="Runtime & Clock Controls">
-        <div className="row compact-row">
-          <span className="muted" style={{ fontSize: 11.5 }}>
-            Noise seed
-          </span>
-          <input
-            type="number"
-            value={cfg.seed}
-            style={{ width: 75, height: 24, fontSize: 11 }}
-            onChange={(e) => replace({ ...cfg, seed: parseInt(e.target.value || '0', 10) })}
-          />
-          <button className="btn sm" style={{ height: 24, padding: '0 8px', fontSize: 11 }} onClick={() => replace({ ...cfg, seed: cfg.seed + 1 })}>
-            Shuffle seed
-          </button>
-        </div>
+      <Section title="Simulation Speed">
         <div className="field" style={{ margin: '4px 0' }}>
           <label style={{ fontSize: 11.5 }}>Playback rate</label>
           <div style={{ gridColumn: '1 / -1' }}>
@@ -133,12 +103,10 @@ function ScenarioDrawer() {
           </div>
         </div>
       </Section>
-      <Section title="Line-of-Sight & Solar Geometry" right={<span className="dim">resets loop</span>}>
+      <Section title="Pointing Geometry" right={<span className="dim">resets loop</span>}>
         <Slider label="LOS azimuth" value={sc.losAzDeg} min={0} max={359} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { losAzDeg: v } })} />
         <Slider label="LOS elevation" value={sc.losElDeg} min={15} max={80} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { losElDeg: v } })} />
         <Slider label="Target altitude" value={sc.altitudeKm} min={300} max={1200} step={10} digits={0} unit=" km" onChange={(v) => patch({ scene: { altitudeKm: v } })} />
-        <Slider label="Solar elevation" value={sc.sunElDeg} min={-12} max={40} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { sunElDeg: v } })} />
-        <Slider label="Solar azimuth" value={sc.sunAzDeg} min={0} max={359} step={1} digits={0} unit="°" onChange={(v) => patch({ scene: { sunAzDeg: v } })} />
         <p className="note" style={{ fontSize: 10.5, marginTop: 4 }}>
           Station: <b>{sc.siteName}</b> ({sc.siteLatDeg.toFixed(2)}° N, {sc.siteLonDeg.toFixed(2)}° E).
         </p>
@@ -163,51 +131,91 @@ function WaypointEditor({ cfg, onChange }: { cfg: SimConfig; onChange: (w: [numb
   const hu = cfg.logic.searchHalfUDeg;
   const hv = cfg.logic.searchHalfVDeg;
   const W = 290;
-  const H = 150;
+  const H = 160;
   const sc = Math.min(W / (2 * hu), H / (2 * hv));
   const X = (u: number) => W / 2 + u * sc;
   const Y = (v: number) => H / 2 - v * sc;
+
+  // Current beacon position from first waypoint, default center
   const wp = cfg.target.waypoints;
+  const bu: number = wp.length > 0 ? wp[0][0] : 0;
+  const bv: number = wp.length > 0 ? wp[0][1] : 0;
+
+  const svgRef = useRef<SVGSVGElement>(null);
+  const dragging = useRef(false);
+
+  const toField = (clientX: number, clientY: number): [number, number] => {
+    const r = svgRef.current!.getBoundingClientRect();
+    const u = Math.max(-hu, Math.min(hu, (clientX - r.left - W / 2) / sc));
+    const v = Math.max(-hv, Math.min(hv, -(clientY - r.top - H / 2) / sc));
+    return [Math.round(u * 100) / 100, Math.round(v * 100) / 100];
+  };
+
+  const commit = (clientX: number, clientY: number) => {
+    const [u, v] = toField(clientX, clientY);
+    onChange([[u, v], [u, v]]);
+  };
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => { if (dragging.current) commit(e.clientX, e.clientY); };
+    const onUp = (e: MouseEvent) => {
+      if (dragging.current) { commit(e.clientX, e.clientY); dragging.current = false; }
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hu, hv]);
+
   return (
     <div>
       <svg
+        ref={svgRef}
         width={W}
         height={H}
-        style={{ background: 'rgba(var(--panel-rgb),0.6)', borderRadius: 6, cursor: 'crosshair', border: '1px solid var(--line)' }}
-        onClick={(e) => {
-          const r = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
-          const u = (e.clientX - r.left - W / 2) / sc;
-          const v = -(e.clientY - r.top - H / 2) / sc;
-          onChange([...wp, [Math.round(u * 100) / 100, Math.round(v * 100) / 100]]);
-        }}
+        style={{ background: 'rgba(var(--panel-rgb),0.6)', borderRadius: 6, cursor: 'crosshair', border: '1px solid var(--line)', display: 'block' }}
+        onMouseDown={(e) => { dragging.current = true; commit(e.clientX, e.clientY); e.preventDefault(); }}
       >
+        {/* Field boundary */}
+        <rect x={X(-hu)} y={Y(hv)} width={2 * hu * sc} height={2 * hv * sc} fill="none" stroke="rgba(var(--line-rgb),0.18)" strokeWidth={1} rx={3} />
+        {/* Crosshair guides */}
         <line style={{ stroke: 'rgba(var(--line-rgb),0.12)' }} x1={X(-hu)} y1={Y(0)} x2={X(hu)} y2={Y(0)} />
         <line style={{ stroke: 'rgba(var(--line-rgb),0.12)' }} x1={X(0)} y1={Y(-hv)} x2={X(0)} y2={Y(hv)} />
-        <polyline points={[...wp, wp[0] ?? [0, 0]].map(([u, v]) => `${X(u)},${Y(v)}`).join(' ')} fill="none" stroke="var(--ice)" strokeDasharray="3 3" />
-        {wp.map(([u, v], i) => (
-          <g key={i}>
-            <circle cx={X(u)} cy={Y(v)} r="3.5" fill="var(--ice)" />
-            <text x={X(u) + 6} y={Y(v) - 5} fontSize="9" fill="var(--text-2)">
-              {i + 1}
-            </text>
-          </g>
-        ))}
+        {/* Axis labels */}
+        <text x={X(hu) - 2} y={Y(0) - 4} fontSize={8} fill="rgba(var(--line-rgb),0.35)" textAnchor="end">+U</text>
+        <text x={X(0) + 3} y={Y(hv) + 9} fontSize={8} fill="rgba(var(--line-rgb),0.35)">+V</text>
+        {/* Drag halo */}
+        <circle cx={X(bu)} cy={Y(bv)} r={14} fill="rgba(255,255,255,0.06)" />
+        {/* Beacon dot */}
+        <circle
+          cx={X(bu)}
+          cy={Y(bv)}
+          r={6}
+          fill="white"
+          stroke="rgba(143,220,255,0.7)"
+          strokeWidth={1.5}
+          style={{ cursor: 'grab', filter: 'drop-shadow(0 0 4px rgba(143,220,255,0.8))' }}
+        />
+        {/* Position readout */}
+        <text x={X(bu) + 10} y={Y(bv) - 8} fontSize={8.5} fill="var(--ice)" fontFamily="monospace">
+          {bu.toFixed(2)}&deg;, {bv.toFixed(2)}&deg;
+        </text>
       </svg>
-      <div className="row" style={{ marginTop: 6 }}>
-        <span className="note" style={{ flex: 1, margin: 0 }}>
-          Click inside the search field to add waypoints ({wp.length}).
-        </span>
-        <button className="btn sm" onClick={() => onChange([])}>
-          Clear
-        </button>
-      </div>
+      <p className="note" style={{ marginTop: 5 }}>
+        Hold &amp; drag the beacon to reposition it in the field. Updates live in 2-D and 3-D.
+      </p>
     </div>
   );
 }
 
+
 function TargetDrawer() {
   const { cfg, patch } = useCfg();
   const t = cfg.target;
+  const cam = cfg.camera;
   const periodic = ['circular', 'sinusoidal', 'figure8', 'spiral'].includes(t.trajectory);
   return (
     <>
@@ -244,34 +252,29 @@ function TargetDrawer() {
           </>
         )}
       </Section>
-      <Section title="Initial Spatial Offset" right={<span className="dim">applies on reset</span>}>
-        <Seg
-          value={t.startMode}
-          options={[
-            { v: 'random', label: 'Stochastic field (PS)' },
-            { v: 'fixed', label: 'Calibrated coordinate' },
-          ]}
-          onChange={(v) => patch({ target: { startMode: v } })}
-        />
-        {t.startMode === 'fixed' && (
+
+      <Section title="Optical Payload & Sensor">
+        <Slider label="Horizontal FOV (tracking)" value={cam.hfovDeg} min={1} max={12} step={0.1} digits={1} unit="°" onChange={(v) => patch({ camera: { hfovDeg: v } })} />
+        <Toggle label="Wide-field acquisition (zoom in after detection)" on={cam.wideAcquisition} onChange={(v) => patch({ camera: { wideAcquisition: v } })} />
+        {cam.wideAcquisition && (
           <>
-            <Slider label="Cross-track U (azimuth)" value={t.startUDeg} min={-6} max={6} step={0.1} digits={1} unit="°" onChange={(v) => patch({ target: { startUDeg: v } })} />
-            <Slider label="Along-track V (elevation)" value={t.startVDeg} min={-6} max={6} step={0.1} digits={1} unit="°" onChange={(v) => patch({ target: { startVDeg: v } })} />
+            <Slider label="Acquisition FOV" value={cam.wideHfovDeg} min={cam.hfovDeg} max={20} step={0.5} digits={1} unit="°" onChange={(v) => patch({ camera: { wideHfovDeg: v } })} />
+            <Slider label="Zoom rate" value={cam.zoomRateDegS} min={2} max={30} step={1} digits={0} unit=" °/s" onChange={(v) => patch({ camera: { zoomRateDegS: v } })} />
           </>
         )}
-      </Section>
-      <Section title="Laser Beacon Characteristics">
         <Seg
-          value={t.spotShape}
+          value={`${cam.width}x${cam.height}`}
           options={[
-            { v: 'square', label: 'Square pixel' },
-            { v: 'disk', label: 'Uniform disk' },
-            { v: 'gaussian', label: 'Gaussian Airy' },
+            { v: '640x480', label: '640×480 (PS)' },
+            { v: '800x600', label: '800×600' },
+            { v: '1024x768', label: '1024×768' },
           ]}
-          onChange={(v) => patch({ target: { spotShape: v } })}
+          onChange={(v) => {
+            const [w, h] = v.split('x').map(Number);
+            patch({ camera: { width: w, height: h } });
+          }}
         />
-        <Slider label="Point spread diameter" value={t.spotSizePx} min={5} max={20} step={1} digits={0} unit=" px" onChange={(v) => patch({ target: { spotSizePx: v } })} />
-        <Slider label="Radiant peak flux" value={t.beaconIntensity} min={40} max={255} step={1} digits={0} unit=" DN" onChange={(v) => patch({ target: { beaconIntensity: v } })} />
+        <Slider label="Frame rate (PS ≥ 30)" value={cam.frameRateHz} min={15} max={60} step={5} digits={0} unit=" Hz" onChange={(v) => patch({ camera: { frameRateHz: v } })} />
       </Section>
     </>
   );
@@ -327,196 +330,18 @@ function DisturbanceDrawer() {
         )}
         <Slider label="Wind torque (rate σ)" value={d.windDegS} min={0} max={1} step={0.01} unit=" °/s" onChange={(v) => patch({ disturbance: { windDegS: v } })} />
       </Section>
-      <Section title="Signal Occlusions & Decoys">
-        <Slider label="Target motion noise" value={d.targetNoiseDeg} min={0} max={0.2} step={0.005} digits={3} unit="°" onChange={(v) => patch({ disturbance: { targetNoiseDeg: v } })} />
-        <Slider label="Beacon dropouts" value={d.dropoutProb * 100} min={0} max={90} step={1} digits={0} unit=" %" onChange={(v) => patch({ disturbance: { dropoutProb: v / 100 } })} />
-        <Slider label="Cloud outage every (0 = off)" value={d.occlusionPeriodS} min={0} max={30} step={1} digits={0} unit=" s" onChange={(v) => patch({ disturbance: { occlusionPeriodS: v } })} />
-        {d.occlusionPeriodS > 0 && (
-          <Slider label="Outage length" value={d.occlusionDurS} min={0.2} max={5} step={0.1} digits={1} unit=" s" onChange={(v) => patch({ disturbance: { occlusionDurS: v } })} />
-        )}
-        <Toggle label="Decoy glint in the field" on={d.decoy} onChange={(v) => patch({ disturbance: { decoy: v } })} />
-        <p className="note">Every disturbance acts on the simulation itself: attitude (jitter, vibration, platform), gimbal rates (wind), the rendered image (noise, atmosphere, turbulence) or the target path.</p>
-      </Section>
     </>
   );
 }
 
 function TrackingDrawer() {
   const { cfg, patch } = useCfg();
-  const hud = useApp((s) => s.hud);
-  const send = useApp((s) => s.send);
-  const [manual, setManual] = useState<[number, number]>([0, 0]);
-  const mode = hud?.mode ?? 'auto';
-  const k = cfg.kalman;
   const c = cfg.control;
   const g = cfg.gimbal;
-  const det = cfg.detection;
   const l = cfg.logic;
-
-  useEffect(() => {
-    if (mode === 'manual' && hud) setManual([hud.gimbal.pan, hud.gimbal.tilt]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode]);
 
   return (
     <>
-      {/* 1. Pointing Mode */}
-      <Section title="Pointing Mode & Loop">
-        <div style={{ marginBottom: 6 }}>
-          <Seg
-            value={mode}
-            options={[
-              { v: 'auto', label: 'Autonomous Track' },
-              { v: 'manual', label: 'Manual Pose' },
-            ]}
-            onChange={(v) => send({ type: 'mode', mode: v })}
-          />
-        </div>
-
-        {mode === 'manual' && (
-          <div className="manual-control-box" style={{ background: 'rgba(255,255,255,0.02)', padding: '6px 8px', borderRadius: 6, border: '1px solid var(--line)', marginBottom: 6 }}>
-            <Slider label="Pan (azimuth)" value={manual[0]} min={-180} max={180} step={0.05} unit="°" onChange={(v) => { setManual([v, manual[1]]); send({ type: 'manual', pan: v, tilt: manual[1] }); }} />
-            <Slider label="Tilt (elevation)" value={manual[1]} min={g.tiltMinDeg} max={g.tiltMaxDeg} step={0.05} unit="°" onChange={(v) => { setManual([manual[0], v]); send({ type: 'manual', pan: manual[0], tilt: v }); }} />
-            <p className="note" style={{ fontSize: 10.5, marginTop: 4 }}>
-              <b>Arrow keys</b> jog 0.1° (<b>Shift</b>: 1.0°). Detection loop remains active.
-            </p>
-          </div>
-        )}
-
-        <div className="row" style={{ marginTop: 4 }}>
-          <button className="btn sm" style={{ width: '100%', height: 26, fontSize: 11, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }} onClick={() => send({ type: 'reacquire' })}>
-            <Icon name="crosshair" size={13} />
-            <span>Force Reacquisition Loop</span>
-          </button>
-        </div>
-      </Section>
-
-      {/* 2. Detection Provider Engine */}
-      <Section title="Detection Provider Engine">
-        <div className="provider-card-grid">
-          {DETECTION_PROVIDERS.map((p) => {
-            const isSel = det.provider === p.id;
-            const isPlanned = p.status === 'planned';
-            return (
-              <button
-                key={p.id}
-                className={`provider-chip ${isSel ? 'on' : ''} ${isPlanned ? 'disabled' : ''}`}
-                disabled={isPlanned}
-                onClick={() => !isPlanned && patch({ detection: { provider: p.id as 'centroid' | 'synthetic' } })}
-                title={p.note}
-              >
-                <div className="pchip-header">
-                  <span className="pchip-dot" />
-                  <span className="pchip-title">
-                    {p.id === 'centroid' ? 'CV Centroid + AI' : p.id === 'synthetic' ? 'Synthetic Model' : 'YOLO Detector'}
-                  </span>
-                  <span className={`pchip-badge ${p.id === 'centroid' ? 'badge-cv' : isPlanned ? 'badge-plan' : 'badge-sim'}`}>
-                    {isPlanned ? 'PLANNED' : p.id === 'synthetic' ? 'MODEL' : 'CV + AI'}
-                  </span>
-                </div>
-                <span className="pchip-desc">
-                  {p.id === 'centroid' ? 'Classical CV peak finding with neural candidate classifier' : p.id === 'synthetic' ? 'Ground truth with configurable noise & latency' : 'Deep learning bounding box estimator'}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        {det.provider === 'centroid' && (
-          <div className="ai-verifier-card">
-            <div className="ai-card-top">
-              <div className="ai-title-wrap">
-                <span className="ai-spark-dot" />
-                <span className="ai-title">Learned Beacon Verifier</span>
-                <span className="tag ai">AI</span>
-              </div>
-              <Toggle
-                label=""
-                on={det.verifier}
-                onChange={(v) => patch({ detection: { verifier: v } })}
-                hint="Enable/disable neural candidate scoring"
-              />
-            </div>
-            
-            <div className="ai-stats-grid">
-              <div className="ai-stat-cell">
-                <span className="ai-stat-lbl">MODEL</span>
-                <span className="ai-stat-val">MLP 11→16→8→1</span>
-              </div>
-              <div className="ai-stat-cell">
-                <span className="ai-stat-lbl">ACCURACY</span>
-                <span className="ai-stat-val" style={{ color: 'var(--lock)' }}>
-                  {(100 * Number(VERIFIER.metrics?.pdMlp ?? 0.987)).toFixed(1)}%
-                </span>
-              </div>
-              <div className="ai-stat-cell">
-                <span className="ai-stat-lbl">FALSE ALARMS</span>
-                <span className="ai-stat-val" style={{ color: 'var(--accent)' }}>
-                  {(100 * Number(VERIFIER.metrics?.faMlp ?? 0.0059)).toFixed(2)}%
-                </span>
-              </div>
-              <div className="ai-stat-cell">
-                <span className="ai-stat-lbl">LABELS</span>
-                <span className="ai-stat-val">
-                  {Number(VERIFIER.metrics?.trainCandidates ?? 328322).toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-      </Section>
-
-      {/* 3. Vision & Search Parameters */}
-      <Section title="Gating & Detection Thresholds">
-        {det.provider === 'centroid' ? (
-          <>
-            <Slider label="Threshold (k·σ)" value={det.thresholdSigma} min={3} max={10} step={0.5} digits={1} onChange={(v) => patch({ detection: { thresholdSigma: v } })} />
-            <Slider label="Minimum confidence" value={det.minConfidence} min={0.1} max={0.9} step={0.05} digits={2} onChange={(v) => patch({ detection: { minConfidence: v } })} />
-          </>
-        ) : (
-          <>
-            <Slider label="Centroid noise σ" value={det.syntheticNoisePx} min={0} max={5} step={0.1} digits={1} unit=" px" onChange={(v) => patch({ detection: { syntheticNoisePx: v } })} />
-            <Slider label="Miss probability" value={det.syntheticMissProb * 100} min={0} max={80} step={1} digits={0} unit=" %" onChange={(v) => patch({ detection: { syntheticMissProb: v / 100 } })} />
-          </>
-        )}
-        <Slider label="Association gate" value={det.gateRadiusPx} min={10} max={200} step={5} digits={0} unit=" px" onChange={(v) => patch({ detection: { gateRadiusPx: v } })} />
-        <Slider label="Detection latency" value={det.latencyFrames} min={0} max={6} step={1} digits={0} unit=" frames" onChange={(v) => patch({ detection: { latencyFrames: v } })} />
-      </Section>
-
-      {/* 4. Kalman Filter Estimation */}
-      <Section title="State Estimator & Multi-Model Filters" right={<span className="dim">IMM / Kalman</span>}>
-        <Toggle label="Enable State Estimator" on={k.enabled} onChange={(v) => patch({ kalman: { enabled: v } })} />
-        
-        {/* Adaptive IMM & Particle Filter Status Card */}
-        <div style={{ background: 'rgba(var(--panel-rgb), 0.5)', border: '1px solid var(--hair)', borderRadius: 6, padding: '6px 8px', margin: '6px 0', display: 'flex', flexDirection: 'column', gap: 5 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--text-strong)' }}>Adaptive Estimator: <b>IMM (CV+CT+RW)</b></span>
-            <span className="tag ai" style={{ fontSize: 8 }}>ADAPTIVE</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4, textAlign: 'center' }}>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 4, padding: '3px 2px' }}>
-              <div style={{ fontSize: 8.5, color: 'var(--text-3)', fontWeight: 600 }}>CV (Const Vel)</div>
-              <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--ice)' }}>60%</div>
-            </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 4, padding: '3px 2px' }}>
-              <div style={{ fontSize: 8.5, color: 'var(--text-3)', fontWeight: 600 }}>CT (Turn)</div>
-              <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--accent)' }}>25%</div>
-            </div>
-            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 4, padding: '3px 2px' }}>
-              <div style={{ fontSize: 8.5, color: 'var(--text-3)', fontWeight: 600 }}>RW (Accel)</div>
-              <div style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--text-2)' }}>15%</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9.5, color: 'var(--text-3)', borderTop: '1px solid var(--hair)', paddingTop: 4, marginTop: 2 }}>
-            <span>Optical Flow Gating: <b style={{ color: 'var(--lock)' }}>Active</b></span>
-            <span>Particle Filter Recovery: <b style={{ color: 'var(--ice)' }}>Ready (150p)</b></span>
-          </div>
-        </div>
-
-        <Slider label="Process noise q" value={k.processNoise} min={0.05} max={10} step={0.05} unit=" (°/s²)²/Hz" onChange={(v) => patch({ kalman: { processNoise: v } })} />
-        <Slider label="Measurement noise r" value={k.measurementNoisePx} min={0.2} max={10} step={0.1} digits={1} unit=" px" onChange={(v) => patch({ kalman: { measurementNoisePx: v } })} />
-        <Slider label="Innovation gate (χ²)" value={k.gate} min={4} max={100} step={1} digits={0} onChange={(v) => patch({ kalman: { gate: v } })} />
-      </Section>
 
       {/* 5. PID Alignment Controller */}
       <Section title="Gimbal Servo Controller (PID)">
@@ -541,136 +366,6 @@ function TrackingDrawer() {
   );
 }
 
-function PinholeDiagram({ cfg }: { cfg: SimConfig }) {
-  const k = intrinsics(cfg.camera);
-  return (
-    <svg width="290" height="120" viewBox="0 0 290 120" style={{ display: 'block', margin: '4px 0 8px' }}>
-      <line x1="30" y1="20" x2="30" y2="100" stroke="var(--ice)" strokeWidth="2" />
-      <text x="16" y="114" fontSize="9" fill="var(--text-3)">
-        sensor
-      </text>
-      <circle cx="120" cy="60" r="3" fill="var(--amber)" />
-      <text x="104" y="114" fontSize="9" fill="var(--text-3)">
-        pinhole
-      </text>
-      <line style={{ stroke: 'rgba(var(--accent-rgb),0.45)' }} x1="30" y1="20" x2="280" y2="98" />
-      <line style={{ stroke: 'rgba(var(--accent-rgb),0.45)' }} x1="30" y1="100" x2="280" y2="22" />
-      <line style={{ stroke: 'rgba(var(--line-rgb),0.3)' }} x1="30" y1="60" x2="280" y2="60" strokeDasharray="3 3" />
-      <line x1="30" y1="75" x2="120" y2="75" stroke="var(--amber)" />
-      <text x="62" y="86" fontSize="9" fill="var(--amber)">
-        f = {k.focalMm.toFixed(1)} mm
-      </text>
-      <path d="M160 48 A 42 42 0 0 1 160 72" fill="none" stroke="var(--ice)" />
-      <text x="168" y="64" fontSize="9" fill="var(--ice)">
-        HFOV {k.hfovDeg.toFixed(2)}°
-      </text>
-      <text x="36" y="16" fontSize="9" fill="var(--text-2)">
-        {cfg.camera.width} px × {cfg.camera.pixelPitchUm} µm
-      </text>
-    </svg>
-  );
-}
-
-function OpticsDrawer() {
-  const { cfg, patch } = useCfg();
-  const link = useApp((s) => s.hud?.link);
-  const cam = cfg.camera;
-  const k = intrinsics(cam);
-  const acq = acquisitionProbability(cfg);
-  const L = cfg.link;
-  return (
-    <>
-      <Section title="Sensor Calibration & Geometry">
-        <PinholeDiagram cfg={cfg} />
-        <dl className="kv">
-          <dt>Resolution</dt>
-          <dd>
-            {cam.width} × {cam.height} px
-          </dd>
-          <dt>Principal point (cx, cy)</dt>
-          <dd>
-            ({k.cx}, {k.cy}) px
-          </dd>
-          <dt>Focal length fx = fy</dt>
-          <dd>{k.fx.toFixed(1)} px</dd>
-          <dt>Focal length (pitch {cam.pixelPitchUm} µm)</dt>
-          <dd>{k.focalMm.toFixed(2)} mm</dd>
-          <dt>FOV (tracking)</dt>
-          <dd>
-            {k.hfovDeg.toFixed(2)}° × {k.vfovDeg.toFixed(2)}°
-          </dd>
-          <dt>IFOV at centre</dt>
-          <dd>
-            {k.ifovDeg.toFixed(5)}° · {((k.ifovDeg * Math.PI) / 180 * 1e6).toFixed(1)} µrad
-          </dd>
-          <dt>Projection</dt>
-          <dd>u = cx + fx·x/z, v = cy − fy·y/z</dd>
-        </dl>
-      </Section>
-      <Section title="Optical Sensor Configuration" right={<span className="dim">size change restarts</span>}>
-        <Slider label="Horizontal FOV (tracking)" value={cam.hfovDeg} min={1} max={12} step={0.1} digits={1} unit="°" onChange={(v) => patch({ camera: { hfovDeg: v } })} />
-        <Toggle label="Wide-field acquisition (zoom in after detection)" on={cam.wideAcquisition} onChange={(v) => patch({ camera: { wideAcquisition: v } })} />
-        {cam.wideAcquisition && (
-          <>
-            <Slider label="Acquisition FOV" value={cam.wideHfovDeg} min={cam.hfovDeg} max={20} step={0.5} digits={1} unit="°" onChange={(v) => patch({ camera: { wideHfovDeg: v } })} />
-            <Slider label="Zoom rate" value={cam.zoomRateDegS} min={2} max={30} step={1} digits={0} unit=" °/s" onChange={(v) => patch({ camera: { zoomRateDegS: v } })} />
-          </>
-        )}
-        <Seg
-          value={`${cam.width}x${cam.height}`}
-          options={[
-            { v: '640x480', label: '640×480 (PS)' },
-            { v: '800x600', label: '800×600' },
-            { v: '1024x768', label: '1024×768' },
-          ]}
-          onChange={(v) => {
-            const [w, h] = v.split('x').map(Number);
-            patch({ camera: { width: w, height: h } });
-          }}
-        />
-        <Slider label="Frame rate (PS ≥ 30)" value={cam.frameRateHz} min={15} max={60} step={5} digits={0} unit=" Hz" onChange={(v) => patch({ camera: { frameRateHz: v } })} />
-      </Section>
-      <Section title="Acquisition Link Probability" right={<span className="tag sim">estimate</span>}>
-        <dl className="kv">
-          <dt>Beacon in view at start</dt>
-          <dd>{(acq.pView0 * 100).toFixed(1)} %</dd>
-          <dt>Per-frame detection</dt>
-          <dd>{(acq.pDet * 100).toFixed(1)} %</dd>
-          <dt>Estimated SNR (box-filtered)</dt>
-          <dd>{acq.snr.toFixed(1)}</dd>
-          <dt>P(acquire ≤ 2 s)</dt>
-          <dd style={{ color: 'var(--ice)' }}>{(acq.pAcq * 100).toFixed(1)} %</dd>
-        </dl>
-        <p className="note">P = min(1, A_cov(2 s)/A_field) · (1 − (1 − P_det)^n). A_cov = FOV area + scan rate × VFOV × T. Coverage model, not a Monte-Carlo result — use Experiment ▸ Batch for measured rates.</p>
-      </Section>
-      <Section title="Radiometric Link Budget" right={<span className="tag sim">simplified</span>}>
-        <Slider label="Transmit power" value={L.txPowerMw} min={10} max={5000} step={10} digits={0} unit=" mW" onChange={(v) => patch({ link: { txPowerMw: v } })} />
-        <Slider label="Beam divergence (full)" value={L.divergenceUrad} min={20} max={1000} step={5} digits={0} unit=" µrad" onChange={(v) => patch({ link: { divergenceUrad: v } })} />
-        <Slider label="Receiver aperture" value={L.rxApertureCm} min={2} max={60} step={1} digits={0} unit=" cm" onChange={(v) => patch({ link: { rxApertureCm: v } })} />
-        <Slider label="Receiver sensitivity" value={L.rxSensitivityDbm} min={-70} max={-20} step={1} digits={0} unit=" dBm" onChange={(v) => patch({ link: { rxSensitivityDbm: v } })} />
-        <Slider label="Fine-stage capture (half)" value={L.fineCaptureMrad} min={0.1} max={5} step={0.1} digits={1} unit=" mrad" onChange={(v) => patch({ link: { fineCaptureMrad: v } })} />
-        <dl className="kv" style={{ marginTop: 8 }}>
-          <dt>Range (live)</dt>
-          <dd>{fmt(link?.rangeKm, 1, ' km')}</dd>
-          <dt>Geometric loss</dt>
-          <dd>{fmt(link?.geomLossDb, 1, ' dB')}</dd>
-          <dt>Atmospheric loss (× airmass)</dt>
-          <dd>{fmt(link?.atmLossDb, 2, ' dB')}</dd>
-          <dt>Receive pointing loss</dt>
-          <dd>{fmt(link?.pointingLossDb, 2, ' dB')}</dd>
-          <dt>System loss</dt>
-          <dd>{L.systemLossDb.toFixed(1)} dB</dd>
-          <dt>Received power</dt>
-          <dd>{fmt(link?.prDbm, 1, ' dBm')}</dd>
-          <dt>Margin</dt>
-          <dd style={{ color: (link?.marginDb ?? 0) < 0 ? 'var(--lost)' : 'var(--lock)' }}>{fmt(link?.marginDb, 1, ' dB')}</dd>
-        </dl>
-        <p className="note">Assumes a Gaussian far-field beam at {L.wavelengthNm} nm, η = 1 − exp(−2a²/w²), pointing loss exp(−2(θ/θ_fine)²). Ignores scintillation fades, background light and detector noise.</p>
-      </Section>
-    </>
-  );
-}
-
 function BatchPanel() {
   const cfg = useApp((s) => s.config);
   const [runs, setRuns] = useState(10);
@@ -686,27 +381,27 @@ function BatchPanel() {
     setResults([]);
     setBusy(true);
     w.onmessage = (e: MessageEvent<BatchMessage>) => {
-      if (e.data.type === 'progress') setResults((r) => [...r, e.data.type === 'progress' ? e.data.result : r[0]]);
+      if (e.data.type === 'progress') setResults((r: BatchRunResult[]) => [...r, e.data.type === 'progress' ? e.data.result : r[0]]);
       else setBusy(false);
     };
     w.postMessage({ config: cfg, runs, durationS: dur, seed0: cfg.seed * 1000 });
   };
   const summary = useMemo(() => {
     if (!results.length) return null;
-    const acq = results.map((r) => r.metrics.acquisitionS).filter((x): x is number => x !== null);
-    const rms = results.map((r) => r.metrics.errRmsPx).filter((x): x is number => x !== null);
-    const pass = results.filter((r) => r.metrics.acceptance.acquisition && r.metrics.acceptance.error && r.metrics.acceptance.loss !== false).length;
+    const acq = results.map((r: BatchRunResult) => r.metrics.acquisitionS).filter((x: number | null): x is number => x !== null);
+    const rms = results.map((r: BatchRunResult) => r.metrics.errRmsPx).filter((x: number | null): x is number => x !== null);
+    const pass = results.filter((r: BatchRunResult) => r.metrics.acceptance.acquisition && r.metrics.acceptance.error && r.metrics.acceptance.loss !== false).length;
     return {
-      acqMean: acq.length ? acq.reduce((a, b) => a + b, 0) / acq.length : null,
+      acqMean: acq.length ? acq.reduce((a: number, b: number) => a + b, 0) / acq.length : null,
       acqMax: acq.length ? Math.max(...acq) : null,
-      rmsMean: rms.length ? rms.reduce((a, b) => a + b, 0) / rms.length : null,
+      rmsMean: rms.length ? rms.reduce((a: number, b: number) => a + b, 0) / rms.length : null,
       locked: acq.length,
       pass,
     };
   }, [results]);
   const exportCsv = () => {
     const head = 'seed,final_state,acquisition_s,err_rms_px,err_max_px,loss_pct,reacq_max_s,centroid_rms_px,fps_capacity';
-    const rows = results.map((r) =>
+    const rows = results.map((r: BatchRunResult) =>
       [r.seed, r.finalState, r.metrics.acquisitionS ?? '', r.metrics.errRmsPx ?? '', r.metrics.errMaxPx ?? '', r.metrics.lossPct ?? '', r.metrics.reacqMaxS ?? '', r.metrics.centroidRmsPx ?? '', r.metrics.fps.toFixed(0)].join(','),
     );
     const blob = new Blob([[head, ...rows].join('\n')], { type: 'text/csv' });
@@ -716,54 +411,88 @@ function BatchPanel() {
     a.click();
   };
   return (
-    <Section title="Monte Carlo Batch Trials" right={<span className="dim">headless worker</span>}>
-      <Slider label="Runs" value={runs} min={2} max={50} step={1} digits={0} onChange={setRuns} />
-      <Slider label="Duration per run" value={dur} min={5} max={60} step={1} digits={0} unit=" s" onChange={setDur} />
-      <div className="row">
-        <button className="btn sm primary" onClick={start} disabled={busy}>
-          {busy ? `Running ${results.length}/${runs}…` : 'Run batch'}
-        </button>
-        <button className="btn sm" onClick={exportCsv} disabled={!results.length}>
-          <Icon name="download" size={14} /> CSV
-        </button>
-        <button
-          className="btn sm"
-          disabled={!results.length || busy}
-          onClick={() => saveReport(buildReport({ kind: 'batch', source: 'Browser engine (batch worker)', config: cfg, batch: results }), 'html', `netra-batch-report-${cfg.scenarioId}`)}
-        >
-          <Icon name="report" size={14} /> Report
-        </button>
+    <Section title="Monte Carlo Batch Trials" right={<span className="analysis-badge-sub">HEADLESS WORKER</span>}>
+      <div className="analysis-card">
+        <Slider label="Trial runs" value={runs} min={2} max={50} step={1} digits={0} onChange={setRuns} />
+        <Slider label="Duration per run" value={dur} min={5} max={60} step={1} digits={0} unit=" s" onChange={setDur} />
+        <div className="analysis-btn-row">
+          <button className="btn sm primary" onClick={start} disabled={busy} style={{ flex: 1.2 }}>
+            <Icon name="play" size={13} /> {busy ? `Running ${results.length}/${runs}…` : 'Run Batch'}
+          </button>
+          <button className="btn sm" onClick={exportCsv} disabled={!results.length} style={{ flex: 1 }}>
+            <Icon name="download" size={13} /> CSV
+          </button>
+          <button
+            className="btn sm"
+            disabled={!results.length || busy}
+            onClick={() => saveReport(buildReport({ kind: 'batch', source: 'Browser engine (batch worker)', config: cfg, batch: results }), 'html', `netra-batch-report-${cfg.scenarioId}`)}
+            style={{ flex: 1 }}
+          >
+            <Icon name="report" size={13} /> Report
+          </button>
+        </div>
       </div>
       {summary && (
-        <p className="note">
-          Locked <b>{summary.locked}/{results.length}</b> · passing acquisition+error+loss <b>{summary.pass}/{results.length}</b> · acquisition mean <b>{fmt(summary.acqMean, 2, ' s')}</b> (max {fmt(summary.acqMax, 2, ' s')}) · RMS error mean <b>{fmt(summary.rmsMean, 2, ' px')}</b>
-        </p>
+        <div className="batch-scorecard">
+          <div className="scorecard-grid">
+            <div className="score-tile">
+              <span className="score-label">Lock Success</span>
+              <span className="score-val" style={{ color: summary.locked === results.length ? 'var(--lock)' : 'var(--amber)' }}>
+                {summary.locked}<small>/{results.length}</small>
+              </span>
+            </div>
+            <div className="score-tile">
+              <span className="score-label">PS-169 Pass</span>
+              <span className="score-val" style={{ color: summary.pass === results.length ? 'var(--lock)' : 'var(--ice)' }}>
+                {summary.pass}<small>/{results.length}</small>
+              </span>
+            </div>
+            <div className="score-tile">
+              <span className="score-label">Mean Acq Time</span>
+              <span className="score-val">
+                {fmt(summary.acqMean, 2)}<small>s (max {fmt(summary.acqMax, 2)}s)</small>
+              </span>
+            </div>
+            <div className="score-tile">
+              <span className="score-label">Mean RMS Error</span>
+              <span className="score-val">
+                {fmt(summary.rmsMean, 2)}<small>px</small>
+              </span>
+            </div>
+          </div>
+        </div>
       )}
       {results.length > 0 && (
-        <table className="batch-table">
-          <thead>
-            <tr>
-              <th>seed</th>
-              <th>acq s</th>
-              <th>rms px</th>
-              <th>loss %</th>
-              <th>re-acq</th>
-              <th>end</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.slice(-12).map((r) => (
-              <tr key={r.seed}>
-                <td>{r.seed}</td>
-                <td>{fmt(r.metrics.acquisitionS, 2)}</td>
-                <td>{fmt(r.metrics.errRmsPx, 2)}</td>
-                <td>{fmt(r.metrics.lossPct, 1)}</td>
-                <td>{fmt(r.metrics.reacqMaxS, 2)}</td>
-                <td>{r.finalState.slice(0, 4)}</td>
+        <div className="batch-table-wrap">
+          <table className="batch-table">
+            <thead>
+              <tr>
+                <th>SEED</th>
+                <th>ACQ (S)</th>
+                <th>RMS (PX)</th>
+                <th>LOSS %</th>
+                <th>RE-ACQ</th>
+                <th>STATE</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {results.slice(-12).map((r: BatchRunResult) => (
+                <tr key={r.seed}>
+                  <td className="mono">{r.seed}</td>
+                  <td className="mono">{fmt(r.metrics.acquisitionS, 2)}</td>
+                  <td className="mono">{fmt(r.metrics.errRmsPx, 2)}</td>
+                  <td className="mono">{fmt(r.metrics.lossPct, 1)}%</td>
+                  <td className="mono">{fmt(r.metrics.reacqMaxS, 2)}s</td>
+                  <td>
+                    <span className={`state-chip-xs ${r.finalState.toLowerCase().includes('track') || r.finalState.toLowerCase().includes('fine') ? 'lock' : 'warn'}`}>
+                      {r.finalState.slice(0, 5)}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </Section>
   );
@@ -775,38 +504,42 @@ function ReportPanel() {
   const { downloadReport, set } = useApp.getState();
   const rec = useApp((s) => s.recording);
   return (
-    <Section title="Mission Performance Analysis" right={<span className="tag ai">auto</span>}>
-      <p className="note" style={{ marginTop: 0 }}>
-        Duration, FPS, acquisition time, average / max tracking error, lock retention, loss, re-acquisition, processing time, PS169 pass/fail, configuration and the state log.
-      </p>
-      <div className="row">
-        <button className="btn sm primary" onClick={() => downloadReport('live', 'html')}>
-          <Icon name="report" size={14} /> Report (live run)
-        </button>
-        <button className="btn sm" onClick={() => downloadReport('live', 'md')}>
-          Markdown
-        </button>
-        <button className="btn sm" onClick={() => downloadReport('live', 'json')}>
-          JSON
-        </button>
+    <Section title="Mission Performance Analysis" right={<span className="analysis-badge-sub">AUDIT READY</span>}>
+      <div className="analysis-card">
+        <p className="analysis-card-desc">
+          Telemetry audit of link duration, tracking FPS, acquisition latency, RMS/peak pointing error, PS169 compliance & flight state history.
+        </p>
+        <div className="report-action-group">
+          <button className="btn sm primary report-main-btn" onClick={() => downloadReport('live', 'html')}>
+            <Icon name="report" size={14} /> Full Audit Report (Live Run)
+          </button>
+          <div className="report-alt-row">
+            <button className="btn sm" onClick={() => downloadReport('live', 'md')}>
+              Markdown
+            </button>
+            <button className="btn sm" onClick={() => downloadReport('live', 'json')}>
+              JSON Data
+            </button>
+            <button className="btn sm" onClick={() => downloadReport('recording', 'html')} disabled={!rec.frames}>
+              Rec Report
+            </button>
+          </div>
+        </div>
+        <div className="analysis-toggle-wrap">
+          <Toggle
+            label="Auto-export report when recording finishes"
+            on={autoReport}
+            onChange={(v) => {
+              try {
+                localStorage.setItem('netra.autoReport', v ? '1' : '0');
+              } catch {
+                /* storage unavailable */
+              }
+              set({ autoReport: v });
+            }}
+          />
+        </div>
       </div>
-      <div className="row" style={{ marginTop: 6 }}>
-        <button className="btn sm" onClick={() => downloadReport('recording', 'html')} disabled={!rec.frames}>
-          <Icon name="report" size={14} /> Report (recording)
-        </button>
-      </div>
-      <Toggle
-        label="Save a report automatically when a recording stops"
-        on={autoReport}
-        onChange={(v) => {
-          try {
-            localStorage.setItem('netra.autoReport', v ? '1' : '0');
-          } catch {
-            /* storage unavailable */
-          }
-          set({ autoReport: v });
-        }}
-      />
     </Section>
   );
 }
@@ -822,68 +555,116 @@ function ExperimentDrawer() {
   const running = useApp((s) => s.running);
   const [url, setUrl] = useState(serverUrl);
   const file = useRef<HTMLInputElement>(null);
+
+  const statusTone = status;
+
   return (
     <>
-      <Section title="Execution Backend & Connectivity">
-        <Seg
-          value={kind === 'replay' ? 'local' : kind}
-          options={[
-            { v: 'local', label: 'Local (browser)' },
-            { v: 'remote', label: 'FastAPI server' },
-          ]}
-          onChange={(v) => connect(v, v === 'remote' ? { url } : undefined)}
-        />
-        <div className="row" style={{ marginTop: 8 }}>
-          <input type="text" value={url} onChange={(e) => setUrl(e.target.value)} style={{ flex: 1 }} />
-          <button className="btn sm" onClick={() => connect('remote', { url })}>
-            Connect
-          </button>
-        </div>
-        <p className="note">
-          Status: <b>{status}</b> · source <b>{kind}</b>
+      <Section
+        title="Execution Backend & Connectivity"
+        right={
+          <span className={`status-indicator-pill ${statusTone}`}>
+            <span className="rec-dot-pulse" />
+            {status.toUpperCase()}
+          </span>
+        }
+      >
+        <div className="analysis-card">
+          <Seg
+            value={kind === 'replay' ? 'local' : kind}
+            options={[
+              { v: 'local', label: 'Local (Browser)' },
+              { v: 'remote', label: 'FastAPI Server' },
+            ]}
+            onChange={(v) => connect(v, v === 'remote' ? { url } : undefined)}
+          />
+          <div className="remote-connect-box">
+            <span className="remote-label">FastAPI Endpoint</span>
+            <div className="remote-input-row">
+              <input
+                type="text"
+                className="remote-input"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="http://127.0.0.1:8000"
+              />
+              <button className="btn sm" onClick={() => connect('remote', { url })}>
+                Connect
+              </button>
+            </div>
+          </div>
           {err && (
-            <>
-              <br />
-              <span style={{ color: 'var(--lost)' }}>{err}</span>
-            </>
+            <div className="backend-err-box">
+              <Icon name="warn" size={13} />
+              <span>{err}</span>
+            </div>
           )}
-        </p>
-      </Section>
-      <Section title="Live Session & Recording">
-        <div className="row">
-          <button className="btn sm" onClick={() => send({ type: running ? 'pause' : 'start' })}>
-            {running ? 'Stop' : 'Start'}
-          </button>
-          <button className="btn sm" onClick={() => send({ type: 'reset' })} disabled={kind === 'replay'}>
-            Reset
-          </button>
-          <button className={`btn sm rec ${rec.active ? 'on' : ''}`} onClick={() => (rec.active ? stopRecording() : startRecording())}>
-            <span className="led" />
-            {rec.active ? 'Stop recording' : 'Record'}
-          </button>
         </div>
-        <p className="note">
-          Recorded: <b>{rec.frames}</b> frames ({(rec.frames / 30).toFixed(1)} s). Every snapshot is kept (no images) for CSV / JSON export and replay.
-        </p>
-        <div className="row">
-          <button className="btn sm" onClick={exportCsv}>
-            <Icon name="download" size={14} /> CSV
-          </button>
-          <button className="btn sm" onClick={exportJson}>
-            <Icon name="download" size={14} /> JSON
-          </button>
-          <button
-            className="btn sm"
-            onClick={() => {
-              if (!recorder.frames.length) return notify('Nothing recorded yet');
-              connect('replay', { recording: recorder.toRecording('In-memory recording', useApp.getState().config, kind) });
-            }}
-          >
-            <Icon name="play" size={14} /> Replay
-          </button>
-          <button className="btn sm" onClick={() => file.current?.click()}>
-            <Icon name="upload" size={14} /> Load JSON
-          </button>
+      </Section>
+
+      <Section
+        title="Live Session & Recording"
+        right={
+          <span className={`rec-status-pill ${rec.active ? 'active' : ''}`}>
+            {rec.active && <span className="rec-dot-pulse" />}
+            {rec.active ? 'REC ACTIVE' : 'IDLE'}
+          </span>
+        }
+      >
+        <div className="analysis-card">
+          <div className="analysis-btn-row">
+            <button className={`btn sm ${running ? '' : 'primary'}`} onClick={() => send({ type: running ? 'pause' : 'start' })} style={{ flex: 1 }}>
+              <Icon name={running ? 'pause' : 'play'} size={13} /> {running ? 'Pause Sim' : 'Start Sim'}
+            </button>
+            <button className="btn sm" onClick={() => send({ type: 'reset' })} disabled={kind === 'replay'} style={{ flex: 1 }}>
+              <Icon name="reset" size={13} /> Reset
+            </button>
+            <button
+              className={`btn sm rec ${rec.active ? 'on' : ''}`}
+              onClick={() => (rec.active ? stopRecording() : startRecording())}
+              style={{ flex: 1.2 }}
+            >
+              <span className="led" />
+              {rec.active ? 'Stop Rec' : 'Record'}
+            </button>
+          </div>
+
+          <div className="rec-stats-bar">
+            <div className="rec-stat-col">
+              <span className="stat-sub">Buffer</span>
+              <span className="stat-val mono">{rec.frames}<small> pts</small></span>
+            </div>
+            <div className="rec-stat-col">
+              <span className="stat-sub">Duration</span>
+              <span className="stat-val mono">{(rec.frames / 30).toFixed(1)}<small> s</small></span>
+            </div>
+            <div className="rec-stat-col">
+              <span className="stat-sub">Rate</span>
+              <span className="stat-val mono">30<small> Hz</small></span>
+            </div>
+          </div>
+
+          <div className="rec-tools-grid">
+            <button className="btn sm" onClick={exportCsv}>
+              <Icon name="download" size={13} /> CSV Export
+            </button>
+            <button className="btn sm" onClick={exportJson}>
+              <Icon name="download" size={13} /> JSON Export
+            </button>
+            <button
+              className="btn sm"
+              onClick={() => {
+                if (!recorder.frames.length) return notify('Nothing recorded yet');
+                connect('replay', { recording: recorder.toRecording('In-memory recording', useApp.getState().config, kind) });
+              }}
+            >
+              <Icon name="play" size={13} /> Replay
+            </button>
+            <button className="btn sm" onClick={() => file.current?.click()}>
+              <Icon name="upload" size={13} /> Load JSON
+            </button>
+          </div>
+
           <input
             ref={file}
             type="file"
@@ -904,107 +685,57 @@ function ExperimentDrawer() {
           />
         </div>
       </Section>
+
       <ReportPanel />
       <BatchPanel />
-      <Section title="Flight State Transition Log" right={<span className="dim">{events.length}</span>}>
-        <div style={{ maxHeight: 220, overflowY: 'auto', fontSize: 11.5 }}>
-          {[...events].reverse().slice(0, 80).map((e, i) => (
-            <div key={i} style={{ display: 'flex', gap: 8, padding: '3px 0', borderBottom: '1px solid var(--hair)' }}>
-              <span className="mono dim" style={{ flex: 'none', width: 48 }}>
-                {e.t.toFixed(2)}
-              </span>
-              <span className="muted">
-                {e.to && <b style={{ color: 'var(--text)' }}>{e.to} </b>}
-                {e.message}
-              </span>
-            </div>
-          ))}
-        </div>
-      </Section>
-    </>
-  );
-}
 
-function ViewDrawer() {
-  const quality = useApp((s) => s.quality);
-  const overlays = useApp((s) => s.overlays);
-  const view = useApp((s) => s.view);
-  const followKey = useApp((s) => s.followKey);
-  const { setQuality, toggleOverlay } = useApp.getState();
-  return (
-    <>
-      <Section title="Interface Theme">
-        <ThemeList />
-      </Section>
-      <Section title="Graphics & Rendering Fidelity">
-        <Seg
-          value={quality}
-          options={[
-            { v: 'low', label: 'Low' },
-            { v: 'medium', label: 'Medium' },
-            { v: 'high', label: 'High' },
-          ]}
-          onChange={setQuality}
-        />
-        <p className="note">Low: no post-processing, no clouds, 2k land mask. Medium: bloom, clouds. High: SMAA anti-aliasing, shadows, up to 2× pixel ratio (capped to what the screen size allows), 30 Hz sensor feed. If a graphics card cannot draw a level, NETRA drops one level automatically and tells you.</p>
-      </Section>
-      <Section title="Tactical 3D Visual Aids">
-        <Toggle label="Labels" on={overlays.labels} onChange={() => toggleOverlay('labels')} />
-        <Toggle label="Camera FOV frustum & optical axis" on={overlays.fov} onChange={() => toggleOverlay('fov')} />
-        <Toggle label="Trajectories, search field, scan path" on={overlays.trails} onChange={() => toggleOverlay('trails')} />
-        <Toggle label="Latitude / longitude grid" on={overlays.grid} onChange={() => toggleOverlay('grid')} />
-      </Section>
-      <Section title="Celestial & Orbital Bodies" right={<span className="dim">visual only</span>}>
-        <Toggle label="Other satellites, meteors, aurora, galaxies" on={overlays.space} onChange={() => toggleOverlay('space')} />
-        <div className="eyebrow" style={{ margin: '10px 0 6px' }}>
-          <span>Fly to (key F)</span>
+      <Section title="Flight State Transition Log" right={<span className="analysis-badge-sub">{events.length} EVENTS</span>}>
+        <div className="telemetry-log-console">
+          {events.length === 0 ? (
+            <div className="log-empty">No state transitions recorded yet</div>
+          ) : (
+            [...events].reverse().slice(0, 80).map((e, i) => {
+              const col = e.to ? stateColor(e.to) : 'var(--text-3)';
+              return (
+                <div key={i} className="log-entry">
+                  <span className="log-time mono">T+{e.t.toFixed(2)}s</span>
+                  {e.to && (
+                    <span
+                      className="log-state-tag"
+                      style={{
+                        color: col,
+                        background: `color-mix(in srgb, ${col} 15%, transparent)`,
+                        borderColor: `color-mix(in srgb, ${col} 35%, transparent)`,
+                      }}
+                    >
+                      {e.to}
+                    </span>
+                  )}
+                  <span className="log-msg" title={e.message}>
+                    {e.message}
+                  </span>
+                </div>
+              );
+            })
+          )}
         </div>
-        <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
-          {(
-            [
-              ['sat3', 'SAT-3'],
-            ] as const
-          ).map(([k, label]) => (
-            <button key={k} className={`btn sm ${view === 'follow' && followKey === k ? 'primary' : ''}`} onClick={() => useApp.getState().flyTo(k)}>
-              {label}
-            </button>
-          ))}
-          <button className="btn sm ghost" onClick={() => useApp.getState().setView('overview')}>
-            Back
-          </button>
-        </div>
-        <p className="note">
-          SAT-3 (data relay, 1,100 km) flies at real orbital speed on repeating passes over the link. In a Fly-to view, drag to look around the spacecraft and scroll to zoom; the camera travels with it. None of this is in the simulated camera image, so it does not affect tracking or any result. The Andromeda galaxy and Magellanic Clouds are at approximate positions.
-        </p>
-      </Section>
-      <Section title="Focal Plane Overlays">
-        <Toggle label="Region of interest" on={overlays.roi} onChange={() => toggleOverlay('roi')} />
-        <Toggle label="Calibration grid (degrees)" on={overlays.calibration} onChange={() => toggleOverlay('calibration')} />
-        <Toggle label="Ground truth marker (simulation only)" on={overlays.truth} onChange={() => toggleOverlay('truth')} />
-      </Section>
-      <Section title="Spatial Scale Conventions">
-        <p className="note">
-          Scene units are kilometres; directions, ranges and the Earth are true. The terminal and spacecraft are drawn with <b>iconic scaling</b> (enlarged when far away) and the Moon ×3. The beacon cone divergence is exaggerated ×80.
-        </p>
       </Section>
     </>
   );
 }
 
 const TITLES: Record<Exclude<DrawerId, null>, string> = {
-  scenario: 'Mission Profile',
-  target: 'Target Kinematics',
-  disturbance: 'Environmental Dynamics',
+  scenario: 'Test Cases',
+  target: 'Kinematics',
+  disturbance: 'Noise Injection',
   tracking: 'Acquisition & Tracking',
-  optics: 'Optical Payload & Link',
-  experiment: 'Telemetry & Analysis',
+  optics: 'Kinematics',
+  experiment: 'Analysis',
   plugin: 'Algorithm Plugin Playground',
-  view: 'Viewport & Overlays',
 };
 
 export function RightNavbar() {
-  const activeDrawer = useApp((s) => s.drawer) || 'scenario';
-  const measure = useApp((s) => s.measure);
+  const activeDrawer = useApp((s) => s.drawer) || 'target';
   const setDrawer = useApp((s) => s.setDrawer);
   const set = useApp((s) => s.set);
 
@@ -1013,17 +744,15 @@ export function RightNavbar() {
       {/* Embedded Drawer Content Pane */}
       <aside className="drawer-panel glass">
         <div className="drawer-head">
-          <h3>{TITLES[activeDrawer] || 'Scenario'}</h3>
+          <h3>{TITLES[activeDrawer] || 'Kinematics'}</h3>
         </div>
         <div className="drawer-body">
-          {activeDrawer === 'scenario' && <ScenarioDrawer />}
-          {activeDrawer === 'target' && <TargetDrawer />}
-          {activeDrawer === 'disturbance' && <DisturbanceDrawer />}
+          {(activeDrawer === 'target' || activeDrawer === 'optics') && <TargetDrawer />}
           {activeDrawer === 'tracking' && <TrackingDrawer />}
-          {activeDrawer === 'optics' && <OpticsDrawer />}
+          {activeDrawer === 'disturbance' && <DisturbanceDrawer />}
+          {activeDrawer === 'scenario' && <ScenarioDrawer />}
           {activeDrawer === 'experiment' && <ExperimentDrawer />}
           {activeDrawer === 'plugin' && <PluginDrawer />}
-          {activeDrawer === 'view' && <ViewDrawer />}
         </div>
       </aside>
 
@@ -1040,9 +769,9 @@ export function RightNavbar() {
           <Icon name="film" />
           <span className="tip">Video benchmark · V</span>
         </button>
-        <button className={measure.enabled ? 'on' : ''} onClick={() => set({ measure: { enabled: !measure.enabled, picks: [] } })} aria-label="Measure">
-          <Icon name="measure" />
-          <span className="tip">3D measurement</span>
+        <button onClick={() => fetch('http://localhost:8000/api/plugins/playground')} aria-label="Plugin Playground">
+          <Icon name="code" />
+          <span className="tip">⚡ Algorithm Plugin Playground (GUI) · P</span>
         </button>
       </nav>
     </div>
@@ -1636,8 +1365,10 @@ function getParamConfig(key: string, defaultVal: number, currentVal: number): Pa
   };
 }
 
+type PluginSlot = 'tracking' | 'vision' | 'control';
+
 function PluginDrawer() {
-  const [slot, setSlot] = useState<'tracking' | 'vision' | 'control'>('control');
+  const [slot, setSlot] = useState<PluginSlot>('control');
   const [strategy, setStrategy] = useState<'default' | 'preset' | 'custom'>('custom');
   const [presetIndex, setPresetIndex] = useState(0);
   const [code, setCode] = useState(DEFAULT_CODE['control']);
@@ -1656,7 +1387,7 @@ function PluginDrawer() {
       newDefaults[match[1]] = parseFloat(match[2]);
     }
     setParamDefaults(newDefaults);
-    setParams(prev => {
+    setParams((prev: Record<string, number>) => {
       const next: Record<string, number> = {};
       for (const [k, defVal] of Object.entries(newDefaults)) {
         next[k] = (k in prev && Number.isFinite(prev[k])) ? prev[k] : defVal;
@@ -1798,7 +1529,7 @@ function PluginDrawer() {
                 }}
                 style={{ width: '100%', background: '#1a1d24', color: '#fff', border: '1px solid #333', padding: 5, borderRadius: 4 }}
               >
-                {PRESET_OPTIONS[slot]?.map((p, i) => (
+                {PRESET_OPTIONS[slot]?.map((p: { id: string; name: string; code: string }, i: number) => (
                   <option key={p.id} value={i}>{p.name}</option>
                 ))}
               </select>
@@ -1908,7 +1639,7 @@ function PluginDrawer() {
                             onChange={e => {
                               const val = parseFloat(e.target.value);
                               if (!isNaN(val)) {
-                                setParams(prev => ({ ...prev, [k]: val }));
+                                setParams((prev: Record<string, number>) => ({ ...prev, [k]: val }));
                               }
                             }}
                             style={{
@@ -1924,10 +1655,10 @@ function PluginDrawer() {
                             }}
                           />
                           <button 
-                            type="button"
+                            type="button" 
                             title={`Reset ${k} to default (${defaultVal})`}
                             disabled={!isModified}
-                            onClick={() => setParams(prev => ({ ...prev, [k]: defaultVal }))}
+                            onClick={() => setParams((prev: Record<string, number>) => ({ ...prev, [k]: defaultVal }))}
                             style={{
                               background: 'transparent',
                               border: 'none',
@@ -1948,7 +1679,7 @@ function PluginDrawer() {
                         max={cfg.max} 
                         step={cfg.step} 
                         value={currentVal} 
-                        onChange={e => setParams(prev => ({ ...prev, [k]: parseFloat(e.target.value) }))} 
+                        onChange={e => setParams((prev: Record<string, number>) => ({ ...prev, [k]: parseFloat(e.target.value) }))} 
                         style={{ width: '100%', ['--p' as string]: `${percent}%` }} 
                       />
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#6e7681', fontFamily: 'monospace', marginTop: 2 }}>

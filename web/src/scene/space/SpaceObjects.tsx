@@ -103,7 +103,7 @@ function RelaySat({ m }: { m: M }) {
   }, []);
 
   return (
-    <group ref={root} userData={{ measure: 'obj:sat3', measureName: 'SAT-3 (data relay)' }}>
+    <group ref={root}>
       {/* Central composite truss bus */}
       <mesh material={m.frame} rotation={[Math.PI / 2, 0, 0]}>
         <boxGeometry args={[0.55, 0.55, 3.6]} />

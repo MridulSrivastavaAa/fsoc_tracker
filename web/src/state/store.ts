@@ -89,7 +89,7 @@ export function historySlice(key: SeriesKey, seconds: number): { t: Float32Array
 }
 
 // ───────────────────────── React-facing store ─────────────────────────
-export type DrawerId = 'scenario' | 'target' | 'disturbance' | 'tracking' | 'experiment' | 'optics' | 'view' | 'plugin' | null;
+export type DrawerId = 'scenario' | 'target' | 'disturbance' | 'tracking' | 'experiment' | 'optics' | 'plugin' | null;
 export type ViewPreset = 'overview' | 'terminal' | 'link' | 'sensor' | 'orbit' | 'free' | 'follow';
 export type FollowKey = 'sat3';
 export type Quality = 'low' | 'medium' | 'high';
@@ -105,12 +105,6 @@ export function applyTheme(t: ThemeId) {
   if (typeof document === 'undefined') return;
   if (t === 'deep-space') delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = t;
-}
-export interface MeasureTarget {
-  id: string;
-  name: string;
-  /** True position, km, site ENU frame. */
-  pos: [number, number, number];
 }
 
 interface AppState {
@@ -141,7 +135,6 @@ interface AppState {
   analysisOpen: boolean;
   analysisTab: string;
   helpOpen: boolean;
-  measure: { enabled: boolean; picks: MeasureTarget[] };
   recording: { active: boolean; frames: number };
   replay: { name: string; length: number; position: number; playing: boolean } | null;
   toast: string | null;
@@ -260,7 +253,7 @@ export const useApp = create<AppState>((set, get) => {
     engineFps: 0,
     timeScale: 1,
     events: [],
-    drawer: (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('drawer') as DrawerId) : null) || 'scenario',
+    drawer: (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('drawer') as DrawerId) : null) || 'target',
     view: 'overview',
     viewNonce: 0,
     followKey: 'sat3',
@@ -275,7 +268,6 @@ export const useApp = create<AppState>((set, get) => {
     analysisOpen: false,
     analysisTab: 'error',
     helpOpen: false,
-    measure: { enabled: false, picks: [] },
     recording: { active: false, frames: 0 },
     replay: null,
     toast: null,
@@ -332,7 +324,7 @@ export const useApp = create<AppState>((set, get) => {
       provider?.send({ type: 'replaceConfig', config: cfg });
     },
 
-    setDrawer: (d) => set({ drawer: d || 'scenario' }),
+    setDrawer: (d) => set({ drawer: d || 'target' }),
     setView: (v) => set({ view: v, viewNonce: get().viewNonce + 1 }),
     flyTo: (k) => set({ view: 'follow', followKey: k, viewNonce: get().viewNonce + 1, overlays: { ...get().overlays, space: true } }),
     setQuality: (q) => {

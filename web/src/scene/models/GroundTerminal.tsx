@@ -21,45 +21,10 @@ import { makeMaterials } from './materials';
 import { TERMINAL_HEADING_DEG, vis } from '../vis';
 import { useApp } from '../../state/store';
 
-type M = ReturnType<typeof makeMaterials>;
-
 const PEDESTAL_TOP = 3.6; // m above ground
 const TILT_AXIS_UP = 1.1; // m above the pan turntable
 
-function SafetyBollard({ x, z, m }: { x: number; z: number; m: M }) {
-  return (
-    <group position={[x, 0, z]}>
-      <mesh material={m.chassis} position={[0, 0.04, 0]}>
-        <cylinderGeometry args={[0.16, 0.18, 0.08, 16]} />
-      </mesh>
-      <mesh material={m.orange} position={[0, 0.45, 0]}>
-        <cylinderGeometry args={[0.07, 0.07, 0.82, 16]} />
-      </mesh>
-      <mesh material={m.reflect} position={[0, 0.65, 0]}>
-        <cylinderGeometry args={[0.075, 0.075, 0.12, 16]} />
-      </mesh>
-      <mesh material={m.chassis} position={[0, 0.88, 0]}>
-        <sphereGeometry args={[0.072, 12, 12]} />
-      </mesh>
-    </group>
-  );
-}
 
-function Cone({ x, z, m }: { x: number; z: number; m: M }) {
-  return (
-    <group position={[x, 0, z]}>
-      <mesh material={m.trim} position={[0, 0.015, 0]}>
-        <boxGeometry args={[0.38, 0.03, 0.38]} />
-      </mesh>
-      <mesh material={m.orange} position={[0, 0.37, 0]}>
-        <cylinderGeometry args={[0.03, 0.15, 0.7, 20]} />
-      </mesh>
-      <mesh material={m.reflect} position={[0, 0.42, 0]}>
-        <cylinderGeometry args={[0.078, 0.095, 0.12, 20, 1, true]} />
-      </mesh>
-    </group>
-  );
-}
 
 export function GroundTerminal() {
   const m = useMemo(makeMaterials, []);
@@ -136,7 +101,7 @@ export function GroundTerminal() {
   const lights = quality !== 'low';
 
   return (
-    <group ref={root} userData={{ measure: 'terminal' }}>
+    <group ref={root}>
       <group rotation={[0, heading, 0]}>
         {/* ── 1. Reinforced Concrete Foundation Pad ───────────────── */}
         {/* Octagonal Foundation Base */}
@@ -550,47 +515,7 @@ export function GroundTerminal() {
           </group>
         </group>
 
-        {/* ── 4. Ground Site Support Equipment ─────────────────────── */}
-        {/* Terminal Control & Power Cabinet */}
-        <group position={[-2.8, 0, 1.6]} rotation={[0, 0.45, 0]}>
-          <RoundedBox
-            args={[1.4, 1.6, 2.0]}
-            radius={0.08}
-            smoothness={2}
-            position={[0, 0.92, 0]}
-            material={m.paint}
-            castShadow={shadows}
-          />
-          <mesh material={m.trim} position={[0, 0.1, 0]}>
-            <boxGeometry args={[1.5, 0.2, 2.1]} />
-          </mesh>
-          {/* Ventilation Louvers & Status Screen */}
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <mesh key={`vent${i}`} material={m.trim} position={[0.706, 1.1 + i * 0.08, 0.2]}>
-              <boxGeometry args={[0.01, 0.035, 0.9]} />
-            </mesh>
-          ))}
-          {/* Operator Status Panel */}
-          <mesh material={m.blackAnod} position={[0.706, 0.8, -0.45]}>
-            <boxGeometry args={[0.02, 0.4, 0.55]} />
-          </mesh>
-          <mesh position={[0.718, 0.8, -0.45]}>
-            <planeGeometry args={[0.01, 0.36]} />
-            <meshStandardMaterial
-              color="#0284c7"
-              emissive="#38bdf8"
-              emissiveIntensity={1.2}
-              toneMapped={false}
-            />
-          </mesh>
-          {/* Roof Exhaust & GPS/Iridium Antennas */}
-          <mesh material={m.chassis} position={[-0.3, 1.82, -0.5]}>
-            <cylinderGeometry args={[0.06, 0.06, 0.22, 12]} />
-          </mesh>
-          <mesh material={m.whitePaint} position={[0.2, 1.82, 0.4]}>
-            <cylinderGeometry args={[0.08, 0.1, 0.08, 16]} />
-          </mesh>
-        </group>
+
 
         {/* Perimeter Floodlight Mast */}
         <group position={[3.2, 0, -1.8]}>
@@ -620,26 +545,7 @@ export function GroundTerminal() {
           )}
         </group>
 
-        {/* Foundation Perimeter Safety Bollards & Hazard Cones */}
-        {[
-          [-2.8, -2.8],
-          [2.8, -2.8],
-          [3.5, 2.2],
-          [-3.5, 2.2],
-        ].map(([x, z]) => (
-          <SafetyBollard key={`bollard_${x}_${z}`} x={x} z={z} m={m} />
-        ))}
 
-        {[
-          [-3.2, -4.2],
-          [3.2, -4.2],
-          [4.4, 3.2],
-          [-4.4, 3.8],
-          [0, 5.0],
-          [4.5, 0.5],
-        ].map(([x, z]) => (
-          <Cone key={`cone_${x}_${z}`} x={x} z={z} m={m} />
-        ))}
       </group>
     </group>
   );

@@ -1,0 +1,9 @@
+{
+  "name": "fsoc-tracker-root",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --prefix web dev",
+    "build": "pnpm --prefix web build",
+    "start": "pnpm --prefix web dev"
+  }
+}

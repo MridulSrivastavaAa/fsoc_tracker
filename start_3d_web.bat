@@ -1,9 +1,9 @@
 @echo off
-title ISRO FSOC 3D - Interactive Web Mission Control
+title NETRA - Interactive Web Mission Control
 cd /d "%~dp0web"
 
 echo =====================================================================
-echo    ISRO / SAC PS 26169 - FSOC 3D VIRTUAL CAMERA TRACKING SYSTEM
+echo    NETRA - AI-BASED VIRTUAL CAMERA TRACKING SYSTEM (PS 26169)
 echo    Launching Interactive 3D Web Visualizer & Orbit Tracker...
 echo =====================================================================
 echo.

@@ -541,10 +541,6 @@ export function SensorView() {
             <div className="eyebrow">Angular err</div>
             <div className="v">{fmt(e?.angDeg, 3, '°')}</div>
           </div>
-          <div>
-            <div className="eyebrow">Confidence</div>
-            <div className="v">{d ? `${(d.confidence * 100).toFixed(0)} %` : '—'}</div>
-          </div>
         </div>
       </section>
     );
