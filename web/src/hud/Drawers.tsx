@@ -18,14 +18,55 @@ export interface ToolDef {
   icon: string;
   label: string;
   tag: string;
+  desc: string;
 }
 
 export const TOOLS: ToolDef[] = [
-  { id: 'target', num: '01', code: 'TRGT', icon: 'target', label: 'Kinematics & Orbit', tag: 'DYNAMICS' },
-  { id: 'tracking', num: '02', code: 'LOOP', icon: 'tracking', label: 'Acquisition & Loop', tag: 'PIPELINE' },
-  { id: 'disturbance', num: '03', code: 'NOIS', icon: 'disturbance', label: 'Noise & Atmosphere', tag: 'TURBULENCE' },
-  { id: 'scenario', num: '04', code: 'SCEN', icon: 'scenario', label: 'Flight Scenarios', tag: 'PROFILES' },
-  { id: 'experiment', num: '05', code: 'ANLS', icon: 'experiment', label: 'Telemetry & Reports', tag: 'METRICS' },
+  {
+    id: 'target',
+    num: '01',
+    code: 'TRGT',
+    icon: 'target',
+    label: 'Kinematics & Orbit',
+    tag: 'DYNAMICS',
+    desc: 'Configure orbital flight paths, target distance, velocity, and line-of-sight kinematics.',
+  },
+  {
+    id: 'tracking',
+    num: '02',
+    code: 'LOOP',
+    icon: 'tracking',
+    label: 'Acquisition & Loop',
+    tag: 'PIPELINE',
+    desc: 'Tune PID control gains, Kalman filtering, acquisition thresholds, and closed-loop lock.',
+  },
+  {
+    id: 'disturbance',
+    num: '03',
+    code: 'NOIS',
+    icon: 'disturbance',
+    label: 'Noise & Atmosphere',
+    tag: 'TURBULENCE',
+    desc: 'Simulate atmospheric scintillation, beam wander, sensor noise, and platform vibration.',
+  },
+  {
+    id: 'scenario',
+    num: '04',
+    code: 'SCEN',
+    icon: 'scenario',
+    label: 'Flight Scenarios',
+    tag: 'PROFILES',
+    desc: 'Select mission profiles, LEO satellite passes, custom flight paths, and waypoint routes.',
+  },
+  {
+    id: 'experiment',
+    num: '05',
+    code: 'ANLS',
+    icon: 'experiment',
+    label: 'Telemetry & Reports',
+    tag: 'METRICS',
+    desc: 'Run multi-trial Monte Carlo batches, export telemetry CSVs, and generate audit reports.',
+  },
 ];
 
 export function ToolRail() {
@@ -46,30 +87,31 @@ export function ToolRail() {
         >
           <Icon name={t.icon} />
           <span className="rail-indicator" />
-          <div className="tip">
-            <div className="tip-header">
-              <span className="tip-code">{t.code}</span>
-              <span className="tip-tag">{t.tag}</span>
+              <div className="tip">
+                <div className="tip-header">
+                  <span className="tip-code">{t.code}</span>
+                  <span className="tip-tag">{t.tag}</span>
+                </div>
+                <div className="tip-label">{t.label}</div>
+                <div className="tip-desc">{t.desc}</div>
+              </div>
+            </button>
+          ))}
+          <div className="sep" />
+          <button
+            className="rail-btn bench-btn"
+            onClick={() => set({ videoOpen: true })}
+            aria-label="Video benchmark"
+          >
+            <Icon name="film" />
+            <div className="tip">
+              <div className="tip-header">
+                <span className="tip-code">BENCH</span>
+                <span className="tip-tag">BYPASS</span>
+              </div>
+              <div className="tip-label">Video Benchmark · Camera Bypass</div>
+              <div className="tip-desc">Feed video (.mp4) directly into the detector to benchmark centroid error against truth.</div>
             </div>
-            <div className="tip-label">{t.label}</div>
-          </div>
-        </button>
-      ))}
-      <div className="sep" />
-      <button
-        className="rail-btn bench-btn"
-        onClick={() => set({ videoOpen: true })}
-        aria-label="Video benchmark"
-      >
-        <Icon name="film" />
-        <div className="tip">
-          <div className="tip-header">
-            <span className="tip-num">[V]</span>
-            <span className="tip-code">BENCH</span>
-            <span className="tip-tag">BYPASS</span>
-          </div>
-          <div className="tip-label">Video Benchmark · Camera Bypass</div>
-        </div>
       </button>
     </nav>
   );
@@ -836,6 +878,7 @@ export function RightNavbar() {
                   <span className="tip-tag">{t.tag}</span>
                 </div>
                 <div className="tip-label">{t.label}</div>
+                <div className="tip-desc">{t.desc}</div>
               </div>
             </button>
           );
@@ -849,11 +892,11 @@ export function RightNavbar() {
           <Icon name="film" />
           <div className="tip">
             <div className="tip-header">
-              <span className="tip-num">[V]</span>
               <span className="tip-code">BENCH</span>
               <span className="tip-tag">BYPASS</span>
             </div>
             <div className="tip-label">Video Benchmark · Camera Bypass</div>
+            <div className="tip-desc">Feed video (.mp4) directly into the detector to benchmark centroid error against truth.</div>
           </div>
         </button>
       </nav>
