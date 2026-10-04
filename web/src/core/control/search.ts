@@ -21,9 +21,9 @@ export class SpiralSearch {
     private stepV: number,
     private maxRings = 99,
   ) {
-    // stepU/V are 85 % of the FOV; the footprint half-width is stepU / 1.7.
-    this.limU = Math.max(0, halfU - stepU / 1.7 + 0.1);
-    this.limV = Math.max(0, halfV - stepV / 1.7 + 0.1);
+    // Ensure the footprint sweeps the field gracefully without collapsing when stepU/V is wide
+    this.limU = Math.max(halfU * 0.75, halfU - Math.min(stepU / 2, halfU * 0.35));
+    this.limV = Math.max(halfV * 0.75, halfV - Math.min(stepV / 2, halfV * 0.35));
     this.build();
   }
 
@@ -49,7 +49,7 @@ export class SpiralSearch {
           x += dirs[d][0];
           y += dirs[d][1];
           if (Math.abs(x) <= nu && Math.abs(y) <= nv) {
-            // Clamp so the footprint edge (not the centre) reaches the field edge.
+            // Clamp so the footprint reaches across the field of regard
             const p: [number, number] = [
               Math.max(-this.limU, Math.min(this.limU, x * this.stepU)),
               Math.max(-this.limV, Math.min(this.limV, y * this.stepV)),
@@ -70,10 +70,11 @@ export class SpiralSearch {
     return this.points[this.index];
   }
 
-  /** Advance when the camera is within `tol` (deg) of the current waypoint. */
+  /** Advance smoothly when approaching the current waypoint so gimbal velocity doesn't stall. */
   update(u: number, v: number, tolU: number, tolV: number): [number, number] {
     const [pu, pv] = this.points[this.index];
-    if (Math.abs(u - pu) < tolU && Math.abs(v - pv) < tolV) {
+    const advanceDist = Math.max(tolU, tolV, 0.55);
+    if (Math.hypot(u - pu, v - pv) < advanceDist) {
       this.index++;
       if (this.index >= this.points.length) {
         this.index = 0;

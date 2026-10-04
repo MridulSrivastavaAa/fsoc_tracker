@@ -115,8 +115,8 @@ export class RunMetrics {
       if (s.state === 'LOCKED') locked++;
     }
     const rms = ne ? Math.sqrt(e2 / ne) : Infinity;
-    const sErr = Number.isFinite(rms) ? Math.max(0, 1 - rms / (2 * lockPx)) : 0;
-    return 100 * (0.45 * sErr + 0.25 * (conf / r.length) + 0.3 * (locked / r.length));
+    const sErr = Number.isFinite(rms) ? Math.max(0, Math.exp(-rms / (2.5 * lockPx))) : 0;
+    return Math.round(100 * (0.45 * sErr + 0.25 * (conf / r.length) + 0.3 * (locked / r.length)));
   }
 
   summary(elapsedS: number, lockPx: number): MetricsSummary {

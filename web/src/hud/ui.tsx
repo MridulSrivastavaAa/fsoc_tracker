@@ -92,6 +92,12 @@ export function Readout({ label, value, unit, color }: { label: string; value: s
 export function Icon({ name, size = 18 }: { name: string; size?: number }) {
   const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   const paths: Record<string, ReactNode> = {
+    code: (
+      <>
+        <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" {...p} />
+        <path d="M14 4.5l-4 15" {...p} opacity={0.65} />
+      </>
+    ),
     scenario: (
       <>
         <circle cx="12" cy="12" r="7" {...p} strokeWidth={1.5} />

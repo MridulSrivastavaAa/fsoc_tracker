@@ -20,7 +20,7 @@ export function VisBus() {
     vis.time = state.clock.elapsedTime;
     const { view, config } = useApp.getState();
     if (s) {
-      const k = vis.ready ? 1 - Math.exp(-Math.min(dt, 0.1) * 18) : 1;
+      const k = vis.ready ? 1 - Math.exp(-Math.min(dt, 0.1) * 45) : 1;
       vis.pan = lerpAngle(vis.pan, s.gimbal.pan, k);
       vis.tilt += (s.gimbal.tilt - vis.tilt) * k;
       vis.axisAz = lerpAngle(vis.axisAz, s.gimbal.axisAz, k);
@@ -31,7 +31,16 @@ export function VisBus() {
       vis.vfov += (s.camera.vfovDeg - vis.vfov) * k;
       tmp.v.set(s.target.posKm[0], s.target.posKm[1], s.target.posKm[2]);
       tmp.prev.copy(vis.sat);
-      vis.sat.copy(tmp.v); // unsmoothed so the beacon, trails and estimate stay consistent
+      if (!vis.ready || tmp.prev.lengthSq() < 1) {
+        vis.sat.copy(tmp.v);
+        vis.beacon.copy(tmp.v);
+      } else {
+        const satK = 1 - Math.exp(-Math.min(dt, 0.1) * 45);
+        vis.sat.lerp(tmp.v, satK);
+        if (vis.beacon.distanceTo(vis.sat) > 2) {
+          vis.beacon.copy(vis.sat);
+        }
+      }
       if (dt > 0) vis.satVel.copy(vis.sat).sub(tmp.prev).divideScalar(dt);
       if (vis.satVel.lengthSq() < 1e-4) vis.satVel.set(0, 0, 0);
       vis.range += (s.target.rangeKm - vis.range) * k;

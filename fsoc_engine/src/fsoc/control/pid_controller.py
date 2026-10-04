@@ -73,6 +73,13 @@ class PIDController:
         self._cam_rate_x_px_s: float = 0.0   # camera slew x in px/s (world coords)
         self._cam_rate_y_px_s: float = 0.0   # camera slew y in px/s (world coords)
 
+        # Last command decomposition in deg/s, published to the telemetry HUD:
+        # (pan_p, tilt_p), (pan_i, tilt_i), (pan_d, tilt_d), (pan_ff, tilt_ff)
+        self.last_p: tuple[float, float] = (0.0, 0.0)
+        self.last_i: tuple[float, float] = (0.0, 0.0)
+        self.last_d: tuple[float, float] = (0.0, 0.0)
+        self.last_ff: tuple[float, float] = (0.0, 0.0)
+
     def set_camera_rates(self, pan_rate_px_s: float, tilt_rate_px_s: float) -> None:
         """
         Update cached camera slew rates for world-space feed-forward.
@@ -170,6 +177,12 @@ class PIDController:
         pan_rate = u_x / self.scale_x
         tilt_rate = u_y / self.scale_y
 
+        # Keep the term-by-term decomposition for the HUD (deg/s)
+        self.last_p = (kp_active * e_x / self.scale_x, kp_active * e_y / self.scale_y)
+        self.last_i = (self.cfg.ki * self.int_x / self.scale_x, self.cfg.ki * self.int_y / self.scale_y)
+        self.last_d = (self.cfg.kd * d_x / self.scale_x, self.cfg.kd * d_y / self.scale_y)
+        self.last_ff = (self.cfg.kff * world_vel_x / self.scale_x, self.cfg.kff * world_vel_y / self.scale_y)
+
         # Clamp to physical actuator limits
         pan_rate = float(np.clip(
             pan_rate,
@@ -200,3 +213,7 @@ class PIDController:
         self.prev_e_x = 0.0
         self.prev_e_y = 0.0
         self.has_prev = False
+        self.last_p = (0.0, 0.0)
+        self.last_i = (0.0, 0.0)
+        self.last_d = (0.0, 0.0)
+        self.last_ff = (0.0, 0.0)

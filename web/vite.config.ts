@@ -10,7 +10,16 @@ declare const process: { env: Record<string, string | undefined> };
 export default defineConfig({
   base: process.env.NETRA_BASE ?? '/',
   plugins: [react()],
-  server: { port: 5173, host: true },
+  server: { 
+    port: 5173, 
+    host: true,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true
+      }
+    }
+  },
   preview: { port: 4173, host: true },
   worker: { format: 'es' },
   build: { chunkSizeWarningLimit: 2500, sourcemap: false },

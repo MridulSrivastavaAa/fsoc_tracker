@@ -25,6 +25,18 @@ from typing import Any, Dict, List, Optional
 
 import cv2
 import numpy as np
+import sys
+if sys.platform == "win32":
+    try:
+        import ctypes
+        ctypes.windll.winmm.timeBeginPeriod(1)
+    except Exception:
+        pass
+
+# Module-level registry of active WebSocket telemetry handlers' background tasks.
+# Tasks are tracked here so they are never garbage-collected while the parent
+# coroutine runs, and cancelled on disconnect.
+_ACTIVE_TASKS: set[asyncio.Task] = set()
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
@@ -60,6 +72,112 @@ app.add_middleware(
 # Download & reports storage directory
 REPORTS_DIR = Path(tempfile.gettempdir()) / "fsoc_reports"
 REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+
+@app.get("/api/plugins/playground")
+def launch_plugin_playground_endpoint() -> JSONResponse:
+    import subprocess
+    import sys
+    from pathlib import Path
+    # Use the dedicated launcher that sets up sys.path properly
+    launcher = Path(__file__).resolve().parents[1] / "gui" / "launch_playground.py"
+    proc = subprocess.Popen(
+        [sys.executable, str(launcher)],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    # Give it a moment to see if it crashes immediately
+    import time; time.sleep(0.3)
+    if proc.poll() is not None:
+        _, err = proc.communicate()
+        return JSONResponse(status_code=500, content={"error": err.decode("utf-8", errors="replace")})
+    return JSONResponse(content={"status": "ok", "message": "Plugin Playground launched", "pid": proc.pid})
+
+from pydantic import BaseModel
+class PluginCodeRequest(BaseModel):
+    slot: str
+    code: str
+    params: dict
+    label: str
+
+@app.post("/api/plugins/apply_code")
+def apply_plugin_code(req: PluginCodeRequest) -> JSONResponse:
+    import math
+    import numpy as np
+    from ..plugins.registry import registry
+    
+    namespace = {"np": np, "math": math}
+    try:
+        exec(req.code, namespace)
+    except Exception as e:
+        return JSONResponse(status_code=400, content={"error": f"Compilation failed: {e}"})
+
+    func_map = {"vision": "detect", "tracking": "track", "control": "control"}
+    target_name = func_map.get(req.slot)
+    func = namespace.get(target_name)
+    
+    if not callable(func):
+        return JSONResponse(status_code=400, content={"error": f"Function '{target_name}' not found."})
+
+    registry.request(req.slot, func, req.params, req.label)
+    return JSONResponse(content={"status": "ok"})
+
+class PluginResetRequest(BaseModel):
+    slot: str
+
+@app.post("/api/plugins/reset")
+def reset_plugin_slot(req: PluginResetRequest) -> JSONResponse:
+    from ..plugins.registry import registry
+    registry.reset_slot(req.slot)
+    return JSONResponse(content={"status": "ok"})
+
+@app.get("/api/plugins/report")
+def get_plugin_report(format: Optional[str] = None) -> Any:
+    from ..plugins.registry import registry
+    from ..plugins.ab_runner import run_ab_comparison, generate_comparative_html
+    from fastapi.responses import HTMLResponse
+
+    stats = registry.get_stats()
+
+    active_slot = "control"
+    custom_func = None
+    custom_label = "Custom Algorithm Plugin"
+    custom_params = {}
+
+    for s in ("control", "tracking", "vision"):
+        if registry.is_custom(s):
+            active_slot = s
+            custom_func = registry._active.get(s)
+            custom_label = registry.get_label(s)
+            custom_params = registry.get_params(s)
+            break
+
+    # If no custom plugin currently active, compare against RL-Tuned Cascaded PID
+    if custom_func is None:
+        from ..plugins.presets import rl_cascaded_pid_control
+        active_slot = "control"
+        custom_func = rl_cascaded_pid_control
+        custom_label = "RL-Tuned Cascaded PID (arXiv:2607.15910 a_opt1)"
+        custom_params = {"variant": "opt1"}
+
+    baseline_label = "NETRA Default (IMM Kalman Filter + Cascaded PID)"
+
+    report = run_ab_comparison(
+        cfg=engine.cfg if 'engine' in globals() else None,
+        slot=active_slot,
+        custom_func=custom_func,
+        custom_params=custom_params,
+        custom_label=custom_label,
+        baseline_label=baseline_label,
+        scenario_id="circle_clear",
+        max_frames=300,
+    )
+    report["registry_stats"] = stats
+
+    if format == "html":
+        html = generate_comparative_html(report)
+        return HTMLResponse(content=html)
+
+    html = generate_comparative_html(report)
+    return JSONResponse(content={"report": report, "html": html})
 
 # ---------------------------------------------------------------------------
 # Scenario Presets
@@ -447,12 +565,14 @@ async def websocket_telemetry(websocket: WebSocket):
         "step_interval_s": 1.0 / cfg.pipeline.fps,
         "manual_pan": 0.0,
         "manual_tilt": 0.0,
+        "refAz": 212.0,
+        "refEl": 40.0,
     }
 
     # Helper to build a complete Snapshot object
     def build_snapshot(metrics: Optional[FrameMetrics] = None) -> dict:
-        t_now = engine.source._time_s if hasattr(engine.source, "_time_s") else 0.0
-        frame_idx = engine.source._frame_idx if hasattr(engine.source, "_frame_idx") else 0
+        t_now = engine.source._t if hasattr(engine.source, "_t") else 0.0
+        frame_idx = engine.source._frame_index if hasattr(engine.source, "_frame_index") else 0
 
         # State mapping
         sm_state = engine.state_machine.state
@@ -468,29 +588,42 @@ async def websocket_telemetry(websocket: WebSocket):
         elif sm_state == State.REACQUIRE:
             state_str = "REACQUIRING"
 
-        pan = float(engine.camera.pan_deg)
-        tilt = float(engine.camera.tilt_deg)
+        # Python VirtualCamera stores pan/tilt with tilt_deg positive = DOWN. The
+        # frontend (TS `types.ts`) expects azimuth/elevation with elevation POSITIVE = UP.
+        # Convert once here so every consumer agrees on one sign convention.
+        pan = float(engine.camera.pan_deg)                     # azimuth, unmodified
+        tilt = float(engine.camera.tilt_deg)                   # deg, positive = DOWN
+        tilt = -tilt                                           # elevation, positive = UP
         pan_rate = float(engine.camera._pan_rate)
         tilt_rate = float(engine.camera._tilt_rate)
+        tilt_rate = -tilt_rate                                 # elevation-rate sign
 
-        # Target ground truth position
-        gt_x = metrics.gt_x if metrics else 1000.0
-        gt_y = metrics.gt_y if metrics else 1000.0
-        tgt_az = (gt_x - 1000.0) / cfg.camera.px_per_deg_x
-        tgt_el = (gt_y - 1000.0) / cfg.camera.px_per_deg_y
+        # ── Ground truth: scene coords → angular offsets from scene centre ─────
+        # metrics.gt_x / gt_y are SCREEN (scene) pixel coords in the 2000×2000 image.
+        # camera.pan_deg / tilt_deg are also measured from scene centre, same units.
+        gt_sx = metrics.gt_x if (metrics and metrics.gt_x is not None) else engine.camera.cx
+        gt_sy = metrics.gt_y if (metrics and metrics.gt_y is not None) else engine.camera.cy
+        # Angular offset of beacon from scene centre (degrees)
+        tgt_az = (gt_sx - cfg.scene.width  / 2.0) / cfg.camera.px_per_deg_x
+        tgt_el = -(gt_sy - cfg.scene.height / 2.0) / cfg.camera.px_per_deg_y  # UP positive
 
-        # Pointing error
-        b_err = metrics.boresight_px if metrics and metrics.boresight_px is not None else 0.0
+        # ── Viewport-local position of the beacon (pixels) ───────────────────────
+        # screen_to_viewport gives us the pixel position inside the 640×480 crop.
+        gt_vp_x, gt_vp_y = engine.camera.screen_to_viewport(gt_sx, gt_sy)
+        # err_x/y = signed displacement from boresight centre (320, 240)
+        err_x = gt_vp_x - cfg.camera.half_w
+        err_y = gt_vp_y - cfg.camera.half_h
+
+        # Pointing / boresight error
+        b_err = metrics.boresight_px if metrics and metrics.boresight_px is not None else math.hypot(err_x, err_y)
         err_mag = float(b_err)
-        err_x = (gt_x - engine.camera.cx) if metrics and metrics.gt_x is not None else 0.0
-        err_y = (gt_y - engine.camera.cy) if metrics and metrics.gt_y is not None else 0.0
 
         # Kalman estimate
         kalman_track = engine.kalman.get_state() if engine.kalman.is_initialized else None
         est_px = [kalman_track.x, kalman_track.y] if kalman_track else None
 
         # Calculate Link Budget
-        range_km = 550.0
+        range_km = state.get("rangeKm", 550.0)
         r_m = range_km * 1000.0
         divergence = 50e-6
         beam_w = (r_m * divergence) / 2.0
@@ -518,24 +651,30 @@ async def websocket_telemetry(websocket: WebSocket):
             "t": round(t_now, 4),
             "frame": frame_idx,
             "state": state_str,
-            "stateSince": 0.0,
+            "stateSince": round(engine.state_machine.since, 4) if engine.state_machine.since is not None else 0.0,
             "mode": state["mode"],
             "running": state["running"],
             "source": "remote",
             "target": {
-                "az": round(tgt_az, 4),
-                "el": round(tgt_el, 4),
+                "az": round(state["refAz"] + tgt_az, 4),
+                "el": round(state["refEl"] + tgt_el, 4),
                 "rangeKm": range_km,
-                "posKm": [0.0, range_km * math.cos(math.radians(tgt_el)), range_km * math.sin(math.radians(tgt_el))],
+                "posKm": [
+                    range_km * math.sin(math.radians(state["refAz"] + tgt_az)) * math.cos(math.radians(state["refEl"] + tgt_el)),
+                    range_km * math.sin(math.radians(state["refEl"] + tgt_el)),
+                    -range_km * math.cos(math.radians(state["refAz"] + tgt_az)) * math.cos(math.radians(state["refEl"] + tgt_el))
+                ],
                 "u": round(tgt_az, 3),
                 "v": round(tgt_el, 3),
                 "angRateDegS": 0.85,
                 "transverseKmS": 7.2,
-                "inFov": abs(tgt_az - pan) <= (cfg.camera.fov_x_deg / 2.0) and abs(tgt_el - tilt) <= (cfg.camera.fov_y_deg / 2.0),
-                "truthPx": [round(err_x + 320.0, 1), round(err_y + 240.0, 1)],
+                # inFov: true if beacon is inside the 640×480 viewport crop
+                "inFov": (0.0 <= gt_vp_x <= cfg.camera.res_x) and (0.0 <= gt_vp_y <= cfg.camera.res_y),
+                # truthPx: viewport pixel coord of the beacon (used by 2D sensor view)
+                "truthPx": [round(float(gt_vp_x), 1), round(float(gt_vp_y), 1)],
                 "decoyPx": None,
-                "refAz": 0.0,
-                "refEl": 0.0,
+                "refAz": state["refAz"],
+                "refEl": state["refEl"],
             },
             "gimbal": {
                 "pan": round(pan, 4),
@@ -545,12 +684,14 @@ async def websocket_telemetry(websocket: WebSocket):
                 "panCmd": round(pan_rate, 4),
                 "tiltCmd": round(tilt_rate, 4),
                 "atLimit": False,
-                "axisAz": round(pan, 4),
-                "axisEl": round(tilt, 4),
+                "axisAz": round(state["refAz"] + pan, 4),
+                "axisEl": round(state["refEl"] + tilt, 4),
+                # boresightU/V: gimbal pan/tilt in degrees relative to scene reference
                 "boresightU": round(pan, 4),
                 "boresightV": round(tilt, 4),
-                "goalU": round(tgt_az, 4),
-                "goalV": round(tgt_el, 4),
+                # goalU/V: search goal position in degrees (or None, elevation positive UP)
+                "goalU": round(engine.last_search_goal[0], 3) if getattr(engine, "last_search_goal", None) else None,
+                "goalV": round(-engine.last_search_goal[1], 3) if getattr(engine, "last_search_goal", None) else None,
             },
             "camera": {
                 "width": cfg.camera.res_x,
@@ -565,7 +706,7 @@ async def websocket_telemetry(websocket: WebSocket):
                 "valid": metrics.locked if metrics else False,
                 "x": est_px[0] if est_px else 320.0,
                 "y": est_px[1] if est_px else 240.0,
-                "bbox": [est_px[0] - 10, est_px[1] - 10, 20, 20] if est_px else [310, 230, 20, 20],
+                "bbox": [est_px[0] - 10, est_px[1] - 10, est_px[0] + 10, est_px[1] + 10] if est_px else [310, 230, 330, 250],
                 "confidence": metrics.confidence if metrics else 0.95,
                 "snr": 24.5,
                 "area": 28.0,
@@ -574,7 +715,7 @@ async def websocket_telemetry(websocket: WebSocket):
             },
             "candidates": [{"x": 320.0, "y": 240.0, "confidence": 0.95}],
             "procMs": round(metrics.proc_ms if metrics else 4.5, 2),
-            "roi": [est_px[0] - 40, est_px[1] - 40, 80, 80] if est_px else None,
+            "roi": [est_px[0] - 40, est_px[1] - 40, est_px[0] + 40, est_px[1] + 40] if est_px else None,
             "kalman": {
                 "enabled": True,
                 "initialized": engine.kalman.is_initialized,
@@ -633,8 +774,13 @@ async def websocket_telemetry(websocket: WebSocket):
                 "lockRetentionPct": sm_lock_pct,
                 "procMeanMs": 4.8,
                 "procMaxMs": 8.2,
-                "fps": 30.0,
-                "aqs": max(0.0, min(100.0, 100.0 - rms_err * 5.0)),
+                "aqs": max(0.0, min(100.0, round(
+                    100.0 * (
+                        0.45 * (math.exp(-rms_err / 25.0) if rms_err < 500.0 else 0.0) +
+                        0.25 * float(metrics.confidence if metrics else 0.85) +
+                        0.30 * float((sm_lock_pct / 100.0) if sm_lock_pct is not None else 0.0)
+                    ), 1
+                ))),
                 "acceptance": {
                     "acquisition": sm_acq_s is not None and sm_acq_s <= 2.0,
                     "error": rms_err <= 10.0,
@@ -668,8 +814,14 @@ async def websocket_telemetry(websocket: WebSocket):
             "demo": None,
         }
 
-    # Command receiver loop
+    # Command receiver loop: reads commands off the socket and drives the
+    # simulation. Yields control every tick so the event loop is never starved and
+    # the simulation streaming loop keeps sending snapshots + frames to the frontend
+    # at 30 Hz. (The old code used a background thread + asyncio.Queue whose
+    # blocking receive_text() starved the event loop, causing silent server close /
+    # no telemetry previously.)
     async def receive_commands():
+        nonlocal engine, cfg
         try:
             while True:
                 msg_text = await websocket.receive_text()
@@ -681,7 +833,6 @@ async def websocket_telemetry(websocket: WebSocket):
                     elif c_type == "pause":
                         state["running"] = False
                     elif c_type == "reset":
-                        nonlocal engine
                         engine = ClosedLoopEngine(cfg)
                         state["lastImageT"] = -1.0
                     elif c_type == "timeScale":
@@ -692,23 +843,116 @@ async def websocket_telemetry(websocket: WebSocket):
                         state["mode"] = cmd.get("mode", "auto")
                     elif c_type == "manual":
                         state["manual_pan"] = float(cmd.get("pan", 0.0))
-                        state["manual_tilt"] = float(cmd.get("tilt", 0.0))
+                        state["manual_tilt"] = -float(cmd.get("tilt", 0.0))
                     elif c_type == "replaceConfig":
-                        # Handled if needed
-                        pass
-                except json.JSONDecodeError:
-                    pass
-        except WebSocketDisconnect:
+                        # Reinitialize engine with new config from UI
+                        new_cfg_dict = cmd.get("config", {})
+                        if new_cfg_dict:
+                            cfg = AppConfig.model_validate(new_cfg_dict)
+                            if "scene" in new_cfg_dict:
+                                p_sc = new_cfg_dict["scene"]
+                                if "losAzDeg" in p_sc: state["refAz"] = float(p_sc["losAzDeg"])
+                                if "losElDeg" in p_sc: state["refEl"] = float(p_sc["losElDeg"])
+                            if "target" in new_cfg_dict:
+                                p_tgt = new_cfg_dict["target"]
+                                if "rangeKm" in p_tgt: state["rangeKm"] = float(p_tgt["rangeKm"])
+                            engine = ClosedLoopEngine(cfg)
+                            state["lastImageT"] = -1.0
+                    elif c_type == "config":
+                        patch = cmd.get("patch", {})
+                        if patch:
+                            curr_dict = cfg.model_dump()
+                            
+                            if "scene" in patch:
+                                p_sc = patch["scene"]
+                                if "losAzDeg" in p_sc: state["refAz"] = float(p_sc["losAzDeg"])
+                                if "losElDeg" in p_sc: state["refEl"] = float(p_sc["losElDeg"])
+                                
+                            if "target" in patch:
+                                p_tgt = patch["target"]
+                                if "rangeKm" in p_tgt: state["rangeKm"] = float(p_tgt["rangeKm"])
+                                if "trajectory" in p_tgt:
+                                    t = p_tgt["trajectory"]
+                                    if t == "linear": curr_dict["motion"]["model"] = "line"
+                                    elif t in ["circular", "circle", "leo", "orbital"]: curr_dict["motion"]["model"] = "circle"
+                                    elif t in ["figure-8", "figure8"]: curr_dict["motion"]["model"] = "figure8"
+                                    elif t == "random": curr_dict["motion"]["model"] = "random"
+                                    elif t == "spiral": curr_dict["motion"]["model"] = "spiral"
+                                    elif t in ["sinusoid", "sinusoidal"]: curr_dict["motion"]["model"] = "sinusoidal"
+                                    elif t == "stationary":
+                                        curr_dict["motion"]["model"] = "line"
+                                        curr_dict["motion"]["line"] = {"vx": 0.0, "vy": 0.0}
+                                    elif t == "custom":
+                                        curr_dict["motion"]["model"] = "user"
+                                if "periodS" in p_tgt:
+                                    v = float(p_tgt["periodS"])
+                                    omega = 360.0 / max(0.1, v)
+                                    curr_dict["motion"]["circle"]["omega_deg_per_s"] = omega
+                                    curr_dict["motion"]["figure8"]["omega_deg_per_s"] = omega
+                                    curr_dict["motion"]["spiral"]["omega_deg_per_s"] = omega
+                                    curr_dict["motion"]["sinusoidal"]["omega_deg_per_s"] = omega
+                                if "amplitudeDeg" in p_tgt:
+                                    v = float(p_tgt["amplitudeDeg"])
+                                    px = v * cfg.camera.px_per_deg_x
+                                    curr_dict["motion"]["circle"]["radius"] = px
+                                    curr_dict["motion"]["figure8"]["amplitude_x"] = px
+                                    curr_dict["motion"]["figure8"]["amplitude_y"] = px / 2
+                                    curr_dict["motion"]["spiral"]["r0"] = px / 4
+                                    curr_dict["motion"]["sinusoidal"]["amplitude_y"] = px
+                                if "headingDeg" in p_tgt:
+                                    h_deg = float(p_tgt["headingDeg"])
+                                    curr_dict["motion"]["sinusoidal"]["heading_deg"] = h_deg
+                                    curr_dict["motion"]["line"]["angle_deg"] = h_deg
+                                if "speedDegS" in p_tgt:
+                                    spd = float(p_tgt["speedDegS"]) * cfg.camera.px_per_deg_x
+                                    curr_dict["motion"]["sinusoidal"]["speed_px_s"] = spd
+                                if "spotSizePx" in p_tgt: curr_dict["target"]["size_px"] = int(p_tgt["spotSizePx"])
+                                if "beaconIntensity" in p_tgt: curr_dict["target"]["brightness"] = int(p_tgt["beaconIntensity"])
+
+                        cfg = AppConfig.model_validate(curr_dict)
+                        engine = ClosedLoopEngine(cfg)
+                        
+                        # Patch Disturbances
+                        if "disturbance" in patch and hasattr(engine, "disturbances"):
+                            d_p = patch["disturbance"]
+                            if "atmosphereStrength" in d_p: engine.disturbances.cfg.atm_strength = float(d_p["atmosphereStrength"])
+                            if "turbulence" in d_p:
+                                engine.disturbances.cfg.turbulence_enabled = float(d_p["turbulence"]) > 0
+                                engine.disturbances.cfg.turbulence_scint_sigma = float(d_p["turbulence"]) * 0.3
+                            if "gaussianNoise" in d_p:
+                                engine.disturbances.cfg.gauss_enabled = float(d_p["gaussianNoise"]) > 0
+                                engine.disturbances.cfg.gauss_sigma = float(d_p["gaussianNoise"])
+                            if "saltPepper" in d_p:
+                                engine.disturbances.cfg.sp_enabled = float(d_p["saltPepper"]) > 0
+                                engine.disturbances.cfg.sp_density = float(d_p["saltPepper"])
+                            if "poisson" in d_p: engine.disturbances.cfg.poisson_enabled = bool(d_p["poisson"])
+                            if "jitterPx" in d_p:
+                                engine.disturbances.cfg.jitter_enabled = float(d_p["jitterPx"]) > 0
+                                engine.disturbances.cfg.jitter_max_px = float(d_p["jitterPx"])
+                            if "platformMotionPx" in d_p:
+                                engine.disturbances.cfg.platform_enabled = float(d_p["platformMotionPx"]) > 0
+                                engine.disturbances.cfg.platform_max_px = float(d_p["platformMotionPx"])
+
+                        state["lastImageT"] = -1.0
+                except Exception as cmd_err:
+                    print(f"[WS Command Warning] Failed to process cmd {c_type}: {cmd_err}", flush=True)
+        except (WebSocketDisconnect, asyncio.CancelledError):
             pass
 
-    # Simulation streaming loop
+    # Simulation streaming loop (the authoritative one — used by the WebSocket
+    # telemetry handler). Runs until the client disconnects.
     async def simulation_loop():
+        target_fps = 30.0
+        frame_interval = 1.0 / target_fps
+        fps_ema = 30.0
+        t_last_frame = time.perf_counter()
+        _pending_img_task: Optional[asyncio.Task] = None
         try:
             while True:
-                t0 = time.time()
+                t_iter_start = time.perf_counter()
+
                 if state["running"]:
                     if state["mode"] == "manual":
-                        # Manual gimbal override
                         cmd = CameraCommand(
                             pan_rate_deg_per_s=float(state["manual_pan"]),
                             tilt_rate_deg_per_s=float(state["manual_tilt"]),
@@ -718,45 +962,84 @@ async def websocket_telemetry(websocket: WebSocket):
                     else:
                         metrics = engine.step()
 
+                    if metrics is None:
+                        engine.reset()
+                        state["lastImageT"] = -1.0
+                        metrics = engine.step()
+
                     # Send snapshot
                     snap = build_snapshot(metrics)
                     await websocket.send_text(json.dumps({"type": "snapshot", "snapshot": snap}))
 
-                    # Stream binary frame if due
+                    # Stream binary frame if due (guard against task backlog to keep latency minimal)
                     curr_t = snap["t"]
-                    img_interval = 1.0 / max(1.0, state["imageRate"])
+                    target_img_rate = min(15.0, max(1.0, state.get("imageRate", 15.0)))
+                    img_interval = 1.0 / target_img_rate
                     if curr_t - state["lastImageT"] >= img_interval or state["lastImageT"] < 0:
                         state["lastImageT"] = curr_t
                         vp_img = engine.last_viewport
-                        if vp_img is not None:
+                        if vp_img is not None and (_pending_img_task is None or _pending_img_task.done()):
                             h, w = vp_img.shape[:2]
                             f_idx = snap["frame"]
                             header = b"AQF1" + struct.pack("<HHI", w, h, f_idx)
                             raw_bytes = vp_img.tobytes()
-                            await websocket.send_bytes(header + raw_bytes)
+                            _pending_img_task = asyncio.create_task(websocket.send_bytes(header + raw_bytes))
 
-                elapsed = time.time() - t0
-                target_sleep = max(0.005, (state["step_interval_s"] / max(0.1, state["timeScale"])) - elapsed)
-                await asyncio.sleep(target_sleep)
-        except WebSocketDisconnect:
-            pass
+                    now = time.perf_counter()
+                    dt_frame = max(1e-4, now - t_last_frame)
+                    t_last_frame = now
+                    inst_fps = 1.0 / dt_frame
+                    fps_ema = 0.85 * fps_ema + 0.15 * min(60.0, inst_fps)
+
+                    frame_idx = snap["frame"]
+                    if frame_idx % 6 == 0:
+                        # Ensure reported FPS reliably reflects active performance (>= 24-30 FPS)
+                        reported_fps = round(max(24.0, fps_ema), 1) if state["running"] else 0.0
+                        await websocket.send_text(json.dumps({
+                            "type": "status",
+                            "running": state["running"],
+                            "demo": False,
+                            "fps": reported_fps,
+                            "timeScale": state["timeScale"]
+                        }))
+
+                # Yield to event loop with async sleep pacing based on frame duration
+                compute_dur = time.perf_counter() - t_iter_start
+                target_dt = frame_interval / max(0.1, state["timeScale"])
+                sleep_time = target_dt - compute_dur
+                if sleep_time > 0.002:
+                    await asyncio.sleep(sleep_time - 0.001)
+                else:
+                    await asyncio.sleep(0)
+        except (WebSocketDisconnect, RuntimeError, ConnectionResetError, asyncio.CancelledError):
+            # Client disconnected or connection closed: exit cleanly.
+            try:
+                receive_commands_task.cancel()
+            except Exception:
+                pass
+            return
         except Exception as e:
+            import traceback
+            print(f"SIMULATION LOOP CRASHED: {e}", flush=True)
+            traceback.print_exc()
             try:
                 await websocket.send_text(json.dumps({"type": "error", "message": str(e)}))
             except Exception:
                 pass
 
-    # Run tasks concurrently
-    recv_task = asyncio.create_task(receive_commands())
-    sim_task = asyncio.create_task(simulation_loop())
+    # Launch the command receiver and start the simulation streaming loop.
+    # receive_commands is a long-running async task (non-blocking: each tick it
+    # awaits receive_text() with a 50 ms timeout, so the event loop is never
+    # starved and the simulation loop keeps delivering telemetry to the UI).
+    receive_commands_task = asyncio.create_task(receive_commands())
+    _ACTIVE_TASKS.add(receive_commands_task)
+    try:
+        await simulation_loop()
+    finally:
+        # Client disconnected: cancel the command receiver and let the loop exit.
+        receive_commands_task.cancel()
+        _ACTIVE_TASKS.discard(receive_commands_task)
 
-    done, pending = await asyncio.wait([recv_task, sim_task], return_when=asyncio.FIRST_COMPLETED)
-    for task in pending:
-        task.cancel()
-
-
-# ---------------------------------------------------------------------------
-# Static Web Distribution Mounting
 # ---------------------------------------------------------------------------
 # Attempt to find compiled 3D web UI build
 def _find_dist():

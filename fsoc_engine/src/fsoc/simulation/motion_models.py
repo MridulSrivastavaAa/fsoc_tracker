@@ -93,10 +93,11 @@ class CircleMotion(MotionModel):
 class Figure8Motion(MotionModel):
     """Lissajous figure-of-8: x=A sin(wt), y=B sin(2wt)."""
 
-    def __init__(self, cfg: MotionConfig, scene_w: int, scene_h: int) -> None:
+    def __init__(self, cfg: MotionConfig, scene_w: int, scene_h: int,
+                 cx: Optional[float] = None, cy: Optional[float] = None) -> None:
         super().__init__(scene_w, scene_h)
-        self.cx = scene_w / 2.0
-        self.cy = scene_h / 2.0
+        self.cx = scene_w / 2.0 if cx is None else float(cx)
+        self.cy = scene_h / 2.0 if cy is None else float(cy)
         self.Ax = cfg.figure8.amplitude_x
         self.Ay = cfg.figure8.amplitude_y
         self.omega = math.radians(cfg.figure8.omega_deg_per_s)
@@ -156,10 +157,11 @@ class RandomMotion(MotionModel):
 class SpiralMotion(MotionModel):
     """Outward spiral from scene centre, wraps when radius exceeds limit."""
 
-    def __init__(self, cfg: MotionConfig, scene_w: int, scene_h: int) -> None:
+    def __init__(self, cfg: MotionConfig, scene_w: int, scene_h: int,
+                 cx: Optional[float] = None, cy: Optional[float] = None) -> None:
         super().__init__(scene_w, scene_h)
-        self.cx = scene_w / 2.0
-        self.cy = scene_h / 2.0
+        self.cx = scene_w / 2.0 if cx is None else float(cx)
+        self.cy = scene_h / 2.0 if cy is None else float(cy)
         self.r0 = cfg.spiral.r0
         self.k = cfg.spiral.k
         self.omega = math.radians(cfg.spiral.omega_deg_per_s)
@@ -181,19 +183,33 @@ class SpiralMotion(MotionModel):
 # ---------------------------------------------------------------------------
 
 class SinusoidalMotion(MotionModel):
-    """Horizontal constant velocity + vertical sinusoidal oscillation."""
+    """Flight track velocity + transverse sinusoidal oscillation along heading."""
 
     def __init__(self, cfg: MotionConfig, x0: float, y0: float,
                  scene_w: int, scene_h: int) -> None:
         super().__init__(scene_w, scene_h)
-        self.x0, self.y0 = x0, y0
-        self.vx = cfg.sinusoidal.vx
-        self.Ay = cfg.sinusoidal.amplitude_y
-        self.omega = math.radians(cfg.sinusoidal.omega_deg_per_s)
+        self.x0, self.y0 = float(x0), float(y0)
+        self.speed = float(getattr(cfg.sinusoidal, "speed_px_s", cfg.sinusoidal.vx))
+        self.Ay = float(cfg.sinusoidal.amplitude_y)
+        self.omega = math.radians(float(cfg.sinusoidal.omega_deg_per_s))
+        self.heading_rad = math.radians(float(getattr(cfg.sinusoidal, "heading_deg", 0.0)))
 
     def position(self, t: float) -> tuple[float, float]:
-        x = _reflect(self.x0 + self.vx * t, 0, self.scene_w - 1)
-        y = _reflect(self.y0 + self.Ay * math.sin(self.omega * t), 0, self.scene_h - 1)
+        # Track heading vector and transverse orthogonal vector
+        ux = math.cos(self.heading_rad)
+        uy = math.sin(self.heading_rad)
+        nx = -uy
+        ny = ux
+
+        # Progress along track + transverse pure sinusoidal undulation
+        s = self.speed * t
+        d = self.Ay * math.sin(self.omega * t)
+
+        raw_x = self.x0 + s * ux + d * nx
+        raw_y = self.y0 + s * uy + d * ny
+        margin = 32.0
+        x = _reflect(raw_x, margin, self.scene_w - margin - 1.0)
+        y = _reflect(raw_y, margin, self.scene_h - margin - 1.0)
         return float(x), float(y)
 
 
@@ -248,11 +264,11 @@ def build_motion_model(cfg: MotionConfig,
     elif name == "circle":
         return CircleMotion(cfg, x0, y0, scene_w, scene_h)
     elif name == "figure8":
-        return Figure8Motion(cfg, scene_w, scene_h)
+        return Figure8Motion(cfg, scene_w, scene_h, cx=x0, cy=y0)
     elif name == "random":
         return RandomMotion(cfg, x0, y0, scene_w, scene_h, dt, seed=seed)
     elif name == "spiral":
-        return SpiralMotion(cfg, scene_w, scene_h)
+        return SpiralMotion(cfg, scene_w, scene_h, cx=x0, cy=y0)
     elif name == "sinusoidal":
         return SinusoidalMotion(cfg, x0, y0, scene_w, scene_h)
     elif name == "user":

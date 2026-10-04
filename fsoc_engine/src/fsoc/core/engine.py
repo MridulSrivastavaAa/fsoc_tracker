@@ -8,6 +8,7 @@ Orchestrates:
 """
 from __future__ import annotations
 from typing import Optional
+import math
 import time
 import numpy as np
 
@@ -19,6 +20,7 @@ from .types import (
     CameraCommand,
     TrackState,
     Point,
+    Detection,
 )
 from .config import AppConfig, default_config
 from .camera import VirtualCamera
@@ -45,6 +47,7 @@ class ClosedLoopEngine:
         cfg: AppConfig | None = None,
         source: Optional[SimulatedSource] = None,
         disturbance_engine: Optional[DisturbanceEngine] = None,
+        registry: Any = None,
     ) -> None:
         self.cfg = cfg or default_config()
 
@@ -95,6 +98,50 @@ class ClosedLoopEngine:
         self.metrics_history: list[FrameMetrics] = []
         self.last_viewport: Optional[np.ndarray] = None
 
+        # Per-frame state published by the telemetry bridge (web UI)
+        self.manual_override: Optional[CameraCommand] = None
+        self.last_cmd = CameraCommand(0.0, 0.0)
+        self.last_search_goal: Optional[tuple[float, float]] = None
+        self._search_waypoints = self.wide_search.generate_spiral_search_path(max_radius_deg=5.5, radial_step_deg=1.8, angular_step_deg=25.0)
+        self._search_idx: int = 0
+        self.last_ui: dict = {}
+        self._clear_frame_ui()
+        
+        # Plugins
+        if registry is not None:
+            self.registry = registry
+        else:
+            from ..plugins.registry import registry as global_registry
+            self.registry = global_registry
+            
+        self.plugin_states: dict[str, dict] = {"vision": {}, "tracking": {}, "control": {}}
+        self.plugin_version: int = -1
+
+        # Register default plugin adapters for NETRA Plugin Playground
+        from ..plugins.defaults import default_vision, default_tracking, default_control
+        self.registry.register_defaults(self, default_vision, default_tracking, default_control)
+
+    def _clear_frame_ui(self) -> None:
+        """Reset the per-frame UI bundle (filled at the end of step())."""
+        self.last_ui = {
+            "det": None,
+            "accepted": False,
+            "candidates": [],
+            "pred_xy": None,
+            "gt_vp": None,
+            "gt_vp_all": None,
+            "track": None,
+        }
+
+    def force_reacquire(self):
+        """Operator-forced reacquisition: drop the track and return to wide SEARCH."""
+        self.kalman.reset()
+        self.particle_filter.reset()
+        self.optical_flow.reset()
+        self.controller.reset()
+        self.state_machine.transition_to(State.SEARCH, float(self.source._t))
+        self.last_search_goal = None
+        self._clear_frame_ui()
 
     def step(self) -> Optional[FrameMetrics]:
         """
@@ -122,145 +169,278 @@ class ClosedLoopEngine:
         )
         self.last_viewport = disturbed_img
 
+        # Apply any pending plugin swaps from GUI thread at frame boundary
+        self.registry.apply_pending()
+        
+        if self.registry.version != self.plugin_version:
+            self.plugin_states = {"vision": {}, "tracking": {}, "control": {}}
+            self.plugin_version = self.registry.version
+
         curr_state = self.state_machine.state
         best_det = None
         cmd = CameraCommand(0.0, 0.0)
         reacquired_this_frame = False
+        track = None
+        accepted = False
+        pred_xy: Optional[tuple[float, float]] = None
+        self.last_search_goal = None
+        self._clear_frame_ui()
+
+        # Read-only engine context handed to plugins every frame
+        ctx = {
+            "frame_index": frame_idx,
+            "timestamp_s": timestamp_s,
+            "fsm_state": self.state_machine.state.value,
+            "atmosphere": getattr(self.disturbances.atmosphere, "condition", "clear"),
+            "cam_cx": self.camera.cx,
+            "cam_cy": self.camera.cy,
+            "px_per_deg_x": self.cfg.camera.px_per_deg_x,
+            "px_per_deg_y": self.cfg.camera.px_per_deg_y,
+            "pan_deg": self.camera.pan_deg,
+            "tilt_deg": self.camera.tilt_deg,
+            "max_pan_rate": self.cfg.camera.max_pan_deg_per_s,
+            "max_tilt_rate": self.cfg.camera.max_tilt_deg_per_s,
+            "scintillation": self.last_turbulence_diag.get("scintillation_sigma", 0.0),
+            "candidates": [],
+        }
 
         # 4. Processing based on current tracking state
         if curr_state == State.SEARCH:
-            # Check viewport directly first
-            raw_dets = self.detector.detect(disturbed_img)
-            verified = self.verifier.verify_detections(disturbed_img, raw_dets)
-            if verified:
-                best_det = verified[0]
-                self.kalman.init_track(best_det.x, best_det.y, confidence=best_det.score)
-                self.particle_filter.reset()
-                self.optical_flow.reset()
-                self.optical_flow.estimate_flow(
+            if self.registry.is_custom("vision"):
+                # Custom vision plugin drives acquisition too (no default detector).
+                pred_x, pred_y = self.kalman.predict()
+                pred_xy = (pred_x, pred_y)
+                vis_res = self.registry.call(
+                    "vision", disturbed_img, self.cfg.camera.res_x, self.cfg.camera.res_y,
+                    ctx, self.registry.get_params("vision")
+                )
+                if vis_res is not None:
+                    best_det = Detection(x=vis_res["x"], y=vis_res["y"], intensity=255.0,
+                                         score=vis_res.get("confidence", 1.0))
+                    candidates = [best_det]
+                    verified = [best_det]
+                    self.kalman.init_track(best_det.x, best_det.y, confidence=best_det.score)
+                    self.particle_filter.reset()
+                    self.optical_flow.reset()
+                    self.state_machine.step(True, timestamp_s)
+                    accepted = True
+                else:
+                    candidates = []
+                    verified = []
+                    self.state_machine.step(False, timestamp_s)
+            else:
+                # Check viewport directly first
+                raw_dets = self.detector.detect(disturbed_img)
+                verified = self.verifier.verify_detections(disturbed_img, raw_dets)
+                candidates = verified
+                ctx["candidates"] = [{"x": d.x, "y": d.y, "confidence": d.score} for d in verified] if verified else []
+                if verified:
+                    best_det = verified[0]
+                    self.kalman.init_track(best_det.x, best_det.y, confidence=best_det.score)
+                    self.particle_filter.reset()
+                    self.optical_flow.reset()
+                    self.optical_flow.estimate_flow(
+                        curr_img=disturbed_img,
+                        curr_pan_deg=self.camera.pan_deg,
+                        curr_tilt_deg=self.camera.tilt_deg,
+                        hint_pos=(best_det.x, best_det.y),
+                        px_per_deg_x=self.cfg.camera.px_per_deg_x,
+                        px_per_deg_y=self.cfg.camera.px_per_deg_y,
+                    )
+                    self.state_machine.step(True, timestamp_s)
+                    accepted = True
+                else:
+                    # Fast full scene search (skip 2000x2000 warpAffine if platform motion not active)
+                    if self.disturbances.cfg.platform_enabled and self.disturbances.cfg.platform_max_px > 0:
+                        disturbed_full_scene = self.disturbances.apply_full_scene(
+                            full_frame.image,
+                            dt=self.cfg.pipeline.dt
+                        )
+                    else:
+                        disturbed_full_scene = full_frame.image
+                    res = self.wide_search.search_full_scene(disturbed_full_scene)
+                    if res:
+                        target_pt, conf = res
+                        pan, tilt, _ = self.wide_search.compute_camera_pointing(
+                            target_pt,
+                            scene_center_x=self.cfg.scene.width / 2.0,
+                            scene_center_y=self.cfg.scene.height / 2.0,
+                        )
+                        d_pan = pan - self.camera.pan_deg
+                        d_tilt = tilt - self.camera.tilt_deg
+                        self.last_search_goal = (float(pan), float(tilt))
+                        cmd = CameraCommand(
+                            pan_rate_deg_per_s=float(np.clip(d_pan * 3.0, -self.cfg.camera.max_pan_deg_per_s, self.cfg.camera.max_pan_deg_per_s)),
+                            tilt_rate_deg_per_s=float(np.clip(d_tilt * 3.0, -self.cfg.camera.max_tilt_deg_per_s, self.cfg.camera.max_tilt_deg_per_s)),
+                        )
+                    else:
+                        # Systematic Archimedean spiral search over field of regard
+                        if self._search_waypoints:
+                            goal_pan, goal_tilt = self._search_waypoints[self._search_idx]
+                            d_pan = goal_pan - self.camera.pan_deg
+                            d_tilt = goal_tilt - self.camera.tilt_deg
+                            if math.hypot(d_pan, d_tilt) < 0.65:
+                                self._search_idx = (self._search_idx + 1) % len(self._search_waypoints)
+                                goal_pan, goal_tilt = self._search_waypoints[self._search_idx]
+                                d_pan = goal_pan - self.camera.pan_deg
+                                d_tilt = goal_tilt - self.camera.tilt_deg
+                            self.last_search_goal = (float(goal_pan), float(goal_tilt))
+                            cmd = CameraCommand(
+                                pan_rate_deg_per_s=float(np.clip(d_pan * 2.5, -self.cfg.camera.max_pan_deg_per_s, self.cfg.camera.max_pan_deg_per_s)),
+                                tilt_rate_deg_per_s=float(np.clip(d_tilt * 2.5, -self.cfg.camera.max_tilt_deg_per_s, self.cfg.camera.max_tilt_deg_per_s)),
+                            )
+                    self.state_machine.step(False, timestamp_s)
+
+        else:  # ACQUIRE, TRACK, LOST, REACQUIRE
+            # 0. Build read-only engine context dict for plugins
+            ctx = {
+                "frame_index": frame_idx,
+                "timestamp_s": timestamp_s,
+                "fsm_state": self.state_machine.state.value,
+                "atmosphere": getattr(self.disturbances.atmosphere, "condition", "clear"),
+                "cam_cx": self.camera.cx,
+                "cam_cy": self.camera.cy,
+                "px_per_deg_x": self.cfg.camera.px_per_deg_x,
+                "px_per_deg_y": self.cfg.camera.px_per_deg_y,
+                "pan_deg": self.camera.pan_deg,
+                "tilt_deg": self.camera.tilt_deg,
+                "max_pan_rate": self.cfg.camera.max_pan_deg_per_s,
+                "max_tilt_rate": self.cfg.camera.max_tilt_deg_per_s,
+                "scintillation": self.last_turbulence_diag.get("scintillation_sigma", 0.0),
+                "candidates": [],
+            }
+
+            # Safe defaults — prevent UnboundLocalError if custom slots are mixed
+            candidates: list = []
+            verified: list = []
+            flow_res = None
+            best_det = None
+
+            # 1. VISION SLOT
+            if self.registry.is_custom("vision"):
+                vis_res = self.registry.call("vision", disturbed_img, self.cfg.camera.res_x, self.cfg.camera.res_y, ctx, self.registry.get_params("vision"))
+                if vis_res is not None:
+                    best_det = Detection(x=vis_res["x"], y=vis_res["y"], intensity=255.0, score=vis_res.get("confidence", 1.0))
+                    candidates = [best_det]
+                    verified = [best_det]
+                pred_x, pred_y = self.kalman.predict()
+                pred_xy = (pred_x, pred_y)
+            else:
+                pred_x, pred_y = self.kalman.predict()
+                pred_xy = (pred_x, pred_y)
+                clean_img, mask, _ = self.preprocessor.process(disturbed_img)
+                candidates = self.detector.detect(disturbed_img, mask=mask, intensity_image=clean_img)
+                verified = self.verifier.verify_detections(disturbed_img, candidates)
+                best_det = self.kalman.select_best_detection(verified)
+                ctx["candidates"] = [{"x": d.x, "y": d.y, "confidence": d.score} for d in verified] if verified else []
+
+                hint_pt = (best_det.x, best_det.y) if best_det is not None else (pred_x, pred_y)
+                flow_res = self.optical_flow.estimate_flow(
                     curr_img=disturbed_img,
                     curr_pan_deg=self.camera.pan_deg,
                     curr_tilt_deg=self.camera.tilt_deg,
-                    hint_pos=(best_det.x, best_det.y),
+                    hint_pos=hint_pt,
                     px_per_deg_x=self.cfg.camera.px_per_deg_x,
                     px_per_deg_y=self.cfg.camera.px_per_deg_y,
                 )
-                self.state_machine.step(True, timestamp_s)
-            else:
-                # Wide area search on full scene if available
-                # CRITICAL FIX: apply full scene disturbances first so wide search
-                # doesn't cheat by using a pristine image in heavy fog/noise
-                disturbed_full_scene = self.disturbances.apply_full_scene(
-                    full_frame.image,
-                    dt=self.cfg.pipeline.dt
+                self._last_flow = flow_res
+
+            # 2. TRACKING SLOT
+            if self.registry.is_custom("tracking"):
+                meas = {"x": best_det.x, "y": best_det.y, "confidence": best_det.score} if best_det is not None else None
+                track_res = self.registry.call("tracking", meas, self.cfg.pipeline.dt, self.plugin_states["tracking"], ctx, self.registry.get_params("tracking"))
+                track = TrackState(
+                    x=float(track_res["x"]),
+                    y=float(track_res["y"]),
+                    vx=float(track_res["vx"]),
+                    vy=float(track_res["vy"]),
+                    confidence=best_det.score if best_det is not None else 0.5,
+                    locked=best_det is not None,
+                    uncertainty=5.0,
                 )
-                res = self.wide_search.search_full_scene(disturbed_full_scene)
-                if res:
-                    target_pt, conf = res
-                    pan, tilt, _ = self.wide_search.compute_camera_pointing(
-                        target_pt,
-                        scene_center_x=self.cfg.scene.width / 2.0,
-                        scene_center_y=self.cfg.scene.height / 2.0,
-                    )
-                    # Slew camera towards target
-                    d_pan = pan - self.camera.pan_deg
-                    d_tilt = tilt - self.camera.tilt_deg
-                    cmd = CameraCommand(
-                        pan_rate_deg_per_s=float(np.clip(d_pan * 3.0, -self.cfg.camera.max_pan_deg_per_s, self.cfg.camera.max_pan_deg_per_s)),
-                        tilt_rate_deg_per_s=float(np.clip(d_tilt * 3.0, -self.cfg.camera.max_tilt_deg_per_s, self.cfg.camera.max_tilt_deg_per_s)),
-                    )
-                self.state_machine.step(False, timestamp_s)
-
-        else:  # ACQUIRE, TRACK, LOST, REACQUIRE
-            # Predict Kalman forward
-            pred_x, pred_y = self.kalman.predict()
-
-            # Preprocess and detect
-            clean_img, mask, _ = self.preprocessor.process(disturbed_img)
-            candidates = self.detector.detect(disturbed_img, mask=mask, intensity_image=clean_img)
-            verified = self.verifier.verify_detections(disturbed_img, candidates)
-
-            # Association gating
-            best_det = self.kalman.select_best_detection(verified)
-
-            # Local sparse optical flow estimation
-            hint_pt = (best_det.x, best_det.y) if best_det is not None else (pred_x, pred_y)
-            flow_res = self.optical_flow.estimate_flow(
-                curr_img=disturbed_img,
-                curr_pan_deg=self.camera.pan_deg,
-                curr_tilt_deg=self.camera.tilt_deg,
-                hint_pos=hint_pt,
-                px_per_deg_x=self.cfg.camera.px_per_deg_x,
-                px_per_deg_y=self.cfg.camera.px_per_deg_y,
-            )
-
-            # Step 4: Particle Filter Reacquisition / Recovery Pipeline
-            pf_cfg = self.cfg.tracking.particle_filter
-            if pf_cfg.enabled and self.particle_filter.is_active:
-                # 1. Propagate particles forward
-                self.particle_filter.predict()
-                # 2. Update weights using all candidate spots / verified detections in viewport
-                pf_candidates = verified if verified else candidates
-                reacquired, pf_state = self.particle_filter.update(pf_candidates)
-                if reacquired:
-                    reacquired_this_frame = True
-                    # Confirmed recovery: hand off recovered state to IMM
-                    self.kalman.init_track(
-                        pf_state.x,
-                        pf_state.y,
-                        vx=pf_state.vx,
-                        vy=pf_state.vy,
-                        confidence=pf_state.confidence,
-                    )
-                    self.particle_filter.reset()
-                    self.state_machine.transition_to(State.TRACK, timestamp_s)
-                    track = self.kalman.get_state()
-
-            if not reacquired_this_frame:
-                if best_det is not None:
-                    track = self.kalman.update(best_det.x, best_det.y, score=best_det.score, flow=flow_res)
-                    self.state_machine.step(True, timestamp_s)
-                    # If normal confident tracking resumed, ensure PF is reset/inactive
-                    if self.particle_filter.is_active and track.confidence >= pf_cfg.activation_confidence_thresh:
-                        self.particle_filter.reset()
-                else:
-                    track = self.kalman.coast(flow=flow_res)
-                    self.state_machine.step(False, timestamp_s)
-
-                    # Trigger Particle Filter activation on signal loss / drop / high uncertainty
-                    if pf_cfg.enabled:
-                        should_activate_pf = (
-                            self.state_machine.state in (State.LOST, State.REACQUIRE) or
-                            self.state_machine.miss_streak >= pf_cfg.activation_coast_frames or
-                            track.confidence < pf_cfg.activation_confidence_thresh or
-                            track.uncertainty > pf_cfg.activation_uncertainty_px
+                accepted = best_det is not None
+                self.state_machine.step(best_det is not None, timestamp_s)
+            else:
+                pf_cfg = self.cfg.tracking.particle_filter
+                if pf_cfg.enabled and self.particle_filter.is_active:
+                    self.particle_filter.predict()
+                    pf_candidates = verified if verified else candidates
+                    reacquired, pf_state = self.particle_filter.update(pf_candidates)
+                    if reacquired:
+                        reacquired_this_frame = True
+                        self.kalman.init_track(
+                            pf_state.x, pf_state.y, vx=pf_state.vx, vy=pf_state.vy, confidence=pf_state.confidence
                         )
-                        if should_activate_pf and not self.particle_filter.is_active:
-                            self.particle_filter.initialize(
-                                center_x=track.x,
-                                center_y=track.y,
-                                vx=track.vx,
-                                vy=track.vy,
-                                pos_std=pf_cfg.init_pos_std_px,
-                                vel_std=pf_cfg.init_vel_std_px_s,
-                            )
+                        self.particle_filter.reset()
+                        self.state_machine.transition_to(State.TRACK, timestamp_s)
+                        track = self.kalman.get_state()
 
-            # Closed-loop actuator control
-            if self.state_machine.is_locked:
-                # Update controller with current camera slew rates for world-space FF
-                self.controller.set_camera_rates(
-                    pan_rate_px_s=self.camera._pan_rate * self.cfg.camera.px_per_deg_x,
-                    tilt_rate_px_s=self.camera._tilt_rate * self.cfg.camera.px_per_deg_y,
+                if not reacquired_this_frame:
+                    if best_det is not None:
+                        track = self.kalman.update(best_det.x, best_det.y, score=best_det.score, flow=flow_res)
+                        accepted = True
+                        self.state_machine.step(True, timestamp_s)
+                        if self.particle_filter.is_active and track.confidence >= pf_cfg.activation_confidence_thresh:
+                            self.particle_filter.reset()
+                    else:
+                        track = self.kalman.coast(flow=flow_res)
+                        self.state_machine.step(False, timestamp_s)
+
+                        if pf_cfg.enabled:
+                            should_activate_pf = (
+                                self.state_machine.state in (State.LOST, State.REACQUIRE) or
+                                self.state_machine.miss_streak >= pf_cfg.activation_coast_frames or
+                                track.confidence < pf_cfg.activation_confidence_thresh or
+                                track.uncertainty > pf_cfg.activation_uncertainty_px
+                            )
+                            if should_activate_pf and not self.particle_filter.is_active:
+                                self.particle_filter.initialize(
+                                    center_x=track.x,
+                                    center_y=track.y,
+                                    vx=track.vx,
+                                    vy=track.vy,
+                                    pos_std=pf_cfg.init_pos_std_px,
+                                    vel_std=pf_cfg.init_vel_std_px_s,
+                                )
+
+            # 3. CONTROL SLOT
+            if self.registry.is_custom("control"):
+                if track is not None:
+                    err = {"ex": track.x - self.cfg.camera.half_w, "ey": track.y - self.cfg.camera.half_h}
+                    vel = {"vx": track.vx, "vy": track.vy}
+                else:
+                    err = {"ex": 0.0, "ey": 0.0}
+                    vel = {"vx": 0.0, "vy": 0.0}
+                ctrl_res = self.registry.call("control", err, vel, self.cfg.pipeline.dt, self.plugin_states["control"], ctx, self.registry.get_params("control"))
+                cmd = CameraCommand(
+                    pan_rate_deg_per_s=float(ctrl_res["pan_rate"]),
+                    tilt_rate_deg_per_s=float(ctrl_res["tilt_rate"]),
                 )
-                cmd = self.controller.compute(track.x, track.y, track.vx, track.vy, state=self.state_machine.state.value)
-            elif self.particle_filter.is_active:
-                pf_st = self.particle_filter.get_state()
-                cmd = self.controller.compute(pf_st.x, pf_st.y, pf_st.vx * 0.5, pf_st.vy * 0.5, state=self.state_machine.state.value)
-            elif self.state_machine.state == State.LOST:
-                # Coast control command with velocity damping
-                cmd = self.controller.compute(track.x, track.y, track.vx * 0.5, track.vy * 0.5, state=self.state_machine.state.value)
             else:
-                cmd = CameraCommand(0.0, 0.0)
+                if self.state_machine.is_locked or self.state_machine.state in (State.TRACK, State.ACQUIRE):
+                    self.controller.set_camera_rates(
+                        pan_rate_px_s=self.camera._pan_rate * self.cfg.camera.px_per_deg_x,
+                        tilt_rate_px_s=self.camera._tilt_rate * self.cfg.camera.px_per_deg_y,
+                    )
+                    cmd = self.controller.compute(track.x, track.y, track.vx, track.vy, state=self.state_machine.state.value)
+                elif self.particle_filter.is_active:
+                    pf_st = self.particle_filter.get_state()
+                    cmd = self.controller.compute(pf_st.x, pf_st.y, pf_st.vx * 0.5, pf_st.vy * 0.5, state=self.state_machine.state.value)
+                elif self.state_machine.state == State.LOST:
+                    cmd = self.controller.compute(track.x, track.y, track.vx * 0.5, track.vy * 0.5, state=self.state_machine.state.value)
+                else:
+                    cmd = CameraCommand(0.0, 0.0)
+
+        # 4b. Wind torque: rate disturbance on the gimbal axes, then manual override
+        if self.disturbances.cfg.wind_deg_s > 0.0:
+            wx, wy = self.disturbances.wind_rates(self.cfg.pipeline.dt)
+            cmd = CameraCommand(
+                pan_rate_deg_per_s=cmd.pan_rate_deg_per_s + wx,
+                tilt_rate_deg_per_s=cmd.tilt_rate_deg_per_s + wy,
+            )
+        if self.manual_override is not None:
+            cmd = self.manual_override
+        self.last_cmd = cmd
 
         # 5. Adaptive Turbulence & Scintillation Compensation (Phase 7)
         beacon_peak = best_det.intensity if best_det is not None else None
@@ -277,7 +457,7 @@ class ClosedLoopEngine:
         t_proc_ms = (time.perf_counter() - t_start) * 1000.0
 
         # 7. Compute Ground Truth comparison and metrics
-        track_state = self.kalman.get_state()
+        track_state = track if track is not None else self.kalman.get_state()
         pf_info = self.particle_filter.get_state()
         est_screen_x: Optional[float] = None
         est_screen_y: Optional[float] = None
@@ -287,7 +467,11 @@ class ClosedLoopEngine:
         # ISRO R14 primary metric: target distance from optical boresight (320, 240)
         boresight_px: Optional[float] = None
 
-        if self.kalman.is_initialized:
+        is_tracking_active = self.kalman.is_initialized or self.registry.is_custom("tracking")
+        gt_vp = None
+        gt_vp_all = None
+
+        if is_tracking_active and track_state is not None:
             sx, sy = self.camera.viewport_to_screen(track_state.x, track_state.y)
             est_screen_x = float(sx)
             est_screen_y = float(sy)
@@ -299,9 +483,10 @@ class ClosedLoopEngine:
 
             if vp_frame.ground_truth_viewport:
                 gt_vp = vp_frame.ground_truth_viewport[0]
+                gt_vp_all = vp_frame.ground_truth_viewport
 
                 # Centroiding accuracy: how well Kalman tracks beacon in sensor space.
-                if self.kalman.is_initialized:
+                if is_tracking_active and track_state is not None:
                     error_px = float(np.hypot(track_state.x - gt_vp.x, track_state.y - gt_vp.y))
                 else:
                     error_px = float(np.hypot(self.cfg.camera.half_w - gt_vp.x,
@@ -354,6 +539,19 @@ class ClosedLoopEngine:
             pf_n_eff=pf_info.pf_n_eff,
             pf_reacquired=reacquired_this_frame,
         )
+
+        # 7b. Bundle everything the web HUD needs to draw this frame honestly.
+        self.last_ui.update({
+            "det": best_det,
+            "accepted": accepted,
+            "candidates": candidates,
+            "verified": verified,
+            "pred_xy": pred_xy,
+            "gt_vp": gt_vp,
+            "gt_vp_all": gt_vp_all,
+            "track": track_state,
+            "pf": pf_info,
+        })
 
         self.metrics_history.append(metric)
         return metric
@@ -462,5 +660,10 @@ class ClosedLoopEngine:
         self.turbulence_comp.reset()
         self.metrics_history.clear()
         self.last_viewport = None
+        self.last_cmd = CameraCommand(0.0, 0.0)
+        self.last_search_goal = None
+        self._search_idx = 0
+        self._clear_frame_ui()
+        self.plugin_states = {"vision": {}, "tracking": {}, "control": {}}
 
 

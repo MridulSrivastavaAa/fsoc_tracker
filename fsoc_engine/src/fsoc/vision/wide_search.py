@@ -47,8 +47,9 @@ class WideAreaSearch:
         self.cfg = w_cfg
         self.camera_cfg = c_cfg
 
-        # Dedicated preprocessor & detector for coarse search
-        self.preprocessor = VisionPreprocessor()
+        # Dedicated preprocessor & detector for coarse search (tophat_ksize=7 for downscaled 500x500 frame)
+        from ..core.config import PreprocessConfig
+        self.preprocessor = VisionPreprocessor(PreprocessConfig(tophat_ksize=7))
         self.detector = SpotDetector()
 
     def search_full_scene(

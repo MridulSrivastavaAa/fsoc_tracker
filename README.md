@@ -2,7 +2,7 @@
 
 > **ISRO / SAC Problem Statement 26169 • Smart India Hackathon (SIH)**  
 > **System Designation:** **NETRA** (Networked Electro-optical Tracking & Rapid Alignment)  
-> **Status:** 100% Complete • 198+ Unit & Integration Tests Passing • Zero Failures • Production-Ready
+> **Status:** 100% Complete • 208 Unit & Integration Tests Passing • Zero Failures • Production-Ready
 
 ---
 
@@ -19,8 +19,9 @@ Free Space Optical Communication (FSOC) provides multi-gigabit wireless data lin
    - **IMM Filter (Interacting Multiple Model)**: Dynamically blends Constant Velocity (CV), Coordinated Turn (CT), and Random Walk (RW) motion models.
    - **Particle Filter Recovery**: Instant re-acquisition ($\le 0.30$ s) during multi-frame deep fades or laser dropouts.
    - **Dense & Sparse Optical Flow Gating**: Distinguishes true beacon trajectory from erratic background vibrations.
-5. **Interactive 3D Web Mission Control & HUD (`web/`)**: High-performance Three.js + React 19 visualizer featuring Earth orbit trajectory, tactical reticles, live telemetry stream, and Benchmark-2 video player with interactive trajectory playback.
-6. **Standalone Desktop Application**: Precompiled native executable (`FSOCTracker.exe`) bundled with all models, configs, and offline web runtime.
+5. **Interactive 3D Web Mission Control & HUD (`web/`)**: High-performance Three.js + React 19 visualizer featuring Earth orbit trajectory, tactical reticles, live telemetry stream, and Video Benchmark player with interactive trajectory playback.
+6. **Scalable Custom Algorithm Plugin Architecture (`fsoc_engine/src/fsoc/plugins/`)**: Fully modular, hot-reloadable plugin ecosystem enabling live Python code injection across Control, Tracking, and Vision slots with AST coefficient auto-discovery, interactive coefficient sliders, zero-downtime safety fallbacks, and comparative A/B verification reports.
+7. **Standalone Desktop Application**: Precompiled native executable (`FSOCTracker.exe`) bundled with all models, configs, and offline web runtime.
 
 ---
 
@@ -44,7 +45,10 @@ Free Space Optical Communication (FSOC) provides multi-gigabit wireless data lin
 fsoc_tracker/ (Repository Root)
 ├── web/                                 # 3D Mission Control HUD (React 19, Three.js, Vite)
 │   ├── src/                             # 3D Earth, Space Scene, Radar, HUD Overlays, Video Bench
-│   ├── public/                          # Static assets and test video feeds
+│   │   ├── hud/Drawers.tsx              # Contextual Drawers & Algorithm Plugin Playground UI
+│   │   ├── services/providers.ts        # WebSocket Remote Engine Provider with Auto-Reconnect
+│   │   └── state/store.ts               # Reactive Zustand Store with <25ms Low-Latency HUD Loop
+│   ├── public/                          # Static assets and benchmark datasets
 │   └── package.json
 │
 ├── fsoc_engine/                         # Core Python Tracking & AI Perception Engine
@@ -55,32 +59,82 @@ fsoc_tracker/ (Repository Root)
 │   │   ├── vision/                      # SpotDetector, Optical Flow, CNN Verifier
 │   │   ├── tracking/                    # IMM Multi-Model Filter, Particle Filter, State Machine
 │   │   ├── control/                     # PID Controller + Anti-Windup + Feed-Forward Slew
-│   │   ├── benchmarks/                  # Benchmark-1 & Benchmark-2 Automated Runners
-│   │   ├── gui/                         # Desktop GUI Workstation & PyWebView App
-│   │   └── server/                      # FastAPI Backend for Web Telemetry Streaming
+│   │   ├── plugins/                     # ⚡ Custom Algorithm Plugin Architecture
+│   │   │   ├── registry.py              # Hot-reloadable Plugin Registry & Function Dispatcher
+│   │   │   ├── contracts.py             # Strict Function Contracts, Signatures & Defaults
+│   │   │   ├── presets.py               # Pre-Tuned Presets (RL Cascaded PID, Kalman, PSF, etc.)
+│   │   │   └── ab_runner.py             # Automated Comparative A/B Performance Testing Suite
+│   │   ├── benchmarks/                  # Benchmark-1 & Benchmark-2 Automated Evaluators
+│   │   ├── gui/                         # Desktop Tkinter GUI Workstation & Plugin Panel
+│   │   └── server/app.py                # FastAPI Telemetry Streaming & Plugin REST Endpoints
 │   ├── configs/                         # YAML System & Disturbance Configurations
 │   ├── models/                          # ONNX Trained Beacon Verification Models
-│   ├── test_videos/                     # 5-Tier Synthetic Test Videos & Ground-Truth CSVs
-│   ├── dist/FSOCTracker/                # Standalone Native Executable (FSOCTracker.exe)
-│   ├── tests/                           # 198 Unit and Integration Tests
+│   ├── test_videos/                     # Multi-Tier Ground-Truth CSV Datasets
+│   ├── tests/                           # 208 Unit and Integration Tests
 │   └── pyproject.toml / requirements.txt
 │
+├── test_videos/                         # Root Multi-Tier Ground-Truth CSV Datasets
 ├── main.py                              # Universal Root CLI Launcher
 ├── build_exe.py                         # Standalone PyInstaller Executable Builder
 ├── run_demo.bat                         # 1-Click Desktop GUI Launcher
 ├── run_benchmarks.bat                   # 1-Click Automated Benchmark Runner
+├── start_servers.bat                    # 1-Click Full Stack Launcher (FastAPI + React)
 └── start_3d_web.bat                     # 1-Click 3D Mission Control Web Launcher
 ```
 
 ---
 
-## 🚀 4. Quickstart Guide
+## ⚡ 4. Custom Algorithm Plugin Architecture & Live Playground
+
+NETRA features an advanced, research-grade **Plugin Architecture** that allows algorithm developers and researchers to hot-swap or inject proprietary algorithms into the core tracking engine in real time without restarting the application.
+
+### Pipeline Slots & Function Contracts
+
+The architecture supports three primary processing stages:
+
+```
+           ┌────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+Raw Frames │  VISION SLOT   │ Spot  │  TRACKING SLOT  │ State │  CONTROL SLOT   │ Motor
+──────────►│ (Centroiding)  ├──────►│ (Filtering/IMM) ├──────►│ (Servo/PID Loop) ├──────► Rates
+           └────────────────┘       └─────────────────┘       └─────────────────┘
+```
+
+1. **`control` Slot — Servo Control Loop**:
+   - **Contract**: `def control(error, velocity, dt, state, ctx, params) -> {"pan_rate": float, "tilt_rate": float}`
+   - **Inputs**: Boresight pixel error `(e_x, e_y)`, target velocity `(vx, vy)`, timestep `dt`, persistent state dictionary `state`, context `ctx` (containing `px_per_deg_x/y`, `pan/tilt_deg`), and tunable `params`.
+   - **Outputs**: Gimbal motor rate commands in deg/s.
+
+2. **`tracking` Slot — State Estimation & Trajectory Filtering**:
+   - **Contract**: `def track(measurement, dt, state, ctx, params) -> {"x": float, "y": float, "vx": float, "vy": float, "cov": float, "state": str}`
+   - **Inputs**: Raw vision measurement `{"x", "y", "confidence"}` (or `None` during deep fades/cloud occlusions), timestep `dt`, state dictionary, and `params`.
+   - **Outputs**: Filtered target coordinates, velocity estimates, and tracking state.
+
+3. **`vision` Slot — Sub-Pixel Centroid Detection**:
+   - **Contract**: `def detect(image, prev_state, ctx, params) -> {"x": float, "y": float, "intensity": float, "confidence": float} | None`
+   - **Inputs**: 2D grayscale uint8 sensor frame, prior tracking state, optical context, and `params`.
+   - **Outputs**: Centroid coordinate detection with confidence score or `None` if obscured.
+
+### Key Architectural Capabilities
+
+- **Zero-Downtime Hot-Reloading**: Algorithms can be pasted and applied on the fly via the 3D Web HUD or Desktop GUI.
+- **Fail-Safe Automatic Fallback**: If user-injected Python code raises a runtime exception or syntax error, the engine automatically catches it and transparently falls back to the high-performance NETRA default (IMM Kalman Filter + Cascaded PID) without dropping a frame.
+- **Dynamic AST Parameter Discovery**: When custom code references `params.get("ParamName", default_value)`, the system parses the Abstract Syntax Tree (AST) and automatically generates interactive, real-time sliders in the UI.
+- **Pre-Tuned Research Baseline Presets**:
+  - *Control*: Reinforcement-Learning DDPG Tuned Cascaded PID (arXiv:2607.15910), Damped Classical PD, Phase Lead-Lag.
+  - *Tracking*: Alpha-Beta ($\alpha$-$\beta$) Tracking Filter, Single Extended Kalman Filter, Exponential Moving Average (EMA).
+  - *Vision*: Normalized Gaussian PSF Matching, Brightest Blob Centroiding.
+- **Comparative A/B Verification Reports**: Run side-by-side Monte Carlo benchmarking between the active plugin and the default NETRA baseline to evaluate Delta RMSE %, Lock Retention %, FPS throughput, and formal R14 compliance verdicts with one-click printable HTML/JSON exports.
+
+---
+
+## 🚀 5. Quickstart Guide
 
 ### Option A: 1-Click Launchers (Windows)
+- **Full Stack (FastAPI Backend + React Frontend)**: Double-click [`start_servers.bat`](start_servers.bat)
 - **3D Web Mission Control**: Double-click [`start_3d_web.bat`](start_3d_web.bat) (Opens http://localhost:5173)
 - **Desktop GUI Telemetry Workstation**: Double-click [`run_demo.bat`](run_demo.bat)
 - **Run Automated Benchmarks**: Double-click [`run_benchmarks.bat`](run_benchmarks.bat)
-- **Run Standalone Executable**: Double-click [`fsoc_engine/dist/FSOCTracker/FSOCTracker.exe`](fsoc_engine/dist/FSOCTracker/FSOCTracker.exe)
+- **Standalone Windows Executable**: Double-click [`run_exe.bat`](run_exe.bat)
 
 ### Option B: Command-Line Interface (CLI)
 
@@ -91,47 +145,48 @@ python main.py benchmark --type all --duration 2.0
 # 2. Run Benchmark-1 across 10 simulation scenarios:
 python main.py benchmark --type 1 --duration 3.0
 
-# 3. Run Benchmark-2 on Video File with Ground-Truth Comparison:
-python main.py benchmark --type 2 --video fsoc_engine/test_videos/tier1_clean_90pct.mp4
-
-# 4. Launch Native Desktop Operator Workstation:
+# 3. Launch Native Desktop Operator Workstation with Plugin Panel:
 python main.py gui
 
-# 5. Run Single Closed-Loop Simulation with Custom YAML:
+# 4. Run Single Closed-Loop Simulation with Custom YAML:
 python main.py run --config fsoc_engine/configs/default.yaml --duration 5.0
 ```
 
 ---
 
-## 📹 5. Multi-Tier Benchmark Test Suite
+## 📹 6. Multi-Tier Ground-Truth Benchmark Datasets
 
-Under [`fsoc_engine/test_videos/`](fsoc_engine/test_videos/), the system includes 5 multi-tier synthetic evaluation videos with corresponding ground-truth CSVs:
+Under [`test_videos/`](test_videos/) and [`fsoc_engine/test_videos/`](fsoc_engine/test_videos/), the system includes high-precision 60 FPS ground-truth CSV datasets covering extreme operational conditions:
 
-| Tier | Dataset File | Environmental Conditions | Verification Focus |
+| Dataset | Ground-Truth File | Environmental Conditions | Verification Focus |
 | :--- | :--- | :--- | :--- |
-| **Tier 1** | `tier1_clean_90pct.mp4` | 90% Clean • Pure Sky • High SNR | Baseline trajectory accuracy & sub-pixel convergence |
-| **Tier 2** | `tier2_mild_70pct.mp4` | 70% Clarity • Light Haze • Minor Vibration | Slew rate tracking & PID damping |
-| **Tier 3** | `tier3_moderate_50pct.mp4` | 50% Clarity • Moderate Fog • Scintillation | IMM model switching between CV and CT |
-| **Tier 4** | `tier4_degraded_30pct.mp4` | 30% Clarity • Rain Streaks • Platform Drift | False-positive rejection & optical flow gating |
-| **Tier 5** | `tier5_extreme_10pct.mp4` | 10% Visibility • Heavy Jitter & Dropouts | Particle Filter re-acquisition during total loss of signal |
+| **Clear Sky** | `01_clear_sky_decoy_10s_gt.csv` | Clear Atmosphere • Single Decoy | Baseline trajectory accuracy & sub-pixel convergence |
+| **Haze** | `02_haze_moving_glint_10s_gt.csv` | Moving Glint • Reduced Contrast | Slew rate tracking & PID damping |
+| **Dense Fog** | `03_dense_fog_glint_10s_gt.csv` | Dense Fog • Flickering Glint | IMM model switching between CV and CT |
+| **Rain Streaks** | `04_rain_streaks_decoys_10s_gt.csv` | Rain Streaks • Multiple Decoys | False-positive rejection & optical flow gating |
+| **Turbulence** | `05_hard_turbulence_deep_fade_10s_gt.csv`| Severe Turbulence • Deep Fades | Particle Filter re-acquisition during total loss of signal |
+
+> **Note**: Test video MP4 files can be synthesized on demand at 60 FPS using [`fsoc_engine/generate_decoy_benchmark_videos.py`](fsoc_engine/generate_decoy_benchmark_videos.py) or analyzed directly through the Video Benchmark tool in the web interface.
 
 ---
 
-## 🧪 6. Testing & Quality Assurance
+## 🧪 7. Testing & Quality Assurance
 
-The codebase includes **198 automated unit and integration tests** with 100% pass rate:
+The codebase includes **208 automated unit and integration tests** with 100% pass rate:
 
 ```bash
 cd fsoc_engine
-pytest tests/ -v
+pytest tests/unit -v
 ```
 
 Test coverage encompasses:
-- Virtual camera kinematics, pan/tilt slew clipping, and latency propagation.
-- Noise modeling (Gaussian, Poisson, Salt & Pepper) and atmospheric scattering.
-- Sub-pixel centroid accuracy (< 0.2 px clean, < 2.5 px under heavy noise).
-- Wide-area acquisition speed (< 50 ms scan, <= 0.53 s total slew).
+- Custom algorithm plugin registry, safe evaluation, exception fallback, and AST parameter parsing (`test_plugins.py`).
+- Automated A/B comparative report runner and metrics evaluation (`test_ab_runner.py`).
+- Virtual camera kinematics, pan/tilt slew clipping, and latency propagation (`test_camera.py`).
+- Noise modeling (Gaussian, Poisson, Salt & Pepper) and atmospheric scattering (`test_disturbances.py`).
+- Sub-pixel centroid accuracy (< 0.2 px clean, < 2.5 px under heavy noise) (`test_vision.py`).
+- Wide-area acquisition speed (< 50 ms scan, $\le 0.53$ s total slew).
 - ONNX CNN verifier false-positive discrimination.
-- IMM multi-model probability transitions and particle filter re-acquisition.
-- PID closed-loop control and feed-forward compensation.
-- Automated benchmark execution and JSON/CSV reporting.
+- IMM multi-model probability transitions and particle filter re-acquisition (`test_imm.py`, `test_particle_filter.py`).
+- PID closed-loop control and feed-forward compensation (`test_tracking_control.py`).
+- Automated benchmark execution and compliance reporting (`test_benchmarks.py`).

@@ -15,7 +15,9 @@ All modules are configured at construction and can be toggled/updated
 at runtime (e.g., via GUI sliders) by setting their attributes directly.
 """
 from __future__ import annotations
+import math
 import numpy as np
+import cv2
 from dataclasses import dataclass
 
 from .noise import SaltPepperNoise, GaussianNoise, PoissonNoise
@@ -47,6 +49,10 @@ class DisturbanceConfig:
     jitter_enabled: bool = False
     jitter_max_px: float = 10.0
 
+    # Mechanical vibration (deterministic sinusoid, driven by vibration_hz)
+    vibration_px: float = 0.0
+    vibration_hz: float = 8.0
+
     # Platform motion
     platform_enabled: bool = False
     platform_mode: str = "linear"
@@ -62,6 +68,9 @@ class DisturbanceConfig:
     turbulence_wander_px: float = 3.0
     turbulence_scint_sigma: float = 0.15
     turbulence_blur_sigma: float = 0.5
+
+    # Wind torque: sigma of a rate disturbance applied to the gimbal axes, deg/s
+    wind_deg_s: float = 0.0
 
     # Master seed (sub-modules get seed + offset)
     seed: int = 100
@@ -143,6 +152,15 @@ class DisturbanceEngine:
             seed=s + 60,
         )
 
+        # --- Vibration / wind state ---
+        self._t: float = 0.0
+        self._wind_rng = np.random.default_rng(s + 70)
+        self._wind: tuple[float, float] = (0.0, 0.0)
+        #: Total image translation (px) applied by the last apply_viewport call:
+        #: vibration + turbulence wander + camera jitter. Published to the telemetry HUD
+        #: so the 3D view can show the true optical-axis disturbance.
+        self.last_shift_px: tuple[float, float] = (0.0, 0.0)
+
     # ------------------------------------------------------------------
     # Stage 1: Full-scene disturbances (before camera crop)
     # ------------------------------------------------------------------
@@ -184,21 +202,68 @@ class DisturbanceEngine:
         Returns:
             Distorted uint8 image, same shape.
         """
+        # Mechanical vibration: deterministic sinusoid at vibration_hz (models
+        # reaction wheels / cooling pumps — correlated across frames, unlike jitter).
+        vib_dx = 0.0
+        vib_dy = 0.0
+        if self.cfg.vibration_px > 0.0:
+            if timestamp_s is None:
+                self._t += 1.0 / max(1.0, self.cfg.fps)
+                t_v = self._t
+            else:
+                t_v = float(timestamp_s)
+                self._t = t_v
+            w = 2.0 * math.pi * self.cfg.vibration_hz
+            dx = self.cfg.vibration_px * math.sin(w * t_v)
+            dy = 0.7 * self.cfg.vibration_px * math.sin(w * 1.31 * t_v + 1.1)
+            vib_dx, vib_dy = dx, dy
+            M = np.array([[1.0, 0.0, dx], [0.0, 1.0, dy]], dtype=np.float32)
+            H, W = img.shape[:2]
+            img = cv2.warpAffine(img, M, (W, H),
+                                 flags=cv2.INTER_LINEAR,
+                                 borderMode=cv2.BORDER_CONSTANT,
+                                 borderValue=0)
+
         img = self.atmosphere.apply(img)
         img = self.turbulence.apply(img)
         img = self.jitter.apply(img)
         img = self.salt_pepper.apply(img)
         img = self.gaussian.apply(img)
         img = self.poisson.apply(img)
+
+        # Total attitude translation applied to this frame (for the telemetry HUD).
+        jx, jy = self.jitter.last_shift
+        tx, ty = self.turbulence.last_wander
+        self.last_shift_px = (vib_dx + tx + jx, vib_dy + ty + jy)
         return img
+
+    def wind_rates(self, dt: float) -> tuple[float, float]:
+        """Ornstein–Uhlenbeck rate disturbance (deg/s) on the gimbal axes.
+        Returns (d_pan, d_tilt); both are 0 when wind_deg_s == 0."""
+        sigma = self.cfg.wind_deg_s
+        if sigma <= 0.0:
+            if self._wind != (0.0, 0.0):
+                self._wind = (0.0, 0.0)
+            return self._wind
+        tau = 0.5  # s — wind correlation time
+        decay = math.exp(-dt / tau)
+        kick = sigma * math.sqrt(max(1e-6, dt)) * 1.6
+        wx = decay * self._wind[0] + float(self._wind_rng.normal(0.0, kick))
+        wy = decay * self._wind[1] + float(self._wind_rng.normal(0.0, kick))
+        # Clamp to ±4σ so a rare draw cannot slam the gimbal
+        lim = 4.0 * sigma
+        self._wind = (float(np.clip(wx, -lim, lim)), float(np.clip(wy, -lim, lim)))
+        return self._wind
 
     # ------------------------------------------------------------------
     # Reset (used by SimulatedSource.reset())
     # ------------------------------------------------------------------
 
     def reset(self) -> None:
-        """Reset stateful disturbances (platform motion drift)."""
+        """Reset stateful disturbances (platform motion drift, vibration phase, wind)."""
         self.platform.reset()
+        self._t = 0.0
+        self._wind = (0.0, 0.0)
 
     @property
     def noise(self) -> _NoiseProxy:

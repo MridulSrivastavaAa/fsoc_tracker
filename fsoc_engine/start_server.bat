@@ -1,0 +1,3 @@
+@echo off
+echo Starting FSOC 3D Tracker FastAPI Backend...
+python main.py gui --mode 3d
