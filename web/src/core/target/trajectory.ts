@@ -140,8 +140,9 @@ export class TargetModel {
         y = A * Math.sin(w * t);
         break;
       case 'sinusoidal':
+        // Pure harmonic sinusoidal motion along the flight track heading axis
         x = A * Math.sin(w * t);
-        y = 0.45 * A * Math.sin(3 * w * t);
+        y = 0;
         break;
       case 'figure8':
         x = A * Math.sin(w * t);

@@ -46,6 +46,11 @@ class TrackingStateMachine:
         self.cfg = t_cfg
         self.state: State = State.SEARCH
 
+        # Time at which the current state started (mirrors the frontend
+        # Supervisor.since) — used for the per-state elapsed time reported in the
+        # snapshot as `stateSince`.
+        self.since: float = 0.0
+
         # Consecutive frame counters
         self.detect_streak: int = 0
         self.miss_streak: int = 0
@@ -73,6 +78,8 @@ class TrackingStateMachine:
         self.transitions.append((timestamp_s, old_state_str, new_state_str))
         self.state = new_state
         self.state_enter_time_s = timestamp_s
+        # Time the current state started (mirrors the frontend Supervisor).since
+        self.since = timestamp_s
 
         # Reset counters on state entry
         if new_state == State.ACQUIRE:
@@ -108,6 +115,7 @@ class TrackingStateMachine:
         if self.start_time_s is None:
             self.start_time_s = timestamp_s
             self.state_enter_time_s = timestamp_s
+            self.since = timestamp_s
 
         self.frames_per_state[self.state.value] += 1
 

@@ -145,12 +145,17 @@ class TurbulenceEffect:
     _rng: np.random.Generator = field(init=False, repr=False)
     _wander_x: float = field(default=0.0, init=False, repr=False)
     _wander_y: float = field(default=0.0, init=False, repr=False)
+    #: Most recent frame's wander offset (px) and scintillation factor — telemetry HUD.
+    last_wander: tuple[float, float] = (0.0, 0.0)
+    last_scint: float = 1.0
 
     def __post_init__(self) -> None:
         self._rng = np.random.default_rng(self.seed)
 
     def apply(self, img: np.ndarray) -> np.ndarray:
         if not self.enabled:
+            self.last_wander = (0.0, 0.0)
+            self.last_scint = 1.0
             return img
 
         out = img.astype(np.float32)
@@ -160,6 +165,9 @@ class TurbulenceEffect:
             flicker = float(self._rng.lognormal(0.0, self.scintillation_sigma))
             flicker = float(np.clip(flicker, 0.5, 2.0))
             out = out * flicker
+            self.last_scint = flicker
+        else:
+            self.last_scint = 1.0
 
         # 2. Refractive blur (varying kernel per frame)
         if self.blur_sigma > 0.0:
@@ -176,6 +184,7 @@ class TurbulenceEffect:
                                            -self.wander_max_px, self.wander_max_px))
             self._wander_y = float(np.clip(self._wander_y,
                                            -self.wander_max_px, self.wander_max_px))
+            self.last_wander = (self._wander_x, self._wander_y)
             M = np.array([[1.0, 0.0, self._wander_x],
                           [0.0, 1.0, self._wander_y]], dtype=np.float32)
             H, W = out.shape[:2]

@@ -71,9 +71,20 @@ class MADThreshold:
         self.min_threshold = int(min_threshold)
 
     def compute_threshold(self, image: np.ndarray) -> float:
-        """Compute the dynamic cutoff value for the given image."""
+        """Compute the dynamic cutoff value for the given image with sub-millisecond histogram MAD."""
+        if image.dtype == np.uint8 and image.size > 0:
+            hist = cv2.calcHist([image], [0], None, [256], [0, 256]).ravel()
+            cum = np.cumsum(hist)
+            total = cum[-1]
+            med = float(np.searchsorted(cum, total * 0.5))
+            diff = np.abs(np.arange(256) - med).astype(np.int64)
+            diff_hist = np.bincount(diff, weights=hist, minlength=256)
+            diff_cum = np.cumsum(diff_hist)
+            mad = float(np.searchsorted(diff_cum, total * 0.5))
+            cutoff = med + self.mad_k * 1.4826 * mad
+            return max(float(self.min_threshold), cutoff)
+
         flat = image.ravel()
-        # Compute median using sub-sampled array for ultra-fast performance if large
         if flat.size > 200000:
             step = flat.size // 100000
             sample = flat[::step]
@@ -82,8 +93,6 @@ class MADThreshold:
             
         med = float(np.median(sample))
         mad = float(np.median(np.abs(sample - med)))
-        
-        # 1.4826 scales MAD to equivalent Gaussian standard deviation (sigma)
         cutoff = med + self.mad_k * 1.4826 * mad
         return max(float(self.min_threshold), cutoff)
 

@@ -36,6 +36,8 @@ class CameraJitter:
     enabled: bool = True
     seed: int = 10
     _rng: np.random.Generator = field(init=False, repr=False)
+    #: Shift applied by the most recent apply() call — published to the telemetry HUD.
+    last_shift: tuple[float, float] = (0.0, 0.0)
 
     def __post_init__(self) -> None:
         self._rng = np.random.default_rng(self.seed)
@@ -46,6 +48,7 @@ class CameraJitter:
         Border areas are filled with 0 (black) where the shift exposes edges.
         """
         if not self.enabled or self.max_px <= 0.0:
+            self.last_shift = (0.0, 0.0)
             return img
 
         # Sample shift
@@ -56,6 +59,8 @@ class CameraJitter:
         else:  # uniform
             dx = float(self._rng.uniform(-self.max_px, self.max_px))
             dy = float(self._rng.uniform(-self.max_px, self.max_px))
+
+        self.last_shift = (dx, dy)
 
         # Build affine translation matrix  [ 1 0 dx ]
         #                                  [ 0 1 dy ]

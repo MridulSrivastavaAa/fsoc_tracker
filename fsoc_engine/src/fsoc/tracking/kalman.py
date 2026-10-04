@@ -80,6 +80,8 @@ class KalmanTracker:
         self.confidence: float = 0.0
         self.coast_frames: int = 0
         self.total_updates: int = 0
+        #: Magnitude of the last measurement innovation (px) — published to the HUD.
+        self.last_innovation_px: float = 0.0
 
     def init_track(
         self,
@@ -171,6 +173,7 @@ class KalmanTracker:
 
         # Innovation (residual)
         y = z - np.dot(self.H, self.x)
+        self.last_innovation_px = float(np.linalg.norm(y))
         S = np.dot(np.dot(self.H, self.P), self.H.T) + R
 
         # Kalman gain K
@@ -221,6 +224,8 @@ class KalmanTracker:
             vy=float(self.x[3]),
             confidence=float(self.confidence),
             locked=bool(self.is_locked),
+            innovation=float(self.last_innovation_px),
+            uncertainty=float(np.sqrt(max(0.0, self.P[0, 0]))),
         )
 
     def reset(self) -> None:
@@ -232,3 +237,4 @@ class KalmanTracker:
         self.confidence = 0.0
         self.coast_frames = 0
         self.total_updates = 0
+        self.last_innovation_px = 0.0

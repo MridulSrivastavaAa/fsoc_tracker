@@ -252,4 +252,18 @@ class HUDOverlayRenderer:
             target_pt=target_scene_pt,
         )
 
+        # 6. Custom Plugin HUD Banner
+        self.draw_plugin_banner(display_img)
+
         return display_img
+
+    def draw_plugin_banner(self, img: np.ndarray) -> None:
+        """Draw top banner showing active custom algorithm plugins."""
+        from ..plugins.registry import registry, SLOTS
+        active_customs = [f"{s.upper()}: {registry.get_label(s)}" for s in SLOTS if registry.is_custom(s)]
+        if not active_customs:
+            return
+        text = "⚡ CUSTOM: " + " | ".join(active_customs)
+        h, w = img.shape[:2]
+        cv2.rectangle(img, (0, 0), (w, 22), (40, 20, 0), -1)
+        cv2.putText(img, text, (8, 16), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 220, 255), 1, cv2.LINE_AA)

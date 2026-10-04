@@ -210,6 +210,19 @@ class FSOCTrackerApp:
         )
         self.btn_3d.pack(fill=tk.X, pady=(8, 2))
 
+        # Plugin Playground Launcher Button
+        self.btn_plugin = tk.Button(
+            ctrl_frame,
+            text="⚡ ALGORITHM PLUGIN PLAYGROUND",
+            bg="#1e1b4b",
+            fg=THEME_CYAN,
+            font=("Segoe UI", 9, "bold"),
+            bd=1,
+            relief=tk.SOLID,
+            command=self._launch_plugin_playground,
+        )
+        self.btn_plugin.pack(fill=tk.X, pady=(4, 2))
+
         # Mode Selection
         mode_box = tk.Frame(ctrl_frame, bg=THEME_SURFACE)
         mode_box.pack(fill=tk.X, pady=(8, 0))
@@ -703,6 +716,14 @@ class FSOCTrackerApp:
 
         # Label
         self.plot_canvas.create_text(4, 6, anchor=tk.NW, text="BORESIGHT (px)", fill=THEME_MUTED, font=("Segoe UI", 7))
+
+    def _launch_plugin_playground(self) -> None:
+        """Open the Plugin Playground window."""
+        from .plugin_panel import PluginPlaygroundWindow
+        if not hasattr(self, "_plugin_win") or self._plugin_win is None or not self._plugin_win.winfo_exists():
+            self._plugin_win = PluginPlaygroundWindow(self.root)
+        else:
+            self._plugin_win.lift()
 
     def _on_close(self) -> None:
         self.is_running = False

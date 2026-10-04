@@ -66,6 +66,8 @@ class SinusoidalMotionConfig(BaseModel):
     vx: float = 80.0
     amplitude_y: float = 300.0
     omega_deg_per_s: float = 18.0
+    heading_deg: float = 0.0
+    speed_px_s: float = 80.0
 
 
 class UserMotionConfig(BaseModel):

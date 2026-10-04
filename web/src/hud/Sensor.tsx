@@ -223,7 +223,6 @@ function ScreenCanvas() {
     let raf = 0;
     let last = -1;
     const trail: [number, number][] = [];
-    const axis: [number, number][] = [];
     const draw = () => {
       raf = requestAnimationFrame(draw);
       const c = ref.current;
@@ -231,7 +230,6 @@ function ScreenCanvas() {
       if (!c || !s || s.frame === last) return;
       if (s.frame < last) {
         trail.length = 0;
-        axis.length = 0;
       }
       last = s.frame;
       const conf = cfgRef.current;
@@ -239,10 +237,23 @@ function ScreenCanvas() {
       const halfPx = conf.logic.searchHalfUDeg / ifov;
       const N = Math.round(2 * halfPx);
       const toPx = (u: number, v: number): [number, number] => [halfPx + u / ifov, halfPx - v / ifov];
+      const rawU = Number.isFinite(s.gimbal?.boresightU)
+        ? s.gimbal.boresightU
+        : Number.isFinite(s.gimbal?.pan)
+        ? s.gimbal.pan
+        : 0;
+      const rawV = Number.isFinite(s.gimbal?.boresightV)
+        ? s.gimbal.boresightV
+        : Number.isFinite(s.gimbal?.tilt)
+        ? s.gimbal.tilt
+        : 0;
+      // Robust angle handling in case backend emitted pixels or degrees
+      const parseU = (val: number) => (Math.abs(val) > 50 ? (val - halfPx) * ifov : val);
+      const parseV = (val: number) => (Math.abs(val) > 50 ? (halfPx - val) * ifov : val);
+      const safeBu = parseU(rawU);
+      const safeBv = parseV(rawV);
       trail.push(toPx(s.target.u, s.target.v));
-      axis.push(toPx(s.gimbal.boresightU, s.gimbal.boresightV));
-      if (trail.length > 30 * 8) trail.shift();
-      if (axis.length > 30 * 8) axis.shift();
+      if (trail.length > 30 * 12) trail.shift();
       const rect = c.getBoundingClientRect();
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       const W = Math.round(rect.width * dpr);
@@ -254,9 +265,13 @@ function ScreenCanvas() {
       const ctx = c.getContext('2d')!;
       ctx.fillStyle = '#000';
       ctx.fillRect(0, 0, W, H);
-      const side = H - 24 * dpr;
-      const ox = (W - side) / 2;
-      const oy = 12 * dpr;
+      const padL = 34 * dpr;
+      const padR = 12 * dpr;
+      const padT = 18 * dpr;
+      const padB = 14 * dpr;
+      const side = Math.floor(Math.min(H - padT - padB, W - padL - padR));
+      const ox = Math.floor(padL + (W - padL - padR - side) / 2);
+      const oy = padT;
       const k = side / N;
       const X = (p: number) => ox + p * k;
       const Y = (p: number) => oy + p * k;
@@ -277,57 +292,106 @@ function ScreenCanvas() {
       ctx.textAlign = 'right';
       for (let p = 0; p <= N; p += 500) ctx.fillText(String(p), ox - 4 * dpr, Y(p) + 3 * dpr);
       ctx.textAlign = 'left';
-      ctx.strokeStyle = 'rgba(170,214,255,0.35)';
       ctx.strokeRect(ox, oy, side, side);
-      // Scan path of the optical axis.
-      ctx.strokeStyle = 'rgba(255,181,71,0.45)';
-      ctx.beginPath();
-      axis.forEach(([x, y], i) => (i ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y))));
+
+      // Dedicated screen title pill above grid (never collides with inside content)
+      const drawPill = (x: number, y: number, w: number, h: number, r: number) => {
+        ctx.beginPath();
+        if ((ctx as any).roundRect) (ctx as any).roundRect(x, y, w, h, r);
+        else ctx.rect(x, y, w, h);
+      };
+
+      const tagText = `SCREEN ${N}×${N} px · ${ifov.toFixed(5)}°/px`;
+      ctx.font = `600 ${8.5 * dpr}px "IBM Plex Mono", monospace`;
+      const tagW = ctx.measureText(tagText).width + 12 * dpr;
+      const tagH = 15 * dpr;
+      const tagY = Math.max(2 * dpr, oy - 16 * dpr);
+
+      ctx.fillStyle = 'rgba(10, 16, 26, 0.88)';
+      drawPill(ox, tagY, tagW, tagH, 3 * dpr);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(170,214,255,0.22)';
+      ctx.lineWidth = 1;
       ctx.stroke();
-      // Beacon trail.
-      ctx.strokeStyle = 'rgba(255,90,90,0.55)';
+
+      ctx.fillStyle = 'rgba(215, 235, 255, 0.9)';
+      ctx.fillText(tagText, ox + 6 * dpr, tagY + 11 * dpr);
+      // Beacon trail (strictly the red beacon trajectory)
+      ctx.strokeStyle = 'rgba(255, 68, 68, 0.85)';
+      ctx.lineWidth = 1.5 * dpr;
       ctx.beginPath();
       trail.forEach(([x, y], i) => (i ? ctx.lineTo(X(x), Y(y)) : ctx.moveTo(X(x), Y(y))));
       ctx.stroke();
       // Camera viewport (640 × 480 at 4°, wider during wide-field search).
-      const [bx, by] = toPx(s.gimbal.boresightU, s.gimbal.boresightV);
+      const [bx, by] = toPx(safeBu, safeBv);
       const vw = s.camera.hfovDeg / ifov;
       const vh = s.camera.vfovDeg / ifov;
-      const col = STATE_HEX[s.state];
+      const col = STATE_HEX[s.state] || '#38bdf8';
+      const boxLeft = X(bx - vw / 2);
+      const boxTop = Y(by - vh / 2);
+      const boxW = vw * k;
+      const boxH = vh * k;
+
+      // Glow fill for camera viewport
+      ctx.fillStyle = col + '22';
+      ctx.fillRect(boxLeft, boxTop, boxW, boxH);
+      
+      // Main camera frame boundary
       ctx.strokeStyle = col;
-      ctx.lineWidth = 1.5 * dpr;
-      ctx.fillStyle = col + '14';
-      ctx.fillRect(X(bx - vw / 2), Y(by - vh / 2), vw * k, vh * k);
-      ctx.strokeRect(X(bx - vw / 2), Y(by - vh / 2), vw * k, vh * k);
+      ctx.lineWidth = 2 * dpr;
+      ctx.strokeRect(boxLeft, boxTop, boxW, boxH);
+
+      // Corner accent brackets to highlight camera tracking frame
+      const cornerLen = Math.min(14 * dpr, boxW * 0.18);
+      ctx.lineWidth = 3.5 * dpr;
       ctx.beginPath();
-      ctx.moveTo(X(bx) - 5 * dpr, Y(by));
-      ctx.lineTo(X(bx) + 5 * dpr, Y(by));
-      ctx.moveTo(X(bx), Y(by) - 5 * dpr);
-      ctx.lineTo(X(bx), Y(by) + 5 * dpr);
+      // Top-left
+      ctx.moveTo(boxLeft, boxTop + cornerLen);
+      ctx.lineTo(boxLeft, boxTop);
+      ctx.lineTo(boxLeft + cornerLen, boxTop);
+      // Top-right
+      ctx.moveTo(boxLeft + boxW - cornerLen, boxTop);
+      ctx.lineTo(boxLeft + boxW, boxTop);
+      ctx.lineTo(boxLeft + boxW, boxTop + cornerLen);
+      // Bottom-left
+      ctx.moveTo(boxLeft, boxTop + boxH - cornerLen);
+      ctx.lineTo(boxLeft, boxTop + boxH);
+      ctx.lineTo(boxLeft + cornerLen, boxTop + boxH);
+      // Bottom-right
+      ctx.moveTo(boxLeft + boxW - cornerLen, boxTop + boxH);
+      ctx.lineTo(boxLeft + boxW, boxTop + boxH);
+      ctx.lineTo(boxLeft + boxW, boxTop + boxH - cornerLen);
       ctx.stroke();
-      ctx.lineWidth = 1;
+
+      // Optical boresight crosshair + center ring
+      ctx.lineWidth = 1.5 * dpr;
+      ctx.beginPath();
+      ctx.moveTo(X(bx) - 7 * dpr, Y(by));
+      ctx.lineTo(X(bx) + 7 * dpr, Y(by));
+      ctx.moveTo(X(bx), Y(by) - 7 * dpr);
+      ctx.lineTo(X(bx), Y(by) + 7 * dpr);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(X(bx), Y(by), 3 * dpr, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Viewport Label with dedicated dark glass pill to prevent text collisions
+      const camText = `CAM FOV ${Math.round(vw)}×${Math.round(vh)}`;
+      ctx.font = `700 ${8.5 * dpr}px "IBM Plex Mono", monospace`;
+      const camW = ctx.measureText(camText).width + 10 * dpr;
+      const camH = 14 * dpr;
+      const camX = Math.max(ox + 3 * dpr, Math.min(ox + side - camW - 3 * dpr, boxLeft + 3 * dpr));
+      const camY = boxTop > oy + 18 * dpr ? boxTop - 16 * dpr : boxTop + 4 * dpr;
+
+      ctx.fillStyle = 'rgba(7, 12, 20, 0.92)';
+      drawPill(camX, camY, camW, camH, 3 * dpr);
+      ctx.fill();
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1 * dpr;
+      ctx.stroke();
+
       ctx.fillStyle = col;
-      ctx.fillText(`camera ${Math.round(vw)}×${Math.round(vh)} px`, X(bx - vw / 2), Y(by - vh / 2) - 4 * dpr);
-      // Search goal.
-      if (s.gimbal.goalU !== null && s.gimbal.goalV !== null) {
-        const [gx, gy] = toPx(s.gimbal.goalU, s.gimbal.goalV);
-        ctx.strokeStyle = 'rgba(255,181,71,0.8)';
-        ctx.strokeRect(X(gx) - 3 * dpr, Y(gy) - 3 * dpr, 6 * dpr, 6 * dpr);
-      }
-      // Kalman estimate.
-      if (s.kalman.estPx) {
-        const u = s.gimbal.boresightU + (s.kalman.estPx[0] - s.camera.width / 2) * (s.camera.hfovDeg / s.camera.width);
-        const v = s.gimbal.boresightV - (s.kalman.estPx[1] - s.camera.height / 2) * (s.camera.hfovDeg / s.camera.width);
-        const [ex, ey] = toPx(u, v);
-        ctx.fillStyle = '#ffd08a';
-        ctx.beginPath();
-        ctx.moveTo(X(ex), Y(ey) - 5 * dpr);
-        ctx.lineTo(X(ex) + 5 * dpr, Y(ey));
-        ctx.lineTo(X(ex), Y(ey) + 5 * dpr);
-        ctx.lineTo(X(ex) - 5 * dpr, Y(ey));
-        ctx.closePath();
-        ctx.fill();
-      }
+      ctx.fillText(camText, camX + 5 * dpr, camY + 10.5 * dpr);
       // Beacon (true position, drawn at its real 10 px size, with a glow so it is visible).
       const [tx, ty] = toPx(s.target.u, s.target.v);
       const g = ctx.createRadialGradient(X(tx), Y(ty), 0, X(tx), Y(ty), 10 * dpr);
@@ -338,38 +402,24 @@ function ScreenCanvas() {
       const sp = Math.max(2 * dpr, conf.target.spotSizePx * k);
       ctx.fillStyle = s.disturbance.occluded ? 'rgba(255,255,255,0.3)' : '#fff';
       ctx.fillRect(X(tx) - sp / 2, Y(ty) - sp / 2, sp, sp);
-      // Labels.
-      ctx.fillStyle = 'rgba(232,240,247,0.85)';
-      ctx.font = `${10 * dpr}px "IBM Plex Mono", monospace`;
-      const L = ox + side + 8 * dpr;
-      const lines = [
-        `SCREEN ${N}×${N} px`,
-        `${ifov.toFixed(5)}°/px`,
-        '',
-        `beacon  ${tx.toFixed(0)}, ${ty.toFixed(0)}`,
-        `camera  ${bx.toFixed(0)}, ${by.toFixed(0)}`,
-        `error   ${Math.hypot(tx - bx, ty - by).toFixed(1)} px`,
-        s.disturbance.occluded ? 'OUTAGE (cloud)' : '',
-      ];
-      if (L + 120 * dpr < W) lines.forEach((t, i) => ctx.fillText(t, L, oy + (12 + i * 14) * dpr));
-      else lines.slice(0, 1).forEach((t) => ctx.fillText(t, ox + 6 * dpr, oy + 14 * dpr));
-      const lx = ox - 8 * dpr;
-      ctx.textAlign = 'right';
-      if (lx > 110 * dpr) {
-        const legend: [string, string][] = [
-          ['#ffffff', 'beacon'],
-          ['rgba(255,90,90,0.8)', 'beacon path'],
-          [col, 'camera view'],
-          ['rgba(255,181,71,0.8)', 'scan path'],
-          ['#ffd08a', 'Kalman estimate'],
-        ];
-        legend.forEach(([c2, t], i) => {
-          ctx.fillStyle = c2;
-          ctx.fillRect(lx - 8 * dpr, oy + (40 + i * 14) * dpr - 6 * dpr, 6 * dpr, 6 * dpr);
-          ctx.fillStyle = 'rgba(232,240,247,0.75)';
-          ctx.fillText(t, lx - 14 * dpr, oy + (40 + i * 14) * dpr);
-        });
-      }
+      // Clean telemetry pill in bottom-right corner (never overlaps camera or grid)
+      const errPx = Math.hypot(tx - bx, ty - by);
+      const statText = `BEACON ${tx.toFixed(0)},${ty.toFixed(0)} · ERR ${errPx.toFixed(1)} px${s.disturbance.occluded ? ' · OUTAGE' : ''}`;
+      ctx.font = `500 ${8 * dpr}px "IBM Plex Mono", monospace`;
+      const statW = ctx.measureText(statText).width + 10 * dpr;
+      const statH = 14 * dpr;
+      const statX = ox + side - statW - 4 * dpr;
+      const statY = oy + side - statH - 4 * dpr;
+
+      ctx.fillStyle = 'rgba(7, 12, 20, 0.88)';
+      drawPill(statX, statY, statW, statH, 3 * dpr);
+      ctx.fill();
+      ctx.strokeStyle = s.disturbance.occluded ? 'rgba(255,90,90,0.4)' : 'rgba(170,214,255,0.2)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = s.disturbance.occluded ? '#ff7b7b' : 'rgba(232,240,247,0.85)';
+      ctx.fillText(statText, statX + 5 * dpr, statY + 10 * dpr);
       ctx.textAlign = 'left';
     };
     raf = requestAnimationFrame(draw);

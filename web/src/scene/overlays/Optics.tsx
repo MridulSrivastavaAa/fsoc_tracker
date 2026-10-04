@@ -10,10 +10,7 @@
  */
 import { useMemo, useRef } from 'react';
 import * as THREE from 'three';
-import { useFrame, useThree } from '@react-three/fiber';
-import { Line2 } from 'three/examples/jsm/lines/Line2.js';
-import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
+import { useFrame } from '@react-three/fiber';
 import { vis } from '../vis';
 import { live, trails, useApp } from '../../state/store';
 import { basisFromAzEl, dirFromField } from '../../core/geometry';
@@ -82,15 +79,39 @@ export function Optics() {
   const frustum = useMemo(() => {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(5 * 3), 3));
-    g.setIndex([0, 1, 2, 0, 2, 3, 0, 3, 4, 0, 4, 1]);
+    g.setIndex([
+      0, 1, 2,
+      0, 2, 3,
+      0, 3, 4,
+      0, 4, 1,
+      1, 2, 3,
+      1, 3, 4,
+    ]);
     const faces = new THREE.Mesh(
       g,
-      new THREE.MeshBasicMaterial({ color: '#8fdcff', transparent: true, opacity: 0.022, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }),
+      new THREE.MeshBasicMaterial({
+        color: '#38bdf8',
+        transparent: true,
+        opacity: 0.05,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
     );
     const eg = new THREE.BufferGeometry();
-    eg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(16 * 3), 3));
-    const edges = new THREE.LineSegments(eg, new THREE.LineBasicMaterial({ color: '#8fdcff', transparent: true, opacity: 0.4, depthWrite: false }));
+    eg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(32 * 3), 3));
+    const edges = new THREE.LineSegments(
+      eg,
+      new THREE.LineBasicMaterial({
+        color: '#38bdf8',
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false,
+      }),
+    );
     faces.frustumCulled = edges.frustumCulled = false;
+    faces.renderOrder = 1;
+    edges.renderOrder = 2;
     return { faces, edges };
   }, []);
 
@@ -119,21 +140,42 @@ export function Optics() {
     return l;
   }, []);
 
-  // Red laser: thick screen-space core + wide soft glow (Line2 keeps a constant pixel width).
-  const laser = useMemo(() => {
-    const mk = (width: number, color: THREE.Color, opacity: number) => {
-      const g = new LineGeometry();
-      g.setPositions([0, 0, 0, 0, 0.001, 0]);
-      const mat = new LineMaterial({ color: color.getHex(), linewidth: width, transparent: true, opacity, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false });
-      mat.color.copy(color);
-      const l = new Line2(g, mat);
-      l.frustumCulled = false;
-      l.renderOrder = 3;
-      return l;
-    };
-    return { core: mk(2.2, new THREE.Color(4, 0.45, 0.35), 1), glow: mk(9, new THREE.Color(1.6, 0.08, 0.06), 0.35) };
+  // Volumetric 3D Laser Beam Mesh: 100% visible at all distances and zoom levels
+  const laserBeam = useMemo(() => {
+    const coreGeo = new THREE.CylinderGeometry(0.02, 0.02, 1, 16, 1, true);
+    coreGeo.translate(0, 0.5, 0);
+    coreGeo.rotateX(Math.PI / 2);
+    const coreMat = new THREE.MeshBasicMaterial({
+      color: '#ff2222',
+      transparent: true,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    });
+    const core = new THREE.Mesh(coreGeo, coreMat);
+
+    const glowGeo = new THREE.CylinderGeometry(0.12, 0.12, 1, 16, 1, true);
+    glowGeo.translate(0, 0.5, 0);
+    glowGeo.rotateX(Math.PI / 2);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: '#ff4433',
+      transparent: true,
+      opacity: 0.38,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+
+    const group = new THREE.Group();
+    group.add(core);
+    group.add(glow);
+    group.frustumCulled = false;
+    core.frustumCulled = false;
+    glow.frustumCulled = false;
+    group.renderOrder = 3;
+    return { group, core, glow, coreMat, glowMat };
   }, []);
-  const size = useThree((st) => st.size);
 
   const cone = useMemo(() => {
     const g = new THREE.CylinderGeometry(0, 1, 1, 48, 1, true);
@@ -150,6 +192,21 @@ export function Optics() {
     // CylinderGeometry uv.y is 1 at the apex (satellite) and 0 at the base → fades toward the ground.
     const mesh = new THREE.Mesh(g, m);
     mesh.frustumCulled = false;
+    return mesh;
+  }, []);
+
+  const aperture = useMemo(() => {
+    const g = new THREE.RingGeometry(0.005, 0.025, 32);
+    const m = new THREE.MeshBasicMaterial({
+      color: '#38bdf8',
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending,
+    });
+    const mesh = new THREE.Mesh(g, m);
+    mesh.frustumCulled = false;
+    mesh.renderOrder = 4;
     return mesh;
   }, []);
 
@@ -180,27 +237,55 @@ export function Optics() {
 
     const th = Math.tan(THREE.MathUtils.degToRad(vis.hfov / 2));
     const tv = Math.tan(THREE.MathUtils.degToRad(vis.vfov / 2));
-    const corner = (sx: number, sy: number) =>
-      tmp.p.copy(apex).addScaledVector(tmp.f, L).addScaledVector(tmp.r, sx * th * L).addScaledVector(tmp.u, sy * tv * L).clone();
-    const c1 = corner(-1, -1);
-    const c2 = corner(1, -1);
-    const c3 = corner(1, 1);
-    const c4 = corner(-1, 1);
+    const corner = (dist: number, sx: number, sy: number) =>
+      tmp.p.copy(apex).addScaledVector(tmp.f, dist).addScaledVector(tmp.r, sx * th * dist).addScaledVector(tmp.u, sy * tv * dist).clone();
+    
+    // Far camera FOV rectangle at satellite range
+    const c1 = corner(L, -1, -1);
+    const c2 = corner(L, 1, -1);
+    const c3 = corner(L, 1, 1);
+    const c4 = corner(L, -1, 1);
+
+    // Mid camera FOV rectangle at 20% range or 5 km
+    const Lmid = Math.max(5, L * 0.2);
+    const m1 = corner(Lmid, -1, -1);
+    const m2 = corner(Lmid, 1, -1);
+    const m3 = corner(Lmid, 1, 1);
+    const m4 = corner(Lmid, -1, 1);
+
+    // Near camera FOV aperture rectangle (50m = 0.05 km) so frustum is prominent at the terminal
+    const Lnear = Math.min(0.06, L * 0.01);
+    const n1 = corner(Lnear, -1, -1);
+    const n2 = corner(Lnear, 1, -1);
+    const n3 = corner(Lnear, 1, 1);
+    const n4 = corner(Lnear, -1, 1);
+
     const fp = frustum.faces.geometry.attributes.position as THREE.BufferAttribute;
     [apex, c1, c2, c3, c4].forEach((v, i) => fp.setXYZ(i, v.x, v.y, v.z));
     fp.needsUpdate = true;
     const ep = frustum.edges.geometry.attributes.position as THREE.BufferAttribute;
-    const segs = [apex, c1, apex, c2, apex, c3, apex, c4, c1, c2, c2, c3, c3, c4, c4, c1];
+    const segs = [
+      apex, c1, apex, c2, apex, c3, apex, c4, // 4 corner sightlines
+      n1, n2, n2, n3, n3, n4, n4, n1,         // Near aperture box (50m)
+      m1, m2, m2, m3, m3, m4, m4, m1,         // Mid reference box (5km)
+      c1, c2, c2, c3, c3, c4, c4, c1,         // Far camera FOV rectangle (780km)
+    ];
     segs.forEach((v, i) => ep.setXYZ(i, v.x, v.y, v.z));
     ep.needsUpdate = true;
 
-    // Yellow during any non-locked state; Green ONLY when fully LOCKED.
-    const focalCol = isLocked ? '#22c55e' : '#facc15';
+    // Sleek cyan during search/tracking; Vibrant green ONLY when fully LOCKED.
+    const focalCol = isLocked ? '#00ff66' : '#00e5ff';
     (frustum.edges.material as THREE.LineBasicMaterial).color.set(focalCol);
     (frustum.faces.material as THREE.MeshBasicMaterial).color.set(focalCol);
-    (frustum.edges.material as THREE.LineBasicMaterial).opacity = isLocked ? 0.8 : 0.6;
-    (frustum.faces.material as THREE.MeshBasicMaterial).opacity = isLocked ? 0.04 : 0.025;
+    (frustum.edges.material as THREE.LineBasicMaterial).opacity = isLocked ? 0.98 : 0.85;
+    (frustum.faces.material as THREE.MeshBasicMaterial).opacity = isLocked ? 0.22 : 0.15;
     frustum.faces.visible = frustum.edges.visible = overlays.fov && !vis.pov && vis.view !== 'link';
+
+    // Camera aperture ring
+    aperture.position.copy(apex);
+    aperture.lookAt(tmp.p.copy(apex).add(tmp.f));
+    (aperture.material as THREE.MeshBasicMaterial).color.set(focalCol);
+    aperture.visible = overlays.fov && !vis.pov && vis.view !== 'link';
 
     // ── Optical axis (aligned to actual beam direction) ────────────
     const ap = axis.geometry.attributes.position as THREE.BufferAttribute;
@@ -290,9 +375,10 @@ export function Optics() {
     }
 
     // ── Beacon illumination cone (sat → ground) ───────────────────
-    tmp.p.copy(vis.lens).sub(vis.beacon);
+    const targetPos = (vis.beacon && vis.beacon.lengthSq() > 10) ? vis.beacon : vis.sat;
+    tmp.p.copy(vis.lens).sub(targetPos);
     const dist = tmp.p.length();
-    cone.position.copy(vis.beacon);
+    cone.position.copy(targetPos);
     tmp.q.setFromUnitVectors(new THREE.Vector3(0, -1, 0), tmp.p.normalize());
     cone.quaternion.copy(tmp.q);
     const halfAngle = 0.012; // rad — exaggerated ×80 vs a 150 µrad beacon for visibility
@@ -300,30 +386,31 @@ export function Optics() {
     cone.visible = !vis.pov && vis.view !== 'link';
     (cone.material as THREE.ShaderMaterial).uniforms.opacity.value = vis.state === 'LOCKED' ? 0.035 : 0.07;
 
-    // ── Optical link beam ─────────────────────────────────────────
-    const tracking = vis.state === 'LOCKED' || vis.state === 'TRACKING';
-    beam.visible = tracking && !vis.pov;
-    const locked = vis.state === 'LOCKED';
-    laser.core.visible = laser.glow.visible = tracking && !vis.pov;
-    if (tracking) {
-      for (const l of [laser.core, laser.glow]) {
-        const a = (l.geometry.attributes.instanceStart as THREE.InterleavedBufferAttribute).data;
-        a.array.set([vis.lens.x, vis.lens.y, vis.lens.z, vis.beacon.x, vis.beacon.y, vis.beacon.z]);
-        a.needsUpdate = true;
-        const mat = l.material as LineMaterial;
-        mat.resolution.set(size.width, size.height);
-      }
-      (laser.core.material as LineMaterial).opacity = locked ? 1 : 0.35;
-      (laser.glow.material as LineMaterial).opacity = locked ? 0.3 + 0.08 * Math.sin(state.clock.elapsedTime * 7) : 0.1;
-      (laser.core.material as LineMaterial).linewidth = locked ? 2.2 : 1.2;
+    // ── 3D Volumetric Laser Beam ──────────────────────────────────
+    const hasLaser = vis.state === 'LOCKED' || vis.state === 'TRACKING' || vis.state === 'DETECTED';
+    laserBeam.group.visible = !vis.pov && hasLaser && dist > 0.05;
+    if (laserBeam.group.visible) {
+      laserBeam.group.position.copy(apex);
+      laserBeam.group.lookAt(targetPos);
+      const radScale = Math.max(0.08, Math.min(2.5, dist * 0.0014));
+      laserBeam.core.scale.set(radScale * 0.45, radScale * 0.45, dist);
+      laserBeam.glow.scale.set(radScale * 1.6, radScale * 1.6, dist);
+      laserBeam.coreMat.color.set(isLocked ? '#ff2222' : '#ff7a30');
+      laserBeam.glowMat.color.set(isLocked ? '#ff1100' : '#ff5500');
+      laserBeam.coreMat.opacity = isLocked ? 0.98 : 0.70;
+      laserBeam.glowMat.opacity = isLocked ? (0.45 + 0.15 * Math.sin(state.clock.elapsedTime * 8)) : 0.25;
     }
-    if (tracking) {
+
+    // ── Secondary data pulse beam ─────────────────────────────────
+    const tracking = vis.state === 'LOCKED' || vis.state === 'TRACKING';
+    beam.visible = tracking && !vis.pov && dist > 0.05;
+    if (beam.visible) {
       const bp = beam.geometry.attributes.position as THREE.BufferAttribute;
       const bd = beam.geometry.attributes.lineDistance as THREE.BufferAttribute;
       const n = bp.count;
       for (let i = 0; i < n; i++) {
         const t = i / (n - 1);
-        tmp.p.copy(vis.lens).lerp(vis.beacon, t);
+        tmp.p.copy(vis.lens).lerp(targetPos, t);
         bp.setXYZ(i, tmp.p.x, tmp.p.y, tmp.p.z);
         bd.setX(i, t * dist);
       }
@@ -332,29 +419,25 @@ export function Optics() {
       const u = (beam.material as THREE.ShaderMaterial).uniforms;
       u.time.value = state.clock.elapsedTime;
       u.len.value = dist;
-      u.pulses.value = vis.state === 'LOCKED' ? 1 : 0;
-      u.opacity.value = vis.state === 'LOCKED' ? 0.9 : 0.3;
-      u.color.value.set(vis.state === 'LOCKED' ? '#ffd0c8' : '#ff6a5a');
+      u.pulses.value = isLocked ? 1 : 0;
+      u.opacity.value = isLocked ? 0.9 : 0.3;
+      u.color.value.set(isLocked ? '#ffd0c8' : '#ff6a5a');
     }
   });
 
   return (
     <>
+      {/* 3D camera FOV frame pyramid extending from telescope into space */}
       <primitive object={frustum.faces} />
       <primitive object={frustum.edges} />
-      <primitive object={axis} />
-      <primitive object={field} />
-      <primitive object={scan} />
+      {/* Precision camera optical aperture ring at terminal telescope */}
+      <primitive object={aperture} />
+      {/* Clean blue satellite trajectory path */}
       <primitive object={trail} />
-      <primitive object={plan} />
-      <primitive object={cone} />
-      <primitive object={laser.glow} />
-      <primitive object={laser.core} />
+      {/* 3D Volumetric Laser Beam (always visible at all ranges and angles) */}
+      <primitive object={laserBeam.group} />
+      {/* Secondary glowing link pulse beam */}
       <primitive object={beam} />
-      <mesh ref={est}>
-        <octahedronGeometry args={[1, 0]} />
-        <meshBasicMaterial color="#ffd08a" wireframe transparent opacity={0.9} toneMapped={false} />
-      </mesh>
     </>
   );
 }

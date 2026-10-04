@@ -89,7 +89,7 @@ export function historySlice(key: SeriesKey, seconds: number): { t: Float32Array
 }
 
 // ───────────────────────── React-facing store ─────────────────────────
-export type DrawerId = 'scenario' | 'target' | 'disturbance' | 'tracking' | 'experiment' | 'optics' | 'view' | null;
+export type DrawerId = 'scenario' | 'target' | 'disturbance' | 'tracking' | 'experiment' | 'optics' | 'view' | 'plugin' | null;
 export type ViewPreset = 'overview' | 'terminal' | 'link' | 'sensor' | 'orbit' | 'free' | 'follow';
 export type FollowKey = 'sat3';
 export type Quality = 'low' | 'medium' | 'high';
@@ -216,12 +216,13 @@ export const useApp = create<AppState>((set, get) => {
         recorder.push(s);
         const now = performance.now();
         const newEvents = s.events.length ? [...get().events, ...s.events].slice(-250) : null;
-        if (now - lastHud > 80 || newEvents) {
+        if (now - lastHud > 25 || newEvents) {
           lastHud = now;
           const rp = provider instanceof ReplayProvider ? provider : null;
           set({
             hud: s,
             tick: get().tick + 1,
+            ...(get().providerStatus !== 'online' ? { providerStatus: 'online', providerError: null } : {}),
             ...(newEvents ? { events: newEvents } : {}),
             recording: { active: recorder.active, frames: recorder.frames.length },
             ...(rp ? { replay: { name: rp.recording.name, length: rp.length, position: rp.position, playing: rp.isPlaying } } : {}),
@@ -259,7 +260,7 @@ export const useApp = create<AppState>((set, get) => {
     engineFps: 0,
     timeScale: 1,
     events: [],
-    drawer: 'scenario',
+    drawer: (typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('drawer') as DrawerId) : null) || 'scenario',
     view: 'overview',
     viewNonce: 0,
     followKey: 'sat3',

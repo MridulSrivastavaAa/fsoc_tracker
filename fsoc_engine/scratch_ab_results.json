@@ -1,0 +1,177 @@
+{
+  "circle_clear": {
+    "Single Kalman Filter": {
+      "default_rmse": 283.00968884431995,
+      "default_lock_pct": 0.0,
+      "default_fps": 33.32127781843966,
+      "custom_rmse": 422.0490454997438,
+      "custom_lock_pct": 0.0,
+      "custom_fps": 27.29026250689402,
+      "delta_rmse_pct": 49.12883273473638,
+      "delta_lock_pct": 0.0,
+      "verdict": "\u274c Single Kalman Filter fails R14 compliance (RMSE=422.05px vs Default=283.01px)."
+    },
+    "Alpha-Beta Filter": {
+      "default_rmse": 283.00968884431995,
+      "default_lock_pct": 0.0,
+      "default_fps": 24.5550589218888,
+      "custom_rmse": 420.08089512712905,
+      "custom_lock_pct": 0.0,
+      "custom_fps": 29.259647527666495,
+      "delta_rmse_pct": 48.433397048187366,
+      "delta_lock_pct": 0.0,
+      "verdict": "\u274c Alpha-Beta Filter fails R14 compliance (RMSE=420.08px vs Default=283.01px)."
+    },
+    "EMA Smoother": {
+      "default_rmse": 283.00968884431995,
+      "default_lock_pct": 0.0,
+      "default_fps": 27.00295749900279,
+      "custom_rmse": 403.9285146075331,
+      "custom_lock_pct": 0.5555555555555556,
+      "custom_fps": 29.78249052957696,
+      "delta_rmse_pct": 42.726037492564096,
+      "delta_lock_pct": 0.5555555555555556,
+      "verdict": "\u274c EMA Smoother fails R14 compliance (RMSE=403.93px vs Default=283.01px)."
+    }
+  },
+  "line_haze": {
+    "Single Kalman Filter": {
+      "default_rmse": 283.0115060709372,
+      "default_lock_pct": 0.0,
+      "default_fps": 25.70409807862665,
+      "custom_rmse": 422.05071954365786,
+      "custom_lock_pct": 0.0,
+      "custom_fps": 40.129029096795854,
+      "delta_rmse_pct": 49.12846668427338,
+      "delta_lock_pct": 0.0,
+      "verdict": "\u274c Single Kalman Filter fails R14 compliance (RMSE=422.05px vs Default=283.01px)."
+    },
+    "Alpha-Beta Filter": {
+      "default_rmse": 283.0115060709372,
+      "default_lock_pct": 0.0,
+      "default_fps": 81.37374063952032,
+      "custom_rmse": 420.0867503040381,
+      "custom_lock_pct": 0.0,
+      "custom_fps": 24.013191566738556,
+      "delta_rmse_pct": 48.43451283522828,
+      "delta_lock_pct": 0.0,
+      "verdict": "\u274c Alpha-Beta Filter fails R14 compliance (RMSE=420.09px vs Default=283.01px)."
+    },
+    "EMA Smoother": {
+      "default_rmse": 283.0115060709372,
+      "default_lock_pct": 0.0,
+      "default_fps": 21.713050648397083,
+      "custom_rmse": 403.9218287064118,
+      "custom_lock_pct": 0.5555555555555556,
+      "custom_fps": 14.391561824354497,
+      "delta_rmse_pct": 42.722758630586675,
+      "delta_lock_pct": 0.5555555555555556,
+      "verdict": "\u274c EMA Smoother fails R14 compliance (RMSE=403.92px vs Default=283.01px)."
+    }
+  },
+  "figure8_fog": {
+    "Single Kalman Filter": {
+      "default_rmse": 283.0045079026337,
+      "default_lock_pct": 0.0,
+      "default_fps": 8.545260501577351,
+      "custom_rmse": 422.05906945539203,
+      "custom_lock_pct": 0.0,
+      "custom_fps": 9.113970428056,
+      "delta_rmse_pct": 49.13510480214661,
+      "delta_lock_pct": 0.0,
+      "verdict": "\u274c Single Kalman Filter fails R14 compliance (RMSE=422.06px vs Default=283.00px)."
+    },
+    "Alpha-Beta Filter": {
+      "default_rmse": 283.0045079026337,
+      "default_lock_pct": 0.0,
+      "default_fps": 9.409592455336703,
+      "custom_rmse": 420.0838471711999,
+      "custom_lock_pct": 0.0,
+      "custom_fps": 9.888009665978387,
+      "delta_rmse_pct": 48.43715751543,
+      "delta_lock_pct": 0.0,
+      "verdict": "\u274c Alpha-Beta Filter fails R14 compliance (RMSE=420.08px vs Default=283.00px)."
+    },
+    "EMA Smoother": {
+      "default_rmse": 283.0045079026337,
+      "default_lock_pct": 0.0,
+      "default_fps": 10.204381863621224,
+      "custom_rmse": 399.83037033016643,
+      "custom_lock_pct": 0.5555555555555556,
+      "custom_fps": 24.19675445704689,
+      "delta_rmse_pct": 41.280565915128854,
+      "delta_lock_pct": 0.5555555555555556,
+      "verdict": "\u274c EMA Smoother fails R14 compliance (RMSE=399.83px vs Default=283.00px)."
+    }
+  },
+  "random_rain": {
+    "Single Kalman Filter": {
+      "default_rmse": 1094.9355108378754,
+      "default_lock_pct": 0.0,
+      "default_fps": 22.631657688345914,
+      "custom_rmse": 1258.5299825218142,
+      "custom_lock_pct": 0.0,
+      "custom_fps": 22.769358378798348,
+      "delta_rmse_pct": 14.941014339625507,
+      "delta_lock_pct": 0.0,
+      "verdict": "\u274c Single Kalman Filter fails R14 compliance (RMSE=1258.53px vs Default=1094.94px)."
+    },
+    "Alpha-Beta Filter": {
+      "default_rmse": 1094.9355108378754,
+      "default_lock_pct": 0.0,
+      "default_fps": 21.937288798769973,
+      "custom_rmse": 1258.2520627598274,
+      "custom_lock_pct": 0.0,
+      "custom_fps": 9.194933462939213,
+      "delta_rmse_pct": 14.915632044573796,
+      "delta_lock_pct": 0.0,
+      "verdict": "\u274c Alpha-Beta Filter fails R14 compliance (RMSE=1258.25px vs Default=1094.94px)."
+    },
+    "EMA Smoother": {
+      "default_rmse": 1094.9355108378754,
+      "default_lock_pct": 0.0,
+      "default_fps": 15.432156186166564,
+      "custom_rmse": 840.5200000921122,
+      "custom_lock_pct": 0.0,
+      "custom_fps": 40.9274226737264,
+      "delta_rmse_pct": -23.235661664774877,
+      "delta_lock_pct": 0.0,
+      "verdict": "\u274c EMA Smoother fails R14 compliance (RMSE=840.52px vs Default=1094.94px)."
+    }
+  },
+  "circle_stress": {
+    "Single Kalman Filter": {
+      "default_rmse": 283.0045079026337,
+      "default_lock_pct": 0.0,
+      "default_fps": 49.79461519367663,
+      "custom_rmse": 422.05906945539203,
+      "custom_lock_pct": 0.0,
+      "custom_fps": 50.44455808185939,
+      "delta_rmse_pct": 49.13510480214661,
+      "delta_lock_pct": 0.0,
+      "verdict": "\u274c Single Kalman Filter fails R14 compliance (RMSE=422.06px vs Default=283.00px)."
+    },
+    "Alpha-Beta Filter": {
+      "default_rmse": 283.0045079026337,
+      "default_lock_pct": 0.0,
+      "default_fps": 57.72428916889681,
+      "custom_rmse": 420.0838471711999,
+      "custom_lock_pct": 0.0,
+      "custom_fps": 58.12233660427635,
+      "delta_rmse_pct": 48.43715751543,
+      "delta_lock_pct": 0.0,
+      "verdict": "\u274c Alpha-Beta Filter fails R14 compliance (RMSE=420.08px vs Default=283.00px)."
+    },
+    "EMA Smoother": {
+      "default_rmse": 283.0045079026337,
+      "default_lock_pct": 0.0,
+      "default_fps": 55.51413584190578,
+      "custom_rmse": 399.83037033016643,
+      "custom_lock_pct": 0.5555555555555556,
+      "custom_fps": 54.18054528899884,
+      "delta_rmse_pct": 41.280565915128854,
+      "delta_lock_pct": 0.5555555555555556,
+      "verdict": "\u274c EMA Smoother fails R14 compliance (RMSE=399.83px vs Default=283.00px)."
+    }
+  }
+}

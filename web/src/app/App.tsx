@@ -74,7 +74,7 @@ export default function App() {
     if (booted.current) return;
     booted.current = true;
     const st = useApp.getState();
-    st.connect('local').then(() => st.setQuality(st.quality));
+    st.connect('remote').then(() => st.setQuality(st.quality));
   }, []);
 
   // Re-frame whenever the telemetry source changes.

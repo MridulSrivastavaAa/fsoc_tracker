@@ -55,39 +55,55 @@ function decodeBinaryFrame(buf: ArrayBuffer): EngineMessage | null {
 
 export class RemoteEngineProvider implements TelemetryProvider {
   readonly kind = 'remote' as const;
-  readonly label: string;
+  public label: string;
   private ws: WebSocket | null = null;
+  private shouldReconnect = false;
+  private listener: Listener | null = null;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
   constructor(private baseUrl: string) {
     this.label = `Remote engine (${baseUrl})`;
   }
 
-  connect(listener: Listener): Promise<void> {
-    const wsUrl = this.baseUrl.replace(/^http/, 'ws').replace(/\/$/, '') + '/ws/telemetry';
+  private tryConnectUrl(targetUrl: string, listener: Listener): Promise<WebSocket> {
+    const wsUrl = targetUrl.replace(/^http/, 'ws').replace(/\/$/, '') + '/ws/telemetry';
     return new Promise((resolve, reject) => {
+      let settled = false;
       const ws = new WebSocket(wsUrl);
       ws.binaryType = 'arraybuffer';
-      let opened = false;
       const timeout = setTimeout(() => {
-        if (!opened) {
-          ws.close();
-          reject(new Error(`No response from ${wsUrl} within 4 s — is the FastAPI server running?`));
+        if (!settled) {
+          settled = true;
+          try { ws.close(); } catch {}
+          reject(new Error(`Timeout connecting to ${wsUrl}`));
         }
-      }, 4000);
+      }, 5000);
+
       ws.onopen = () => {
-        opened = true;
-        clearTimeout(timeout);
-        this.ws = ws;
-        resolve();
-      };
-      ws.onerror = () => {
-        if (!opened) {
+        if (!settled) {
+          settled = true;
           clearTimeout(timeout);
-          reject(new Error(`WebSocket connection to ${wsUrl} failed`));
-        } else listener({ type: 'error', message: 'WebSocket error' });
+          resolve(ws);
+        }
       };
+
+      ws.onerror = () => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          reject(new Error(`WebSocket error for ${wsUrl}`));
+        } else {
+          listener({ type: 'error', message: 'WebSocket communication error' });
+        }
+      };
+
       ws.onclose = () => {
-        if (opened) listener({ type: 'error', message: 'Remote engine disconnected' });
+        if (settled && this.shouldReconnect) {
+          listener({ type: 'error', message: 'Remote engine disconnected — auto-reconnecting…' });
+          this.scheduleReconnect();
+        }
       };
+
       ws.onmessage = (e) => {
         if (typeof e.data === 'string') {
           try {
@@ -103,13 +119,62 @@ export class RemoteEngineProvider implements TelemetryProvider {
     });
   }
 
+  async connect(listener: Listener): Promise<void> {
+    this.listener = listener;
+    this.shouldReconnect = true;
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+
+    // Primary candidate + automatic fallback candidate (8000 <-> 8001)
+    const candidates = [this.baseUrl];
+    if (this.baseUrl.includes(':8000')) {
+      candidates.push(this.baseUrl.replace(':8000', ':8001'));
+    } else if (this.baseUrl.includes(':8001')) {
+      candidates.push(this.baseUrl.replace(':8001', ':8000'));
+    }
+
+    let lastErr: Error | null = null;
+    for (const url of candidates) {
+      try {
+        const ws = await this.tryConnectUrl(url, listener);
+        this.ws = ws;
+        this.baseUrl = url;
+        this.label = `Remote engine (${url})`;
+        return;
+      } catch (e) {
+        lastErr = e as Error;
+      }
+    }
+
+    throw lastErr ?? new Error(`Could not connect to FastAPI server at ${this.baseUrl} or alternate ports`);
+  }
+
+  private scheduleReconnect() {
+    if (!this.shouldReconnect || this.reconnectTimer) return;
+    this.reconnectTimer = setTimeout(async () => {
+      this.reconnectTimer = null;
+      if (!this.shouldReconnect || !this.listener) return;
+      try {
+        await this.connect(this.listener);
+        this.listener({ type: 'status', running: true, demo: false, fps: 30, timeScale: 1 });
+      } catch {
+        this.scheduleReconnect();
+      }
+    }, 2000);
+  }
+
   send(cmd: EngineCommand) {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(cmd));
   }
 
   disconnect() {
+    this.shouldReconnect = false;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
     const ws = this.ws;
     this.ws = null;
+    this.listener = null;
     if (ws) {
       ws.onclose = null;
       ws.close();
