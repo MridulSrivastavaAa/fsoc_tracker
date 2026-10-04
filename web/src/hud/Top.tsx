@@ -23,53 +23,99 @@ export function TopBar() {
 
   return (
     <header className="topbar">
-      <div className="brand">
-        <BrandMark />
-        <div>
-          <div className="brand-word">NETRA</div>
-          <div className="brand-sub">PS 26169 · Virtual Camera Tracking System</div>
+      {/* Left: NETRA + scenario */}
+      <div className="topbar-left">
+        <div className="brand">
+          <BrandMark />
+          <div>
+            <div className="brand-word">NETRA</div>
+            <div className="brand-sub">Next-generation Emulation for Tracking & Real-time Alignment</div>
+          </div>
         </div>
-      </div>
-      <div className="topbar-mid">
         <button className="chip" onClick={() => setDrawer('scenario')} title="Change scenario">
-          <span className="dim">Scenario</span> <b>{preset?.name ?? 'Custom'}</b>
+          <span className="dim">Scenario:</span> <b>{preset?.name ?? 'Open Sky'}</b>
         </button>
-        <span className="chip mono">
+      </div>
+
+      {/* Center: T+ + FPS */}
+      <div className="topbar-center">
+        <span className="chip mono" title="Mission elapsed time">
           T+ <b>{fmtClock(hud?.t ?? 0)}</b>
         </span>
         <span className="chip opt" title="Where the simulation is running">
-          <span className="dot" style={{ color: status === 'online' ? 'var(--lock)' : status === 'error' ? 'var(--lost)' : 'var(--amber)', background: 'currentColor' }} />
+          <span
+            className="dot"
+            style={{
+              color: status === 'online' ? 'var(--lock)' : status === 'error' ? 'var(--lost)' : 'var(--amber)',
+              background: 'currentColor',
+            }}
+          />
           <b>{src}</b>
           <span className="mono dim">
             {fmt(fps, 0)} fps · {fmt(hud?.procMs, 1)} ms
           </span>
         </span>
       </div>
-      <div className="state-badge" style={{ color: stateColor(state) }} title="Acquisition & tracking state (driven by the state machine)">
-        <span className="pulse" style={{ background: 'currentColor' }} />
-        <span className="state-name">{state}</span>
-        <span className="state-time">{inState.toFixed(1)} s</span>
-      </div>
-      <div className="row">
-        <button className="btn icon" onClick={() => send({ type: running ? 'pause' : 'start' })} title={running ? 'Pause (Space)' : 'Run (Space)'}>
-          <Icon name={running ? 'pause' : 'play'} />
-        </button>
-        <button className="btn icon" onClick={() => send({ type: 'reset' })} title="Reset run — new random start (R)" disabled={isReplay}>
-          <Icon name="reset" />
-        </button>
-        <button className={`btn rec ${rec.active ? 'on' : ''}`} onClick={() => (rec.active ? stopRecording() : startRecording())} title="Record telemetry for export / replay">
-          <span className="led" />
-          {rec.active ? `REC ${(rec.frames / 30).toFixed(0)} s` : 'Record'}
-        </button>
-        <button className="btn primary" onClick={() => send({ type: 'demo', on: !demo })} disabled={isReplay} title="90 s guided demonstration (D)">
-          {demo ? 'End demo' : 'Run demo'}
-        </button>
-        <button className={`btn icon ghost ${themeOpen ? 'on' : ''}`} onClick={() => set({ themeOpen: !themeOpen })} title="Interface Themes (T)" aria-label="Themes">
-          <Icon name="palette" />
-        </button>
-        <button className="btn icon ghost" onClick={() => set({ helpOpen: true })} title="What am I looking at? (?)">
-          <Icon name="help" />
-        </button>
+
+      {/* Right: LOCKED + simulation controls */}
+      <div className="topbar-right">
+        <div
+          className="state-badge"
+          style={{ color: stateColor(state) }}
+          title="Acquisition & tracking state (driven by the state machine)"
+        >
+          <span className="pulse" style={{ background: 'currentColor' }} />
+          <span className="state-name">{state}</span>
+          <span className="state-time">{inState.toFixed(1)} s</span>
+        </div>
+        <div className="topbar-controls">
+          <button
+            className="btn icon"
+            onClick={() => send({ type: running ? 'pause' : 'start' })}
+            title={running ? 'Pause (Space)' : 'Run (Space)'}
+          >
+            <Icon name={running ? 'pause' : 'play'} />
+          </button>
+          <button
+            className="btn icon"
+            onClick={() => send({ type: 'reset' })}
+            title="Reset run — new random start (R)"
+            disabled={isReplay}
+          >
+            <Icon name="reset" />
+          </button>
+          <button
+            className={`btn rec ${rec.active ? 'on' : ''}`}
+            onClick={() => (rec.active ? stopRecording() : startRecording())}
+            title="Record telemetry for export / replay"
+          >
+            <span className="led" />
+            {rec.active ? `REC ${(rec.frames / 30).toFixed(0)} s` : 'Record'}
+          </button>
+          <button
+            className="btn primary"
+            onClick={() => send({ type: 'demo', on: !demo })}
+            disabled={isReplay}
+            title="90 s guided demonstration (D)"
+          >
+            {demo ? 'End demo' : 'Run demo'}
+          </button>
+          <button
+            className={`btn icon ghost ${themeOpen ? 'on' : ''}`}
+            onClick={() => set({ themeOpen: !themeOpen })}
+            title="Interface Themes (T)"
+            aria-label="Themes"
+          >
+            <Icon name="palette" />
+          </button>
+          <button
+            className="btn icon ghost"
+            onClick={() => set({ helpOpen: true })}
+            title="What am I looking at? (?)"
+          >
+            <Icon name="help" />
+          </button>
+        </div>
       </div>
     </header>
   );

@@ -24,7 +24,7 @@ function drawOverlay(ctx: CanvasRenderingContext2D, s: Snapshot, W: number, H: n
   const Y = (y: number) => y * sc;
   const col = STATE_HEX[s.state];
   ctx.lineWidth = 1;
-  ctx.font = `${Math.max(10, 10.5 * Math.min(1.4, sc))}px "IBM Plex Mono", monospace`;
+  ctx.font = `${Math.max(10, 10.5 * Math.min(1.4, sc))}px "JetBrains Mono", monospace`;
   ctx.textBaseline = 'top';
 
   // Calibration grid: gnomonic degree lines from the camera model (x = cx + fx·tan u).
@@ -264,7 +264,7 @@ function ScreenCanvas() {
       ctx.fillRect(ox, oy, side, side);
       ctx.strokeStyle = 'rgba(170,214,255,0.07)';
       ctx.lineWidth = 1;
-      ctx.font = `${9 * dpr}px "IBM Plex Mono", monospace`;
+      ctx.font = `${9 * dpr}px "JetBrains Mono", monospace`;
       ctx.fillStyle = 'rgba(170,214,255,0.45)';
       for (let p = 0; p <= N; p += 250) {
         ctx.beginPath();
@@ -340,7 +340,7 @@ function ScreenCanvas() {
       ctx.fillRect(X(tx) - sp / 2, Y(ty) - sp / 2, sp, sp);
       // Labels.
       ctx.fillStyle = 'rgba(232,240,247,0.85)';
-      ctx.font = `${10 * dpr}px "IBM Plex Mono", monospace`;
+      ctx.font = `${10 * dpr}px "JetBrains Mono", monospace`;
       const L = ox + side + 8 * dpr;
       const lines = [
         `SCREEN ${N}×${N} px`,
@@ -444,7 +444,7 @@ export function SensorView() {
         ctx.drawImage(off.current!, 0, 0, W, H);
       } else {
         ctx.fillStyle = 'rgba(232,240,247,0.5)';
-        ctx.font = `${12 * dpr}px "IBM Plex Mono", monospace`;
+        ctx.font = `${12 * dpr}px "JetBrains Mono", monospace`;
         ctx.textAlign = 'center';
         ctx.fillText(useApp.getState().providerKind === 'replay' ? 'REPLAY · images are not recorded — overlays only' : 'NO SIGNAL', W / 2, H / 2 - 20);
         ctx.textAlign = 'left';

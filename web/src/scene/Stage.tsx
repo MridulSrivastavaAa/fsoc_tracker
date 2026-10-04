@@ -16,7 +16,7 @@ import { SpaceEnvironment } from './space/SpaceObjects';
 import { LabelProjector } from './Labels';
 import { CameraRig } from './CameraRig';
 import { VisBus } from './VisBus';
-import { useApp } from '../state/store';
+import { useApp, THEME_CONFIGS } from '../state/store';
 import { azElVec } from './world';
 
 function Lights({ sunDir }: { sunDir: THREE.Vector3 }) {
@@ -161,6 +161,8 @@ function dprFor(quality: string): [number, number] {
 
 export function Stage() {
   const quality = useApp((s) => s.quality);
+  const theme = useApp((s) => s.theme);
+  const spaceBg = THEME_CONFIGS[theme]?.viewport ?? '#050912';
   // The 3D view is hidden behind the video-benchmark panel: stop rendering it so the
   // analysis gets the whole CPU/GPU budget.
   const paused = useApp((s) => s.videoOpen);
@@ -198,7 +200,7 @@ export function Stage() {
       camera={{ fov: 42, near: 0.0002, far: 3e6, position: [300, 250, 200] }}
       onCreated={({ gl }) => onCreated(gl)}
     >
-      <color attach="background" args={['#020409']} />
+      <color attach="background" args={[spaceBg]} />
       <VisBus />
       <Suspense fallback={null}>
         <Env />

@@ -11,12 +11,21 @@ import { isRecording } from '../core/telemetry/recorder';
 import type { BatchMessage, BatchRunResult } from '../engine/batch.worker';
 import { Icon, Section, Seg, Slider, Toggle, fmt } from './ui';
 
-const TOOLS: { id: Exclude<DrawerId, null>; icon: string; label: string }[] = [
-  { id: 'target', icon: 'target', label: 'Kinematics' },
-  { id: 'tracking', icon: 'tracking', label: 'Detection, Kalman & Servo Loop' },
-  { id: 'disturbance', icon: 'disturbance', label: 'Noise Injection' },
-  { id: 'scenario', icon: 'scenario', label: 'Test Cases' },
-  { id: 'experiment', icon: 'experiment', label: 'Analysis' },
+export interface ToolDef {
+  id: Exclude<DrawerId, null>;
+  num: string;
+  code: string;
+  icon: string;
+  label: string;
+  tag: string;
+}
+
+export const TOOLS: ToolDef[] = [
+  { id: 'target', num: '01', code: 'TRGT', icon: 'target', label: 'Kinematics & Orbit', tag: 'DYNAMICS' },
+  { id: 'tracking', num: '02', code: 'LOOP', icon: 'tracking', label: 'Acquisition & Loop', tag: 'PIPELINE' },
+  { id: 'disturbance', num: '03', code: 'NOIS', icon: 'disturbance', label: 'Noise & Atmosphere', tag: 'TURBULENCE' },
+  { id: 'scenario', num: '04', code: 'SCEN', icon: 'scenario', label: 'Flight Scenarios', tag: 'PROFILES' },
+  { id: 'experiment', num: '05', code: 'ANLS', icon: 'experiment', label: 'Telemetry & Reports', tag: 'METRICS' },
 ];
 
 export function ToolRail() {
@@ -24,17 +33,43 @@ export function ToolRail() {
   const setDrawer = useApp((s) => s.setDrawer);
   const set = useApp((s) => s.set);
   return (
-    <nav className="rail glass" aria-label="Tools">
+    <nav className="rail-strip glass" aria-label="Tools">
+      <div className="rail-strip-header">
+        <span>HUD</span>
+      </div>
       {TOOLS.map((t) => (
-        <button key={t.id} className={drawer === t.id ? 'on' : ''} onClick={() => setDrawer(t.id)} aria-label={t.label}>
+        <button
+          key={t.id}
+          className={`rail-btn ${drawer === t.id ? 'on' : ''}`}
+          onClick={() => setDrawer(t.id)}
+          aria-label={t.label}
+        >
           <Icon name={t.icon} />
-          <span className="tip">{t.label}</span>
+          <span className="rail-indicator" />
+          <div className="tip">
+            <div className="tip-header">
+              <span className="tip-code">{t.code}</span>
+              <span className="tip-tag">{t.tag}</span>
+            </div>
+            <div className="tip-label">{t.label}</div>
+          </div>
         </button>
       ))}
       <div className="sep" />
-      <button onClick={() => set({ videoOpen: true })} aria-label="Video benchmark">
+      <button
+        className="rail-btn bench-btn"
+        onClick={() => set({ videoOpen: true })}
+        aria-label="Video benchmark"
+      >
         <Icon name="film" />
-        <span className="tip">Video benchmark — analyse an MP4 (camera bypass, PS Benchmark-2) · V</span>
+        <div className="tip">
+          <div className="tip-header">
+            <span className="tip-num">[V]</span>
+            <span className="tip-code">BENCH</span>
+            <span className="tip-tag">BYPASS</span>
+          </div>
+          <div className="tip-label">Video Benchmark · Camera Bypass</div>
+        </div>
       </button>
     </nav>
   );
@@ -121,7 +156,7 @@ const TRAJ: { v: TrajectoryKind; label: string }[] = [
   { v: 'figure8', label: 'Figure-8' },
   { v: 'spiral', label: 'Spiral' },
   { v: 'random', label: 'Random' },
-  { v: 'custom', label: 'Waypoints' },
+  { v: 'custom', label: 'Custom Path' },
   { v: 'orbital', label: 'LEO Orbit' },
 ];
 
@@ -721,48 +756,105 @@ function ExperimentDrawer() {
   );
 }
 
-const TITLES: Record<Exclude<DrawerId, null>, string> = {
-  scenario: 'Test Cases',
-  target: 'Kinematics',
-  disturbance: 'Noise Injection',
-  tracking: 'Acquisition & Tracking',
-  optics: 'Kinematics',
-  experiment: 'Analysis',
+const TITLES: Record<Exclude<DrawerId, null>, { num: string; code: string; title: string; tag: string }> = {
+  target: { num: '01', code: 'TRGT', title: 'Kinematics & Orbit', tag: 'DYNAMICS' },
+  optics: { num: '01', code: 'TRGT', title: 'Kinematics & Orbit', tag: 'DYNAMICS' },
+  tracking: { num: '02', code: 'LOOP', title: 'Acquisition & Loop', tag: 'PIPELINE' },
+  disturbance: { num: '03', code: 'NOIS', title: 'Noise & Atmosphere', tag: 'TURBULENCE' },
+  scenario: { num: '04', code: 'SCEN', title: 'Flight Scenarios', tag: 'PROFILES' },
+  experiment: { num: '05', code: 'ANLS', title: 'Telemetry & Reports', tag: 'METRICS' },
 };
 
 export function RightNavbar() {
-  const activeDrawer = useApp((s) => s.drawer) || 'target';
+  const activeDrawer = useApp((s) => s.drawer);
   const setDrawer = useApp((s) => s.setDrawer);
   const set = useApp((s) => s.set);
+  const meta = activeDrawer ? (TITLES[activeDrawer] || TITLES.target) : null;
 
   return (
-    <div className="right-navbar" aria-label="Controls & Navigation">
-      {/* Embedded Drawer Content Pane */}
-      <aside className="drawer-panel glass">
-        <div className="drawer-head">
-          <h3>{TITLES[activeDrawer] || 'Kinematics'}</h3>
-        </div>
-        <div className="drawer-body">
-          {(activeDrawer === 'target' || activeDrawer === 'optics') && <TargetDrawer />}
-          {activeDrawer === 'tracking' && <TrackingDrawer />}
-          {activeDrawer === 'disturbance' && <DisturbanceDrawer />}
-          {activeDrawer === 'scenario' && <ScenarioDrawer />}
-          {activeDrawer === 'experiment' && <ExperimentDrawer />}
-        </div>
-      </aside>
+    <div className={`right-navbar ${activeDrawer ? 'drawer-open' : 'drawer-closed'}`} aria-label="Controls & Navigation">
+      {/* Drawer Content Pane - appears on clicking only */}
+      {activeDrawer && meta && (
+        <aside className="drawer-panel glass" aria-label={meta.title}>
+          <div className="drawer-head">
+            <div className="drawer-head-telemetry">
+              <div className="drawer-badge-row">
+                <span className="drawer-sec-tag">{meta.tag}</span>
+                <span className="drawer-status-chip">
+                  <span className="pulse-dot" />
+                  <span>ARMED</span>
+                </span>
+              </div>
+              <div className="drawer-title-row">
+                <h3 className="drawer-title">{meta.title}</h3>
+              </div>
+            </div>
+            <div className="drawer-head-grid-deco">
+              <span className="deco-code">{meta.code}</span>
+              <span className="deco-line" />
+            </div>
+            <button
+              className="drawer-close-btn"
+              onClick={() => setDrawer(activeDrawer)}
+              title="Close panel (Esc)"
+              aria-label="Close panel"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                <path d="M2 2L10 10M10 2L2 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
+          <div className="drawer-body">
+            {(activeDrawer === 'target' || activeDrawer === 'optics') && <TargetDrawer />}
+            {activeDrawer === 'tracking' && <TrackingDrawer />}
+            {activeDrawer === 'disturbance' && <DisturbanceDrawer />}
+            {activeDrawer === 'scenario' && <ScenarioDrawer />}
+            {activeDrawer === 'experiment' && <ExperimentDrawer />}
+          </div>
+        </aside>
+      )}
 
       {/* Embedded Tool Rail Icon Strip */}
       <nav className="rail-strip glass" aria-label="Tools">
-        {TOOLS.map((t) => (
-          <button key={t.id} className={activeDrawer === t.id ? 'on' : ''} onClick={() => setDrawer(t.id)} aria-label={t.label}>
-            <Icon name={t.icon} />
-            <span className="tip">{t.label}</span>
-          </button>
-        ))}
+        <div className="rail-strip-header">
+          <span>HUD</span>
+        </div>
+        {TOOLS.map((t) => {
+          const isActive = activeDrawer === t.id;
+          return (
+            <button
+              key={t.id}
+              className={`rail-btn ${isActive ? 'on' : ''}`}
+              onClick={() => setDrawer(t.id)}
+              aria-label={t.label}
+            >
+              <Icon name={t.icon} />
+              <span className="rail-indicator" />
+              <div className="tip">
+                <div className="tip-header">
+                  <span className="tip-code">{t.code}</span>
+                  <span className="tip-tag">{t.tag}</span>
+                </div>
+                <div className="tip-label">{t.label}</div>
+              </div>
+            </button>
+          );
+        })}
         <div className="sep" />
-        <button onClick={() => set({ videoOpen: true })} aria-label="Video benchmark">
+        <button
+          className="rail-btn bench-btn"
+          onClick={() => set({ videoOpen: true })}
+          aria-label="Video benchmark"
+        >
           <Icon name="film" />
-          <span className="tip">Video benchmark · V</span>
+          <div className="tip">
+            <div className="tip-header">
+              <span className="tip-num">[V]</span>
+              <span className="tip-code">BENCH</span>
+              <span className="tip-tag">BYPASS</span>
+            </div>
+            <div className="tip-label">Video Benchmark · Camera Bypass</div>
+          </div>
         </button>
       </nav>
     </div>

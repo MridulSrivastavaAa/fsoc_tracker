@@ -15,7 +15,7 @@ import { Line2 } from 'three/examples/jsm/lines/Line2.js';
 import { LineGeometry } from 'three/examples/jsm/lines/LineGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { vis } from '../vis';
-import { live, trails, useApp } from '../../state/store';
+import { live, THEME_CONFIGS, trails, useApp } from '../../state/store';
 import { basisFromAzEl, dirFromField } from '../../core/geometry';
 
 const LOGV = /* glsl */ `#include <common>\n#include <logdepthbuf_pars_vertex>`;
@@ -78,6 +78,8 @@ function makeLine(n: number, color: string, opacity: number, dashed = false) {
 export function Optics() {
   const overlays = useApp((s) => s.overlays);
   const cfg = useApp((s) => s.config);
+  const theme = useApp((s) => s.theme);
+  const themeCfg = THEME_CONFIGS[theme] ?? THEME_CONFIGS['mission-control'];
 
   const frustum = useMemo(() => {
     const g = new THREE.BufferGeometry();
@@ -195,7 +197,7 @@ export function Optics() {
     ep.needsUpdate = true;
 
     // Yellow during any non-locked state; Green ONLY when fully LOCKED.
-    const focalCol = isLocked ? '#22c55e' : '#facc15';
+    const focalCol = isLocked ? themeCfg.successLock : themeCfg.spatialBlue;
     (frustum.edges.material as THREE.LineBasicMaterial).color.set(focalCol);
     (frustum.faces.material as THREE.MeshBasicMaterial).color.set(focalCol);
     (frustum.edges.material as THREE.LineBasicMaterial).opacity = isLocked ? 0.8 : 0.6;
@@ -212,6 +214,7 @@ export function Optics() {
     axis.computeLineDistances();
     (axis.material as THREE.LineDashedMaterial).dashSize = L * 0.012;
     (axis.material as THREE.LineDashedMaterial).gapSize = L * 0.008;
+    (axis.material as THREE.LineDashedMaterial).color.set(themeCfg.axisColor);
     axis.visible = overlays.fov && !vis.pov && vis.view !== 'link';
 
     // ── Search field of regard ────────────────────────────────────
@@ -237,6 +240,7 @@ export function Optics() {
     const searching = vis.state === 'SEARCHING' || vis.state === 'REACQUIRING' || vis.state === 'DETECTED';
     const close = vis.view === 'link';
     field.visible = overlays.trails && !close;
+    (field.material as THREE.LineDashedMaterial).color.set(themeCfg.isroOrange);
     (field.material as THREE.LineDashedMaterial).opacity = searching ? 0.55 : 0.18;
 
     // ── Scan path (recent optical-axis directions at target range) ─
@@ -251,7 +255,7 @@ export function Optics() {
     sp.needsUpdate = true;
     scan.geometry.setDrawRange(0, nScan);
     scan.visible = overlays.trails && !close;
-    (scan.material as THREE.LineBasicMaterial).color.set(searching ? '#ffb547' : '#8fdcff');
+    (scan.material as THREE.LineBasicMaterial).color.set(searching ? themeCfg.isroOrange : themeCfg.spatialBlue);
     (scan.material as THREE.LineBasicMaterial).opacity = searching ? 0.7 : 0.25;
 
     // ── Target trail + planned path ───────────────────────────────
@@ -264,6 +268,7 @@ export function Optics() {
     }
     tp.needsUpdate = true;
     trail.geometry.setDrawRange(0, nT);
+    (trail.material as THREE.LineBasicMaterial).color.set(themeCfg.spatialBlue);
     trail.visible = overlays.trails && !close;
     const pl = live.plan?.path ?? [];
     const pp = plan.geometry.attributes.position as THREE.BufferAttribute;
@@ -277,6 +282,7 @@ export function Optics() {
     plan.computeLineDistances();
     (plan.material as THREE.LineDashedMaterial).dashSize = L * 0.006;
     (plan.material as THREE.LineDashedMaterial).gapSize = L * 0.006;
+    (plan.material as THREE.LineDashedMaterial).color.set(themeCfg.spatialBlue);
     plan.visible = overlays.trails && nP > 1 && !close;
 
     // ── Kalman estimate marker ────────────────────────────────────

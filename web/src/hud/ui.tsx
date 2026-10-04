@@ -94,43 +94,57 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
   const paths: Record<string, ReactNode> = {
     scenario: (
       <>
-        <circle cx="12" cy="12" r="7" {...p} strokeWidth={1.5} />
-        <ellipse cx="12" cy="12" rx="9.8" ry="4.2" transform="rotate(-30 12 12)" {...p} strokeWidth={1.5} />
-        <circle cx="19.2" cy="7.8" r="1.5" fill="currentColor" stroke="none" />
-        <path d="M5.5 12h13" {...p} opacity={0.35} strokeDasharray="1.5 2" />
+        {/* Globe / planetary horizon */}
+        <circle cx="12" cy="12" r="7.5" {...p} strokeWidth={1.4} />
+        {/* Equatorial / meridian line */}
+        <path d="M4.5 12h15M12 4.5c2.5 2.5 4 4.5 4 7.5s-1.5 5-4 7.5" {...p} strokeWidth={1.2} opacity={0.45} />
+        {/* Orbital overpass trajectory track */}
+        <path d="M3 17C4.5 9 10 3.5 18 3.5c3.2 0 4 2.5 2.5 5.5-2.5 5-9 10.5-16 11" {...p} strokeWidth={1.6} />
+        {/* Satellite node on orbital track */}
+        <circle cx="18" cy="4" r="1.8" fill="currentColor" stroke="none" />
+        <path d="M20 2.5l1.5 1.5M16 5.5l-1.5-1.5" {...p} strokeWidth={1.3} />
       </>
     ),
     target: (
       <>
-        <circle cx="12" cy="12" r="8" {...p} strokeWidth={1.5} />
-        <circle cx="12" cy="12" r="3.8" {...p} strokeWidth={1.4} />
-        <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none" />
-        <path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3" {...p} strokeWidth={1.8} strokeLinecap="round" />
+        {/* Targeting pod corner brackets */}
+        <path d="M4 8V5.5a1.5 1.5 0 0 1 1.5-1.5H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" {...p} strokeWidth={1.4} />
+        {/* Target acquisition crosshair */}
+        <circle cx="12" cy="12" r="4.8" {...p} strokeWidth={1.3} />
+        <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
+        <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" {...p} strokeWidth={1.6} />
       </>
     ),
     disturbance: (
       <>
-        <path d="M2.5 8.5c2.2-3.5 4.5-3.5 6.8 0s4.5 3.5 6.8 0 4-2.5 5.4-1" {...p} strokeWidth={1.6} />
-        <path d="M2.5 15.5c2.2-3.5 4.5-3.5 6.8 0s4.5 3.5 6.8 0 4-2.5 5.4-1" {...p} strokeWidth={1.6} />
-        <circle cx="9.3" cy="8.5" r="1.1" fill="currentColor" stroke="none" />
-        <circle cx="16.1" cy="15.5" r="1.1" fill="currentColor" stroke="none" />
+        {/* Upper atmospheric flow stream with vortex */}
+        <path d="M3 6.5h11a3 3 0 1 0-3-3" {...p} strokeWidth={1.5} />
+        {/* Acute scintillation disturbance pulse */}
+        <path d="M3 12h4l1.8-3.5 2.4 7 2-4.5 1.8 2.5H21" {...p} strokeWidth={1.6} />
+        {/* Lower turbulence boundary stream */}
+        <path d="M3 17.5h8.5a2.5 2.5 0 1 1-2.5 2.5" {...p} strokeWidth={1.5} />
       </>
     ),
     tracking: (
       <>
-        <path d="M4 8.5V5a1 1 0 0 1 1-1h3.5M15.5 4H19a1 1 0 0 1 1 1v3.5M20 15.5V19a1 1 0 0 1-1 1h-3.5M8.5 20H5a1 1 0 0 1-1-1v-3.5" {...p} strokeWidth={1.6} />
-        <circle cx="12" cy="12" r="2.8" {...p} strokeWidth={1.4} />
-        <path d="M12 7v2M12 15v2M7 12h2M15 12h2" {...p} strokeWidth={1.5} strokeLinecap="round" />
+        {/* Closed-loop optical tracking diamond gate */}
+        <path d="M12 3.5L20.5 12L12 20.5L3.5 12Z" {...p} strokeWidth={1.5} />
+        {/* Inner centroid tracking circle */}
+        <circle cx="12" cy="12" r="3.2" {...p} strokeWidth={1.2} strokeDasharray="2 1.5" />
+        <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+        {/* Optical alignment ticks */}
+        <path d="M12 1.5v2M12 20.5v2M1.5 12h2M20.5 12h2" {...p} strokeWidth={1.6} />
       </>
     ),
     experiment: (
       <>
-        <path d="M3 20h18" {...p} strokeWidth={1.6} />
-        <path d="M4.5 16l4.5-6.5 4 3.5 6.5-8" {...p} strokeWidth={1.8} />
-        <circle cx="4.5" cy="16" r="1.4" fill="currentColor" stroke="none" />
-        <circle cx="9" cy="9.5" r="1.4" fill="currentColor" stroke="none" />
-        <circle cx="13" cy="13" r="1.4" fill="currentColor" stroke="none" />
-        <circle cx="19.5" cy="5" r="1.4" fill="currentColor" stroke="none" />
+        {/* Coordinate axes */}
+        <path d="M3.5 4v16a1 1 0 0 0 1 1h16" {...p} strokeWidth={1.5} />
+        {/* Telemetry metric distribution bars */}
+        <path d="M7.5 17v-4M11.5 17v-7M15.5 17v-9" {...p} strokeWidth={2} strokeLinecap="round" opacity={0.35} />
+        {/* Performance telemetry curve */}
+        <path d="M6.5 14l3.5-4.5 3.5 3 4-7 3 2.5" {...p} strokeWidth={1.7} />
+        <circle cx="20.5" cy="8" r="1.4" fill="currentColor" stroke="none" />
       </>
     ),
     optics: (
@@ -161,8 +175,11 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
     analysis: <path d="M3.5 19.5h17M5 16l4-5 4 3 6-8" {...p} />,
     help: (
       <>
-        <circle cx="12" cy="12" r="8.5" {...p} />
-        <path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.6M12 16.6v.2" {...p} />
+        {/* Command HUD key badge */}
+        <rect x="3.5" y="3.5" width="17" height="17" rx="4" {...p} strokeWidth={1.5} />
+        {/* Hotkey question glyph */}
+        <path d="M9.5 8.5a2.5 2.5 0 0 1 3.4-.2 2.2 2.2 0 0 1 .5 2.2c-.4.8-1.4 1.3-1.4 2.1v.6" {...p} strokeWidth={1.6} />
+        <circle cx="12" cy="16.4" r="1" fill="currentColor" stroke="none" />
       </>
     ),
     play: <path d="M8 5.5v13l10-6.5z" {...p} />,
@@ -180,17 +197,20 @@ export function Icon({ name, size = 18 }: { name: string; size?: number }) {
     ),
     palette: (
       <>
-        <path d="M12 3.5a8.5 8.5 0 0 0 0 17c1.2 0 1.8-.8 1.5-1.8-.3-1 .3-2.2 1.6-2.2h2a3.4 3.4 0 0 0 3.4-3.4C20.5 7.3 16.7 3.5 12 3.5Z" {...p} />
-        <circle cx="7.5" cy="11" r="1.1" {...p} />
-        <circle cx="10.5" cy="7.3" r="1.1" {...p} />
-        <circle cx="15" cy="7.8" r="1.1" {...p} />
+        {/* Contrast disc / display theme switcher */}
+        <circle cx="12" cy="12" r="8" {...p} strokeWidth={1.6} />
+        <path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none" />
       </>
     ),
     film: (
       <>
-        <rect x="3" y="4.5" width="18" height="15" rx="3.5" {...p} strokeWidth={1.6} />
-        <path d="M10 9.5l5.5 2.5-5.5 2.5z" fill="currentColor" stroke="none" />
-        <path d="M6.5 4.5v2.5M11.5 4.5v2.5M16.5 4.5v2.5M6.5 17v2.5M11.5 17v2.5M16.5 17v2.5" {...p} strokeWidth={1.3} />
+        {/* Camera body */}
+        <rect x="3" y="5.5" width="12" height="13" rx="2.5" {...p} strokeWidth={1.5} />
+        {/* Lens cone */}
+        <path d="M15 10l5.5-3.5v11L15 14" {...p} strokeWidth={1.5} strokeLinejoin="round" />
+        {/* Optical sensor aperture / play reticle */}
+        <circle cx="9" cy="12" r="3" {...p} strokeWidth={1.2} />
+        <path d="M8 10.5l2.8 1.5L8 13.5z" fill="currentColor" stroke="none" />
       </>
     ),
     report: (
