@@ -7,13 +7,13 @@ import { TRACK_STATES } from '../core/telemetry/types';
 import { STATE_HEX } from '../state/store';
 import { Icon, Seg, cssVar, fmt } from './ui';
 
-interface SeriesDef {
+export interface SeriesDef {
   key: SeriesKey;
   label: string;
   color: string;
   dash?: number[];
 }
-interface TabDef {
+export interface TabDef {
   id: string;
   label: string;
   unit: string;
@@ -23,7 +23,7 @@ interface TabDef {
   fixed?: [number, number];
 }
 
-const TABS: TabDef[] = [
+export const TABS: TabDef[] = [
   {
     id: 'error',
     label: 'Pixel error',
@@ -52,7 +52,7 @@ const TABS: TabDef[] = [
   { id: 'aqs', label: 'Quality score', unit: '', series: [{ key: 'aqs', label: 'alignment quality score (10 s window)', color: '--ser-e' }], fixed: [0, 100] },
 ];
 
-function Chart({ tab }: { tab: TabDef }) {
+export function Chart({ tab, compact = false }: { tab: TabDef; compact?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const lockPx = useApp((s) => s.config.logic.lockPx);
   const ifov = useApp((s) => s.hud?.camera.ifovDeg ?? 0.00625);
@@ -70,10 +70,10 @@ function Chart({ tab }: { tab: TabDef }) {
       const H = (c.height = Math.round(rect.height * dpr));
       const ctx = c.getContext('2d')!;
       ctx.clearRect(0, 0, W, H);
-      const padL = 44 * dpr;
-      const padR = 12 * dpr;
-      const padT = 12 * dpr;
-      const padB = 34 * dpr;
+      const padL = (compact ? 32 : 44) * dpr;
+      const padR = (compact ? 8 : 12) * dpr;
+      const padT = (compact ? 6 : 12) * dpr;
+      const padB = (compact ? 16 : 34) * dpr;
       const seconds = 60;
       const data = tab.series.map((s) => historySlice(s.key, seconds));
       const st = historySlice('state', seconds);
@@ -110,29 +110,31 @@ function Chart({ tab }: { tab: TabDef }) {
         const s = TRACK_STATES[st.v[i]];
         ctx.fillStyle = STATE_HEX[s] + '99';
         const x = X(st.t[i]);
-        ctx.fillRect(x, H - padB + 8 * dpr, Math.max(1, (W - padL - padR) / (seconds * 30)) + 0.5, 5 * dpr);
+        ctx.fillRect(x, H - padB + (compact ? 3 : 8) * dpr, Math.max(1, (W - padL - padR) / (seconds * 30)) + 0.5, (compact ? 3 : 5) * dpr);
       }
       // Grid.
       ctx.strokeStyle = cssVar('--grid');
       ctx.fillStyle = cssVar('--axis-text');
-      ctx.font = `${10 * dpr}px "IBM Plex Mono", monospace`;
+      ctx.font = `${(compact ? 8.5 : 10) * dpr}px "IBM Plex Mono", monospace`;
       ctx.lineWidth = 1;
       const ticks = tab.log
         ? [0.001, 0.01, 0.1, 1, 10, 100, 1000].filter((v) => v >= lo && v <= hi)
-        : Array.from({ length: 5 }, (_, i) => lo + ((hi - lo) * i) / 4);
+        : Array.from({ length: compact ? 4 : 5 }, (_, i) => lo + ((hi - lo) * i) / (compact ? 3 : 4));
       for (const v of ticks) {
         ctx.beginPath();
         ctx.moveTo(padL, Y(v));
         ctx.lineTo(W - padR, Y(v));
         ctx.stroke();
-        ctx.fillText(Math.abs(v) >= 100 || v === 0 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(1) : v.toPrecision(1), 4 * dpr, Y(v) - 6 * dpr);
+        ctx.fillText(Math.abs(v) >= 100 || v === 0 ? v.toFixed(0) : Math.abs(v) >= 1 ? v.toFixed(1) : v.toPrecision(1), 3 * dpr, Y(v) - 3 * dpr);
       }
       for (let s = Math.ceil(t0 / 10) * 10; s <= t1; s += 10) {
         ctx.beginPath();
         ctx.moveTo(X(s), padT);
         ctx.lineTo(X(s), H - padB);
         ctx.stroke();
-        ctx.fillText(`${s.toFixed(0)}s`, X(s) + 3 * dpr, H - padB + 16 * dpr);
+        if (!compact) {
+          ctx.fillText(`${s.toFixed(0)}s`, X(s) + 3 * dpr, H - padB + 16 * dpr);
+        }
       }
       if (thr !== null) {
         ctx.strokeStyle = cssVar('--lock');
@@ -145,7 +147,9 @@ function Chart({ tab }: { tab: TabDef }) {
         ctx.setLineDash([]);
         ctx.globalAlpha = 1;
         ctx.fillStyle = cssVar('--lock');
-        ctx.fillText(`lock threshold ${tab.unit === 'px' ? thr.toFixed(0) + ' px' : thr.toFixed(4) + '°'}`, W - padR - 190 * dpr, Y(thr) - 14 * dpr);
+        if (!compact) {
+          ctx.fillText(`lock threshold ${tab.unit === 'px' ? thr.toFixed(0) + ' px' : thr.toFixed(4) + '°'}`, W - padR - 190 * dpr, Y(thr) - 14 * dpr);
+        }
       }
       tab.series.forEach((s, k) => {
         const d = data[k];
@@ -170,19 +174,21 @@ function Chart({ tab }: { tab: TabDef }) {
         ctx.setLineDash([]);
       });
       // Legend.
-      let lx = padL + 6 * dpr;
-      ctx.font = `${10.5 * dpr}px "IBM Plex Sans", sans-serif`;
-      tab.series.forEach((s) => {
-        ctx.fillStyle = cssVar(s.color);
-        ctx.fillRect(lx, padT + 2 * dpr, 12 * dpr, 2 * dpr);
-        ctx.fillStyle = cssVar('--text');
-        ctx.fillText(s.label, lx + 16 * dpr, padT + 7 * dpr);
-        lx += (ctx.measureText(s.label).width + 34 * dpr);
-      });
+      if (!compact) {
+        let lx = padL + 6 * dpr;
+        ctx.font = `${10.5 * dpr}px "IBM Plex Sans", sans-serif`;
+        tab.series.forEach((s) => {
+          ctx.fillStyle = cssVar(s.color);
+          ctx.fillRect(lx, padT + 2 * dpr, 12 * dpr, 2 * dpr);
+          ctx.fillStyle = cssVar('--text');
+          ctx.fillText(s.label, lx + 16 * dpr, padT + 7 * dpr);
+          lx += (ctx.measureText(s.label).width + 34 * dpr);
+        });
+      }
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [tab, lockPx, ifov]);
+  }, [tab, lockPx, ifov, compact]);
   return <canvas ref={ref} />;
 }
 

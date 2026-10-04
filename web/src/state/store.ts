@@ -252,7 +252,7 @@ export const useApp = create<AppState>((set, get) => {
     engineFps: 0,
     timeScale: 1,
     events: [],
-    drawer: 'scenario',
+    drawer: 'target',
     view: 'overview',
     viewNonce: 0,
     followKey: 'sat3',
@@ -323,7 +323,7 @@ export const useApp = create<AppState>((set, get) => {
       provider?.send({ type: 'replaceConfig', config: cfg });
     },
 
-    setDrawer: (d) => set({ drawer: d || 'scenario' }),
+    setDrawer: (d) => set({ drawer: d || 'target' }),
     setView: (v) => set({ view: v, viewNonce: get().viewNonce + 1 }),
     flyTo: (k) => set({ view: 'follow', followKey: k, viewNonce: get().viewNonce + 1, overlays: { ...get().overlays, space: true } }),
     setQuality: (q) => {
