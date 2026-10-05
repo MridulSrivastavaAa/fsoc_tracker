@@ -109,8 +109,14 @@ def _start_fastapi_server(port: int = 8000) -> bool:
     """Start uvicorn FastAPI backend server in a background daemon thread."""
     try:
         import uvicorn
-        from fsoc.server.app import app
-        config = uvicorn.Config(app=app, host="127.0.0.1", port=port, log_level="error", loop="asyncio")
+        config = uvicorn.Config(
+            app=app,
+            host="127.0.0.1",
+            port=port,
+            log_level="error",
+            loop="asyncio",
+            log_config=None,
+        )
         server = uvicorn.Server(config)
         server_thread = threading.Thread(target=server.run, daemon=True)
         server_thread.start()
