@@ -58,12 +58,15 @@ def _data_root() -> Path:
     override = os.environ.get("NETRA_DATA_DIR", "").strip()
     if override:
         return Path(override)
+    # macOS: ~/Library/Application Support/NETRA
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "NETRA"
     # Windows: %APPDATA%\NETRA
     appdata = os.environ.get("APPDATA", "")
     if appdata:
         return Path(appdata) / "NETRA"
-    # macOS / Linux fallback
-    return Path.home() / "NETRA"
+    # Linux / other fallback
+    return Path.home() / ".local" / "share" / "NETRA"
 
 
 def data_dir() -> Path:
@@ -74,21 +77,43 @@ def data_dir() -> Path:
 
 
 def reports_dir() -> Path:
-    """Return (and create) %APPDATA%\\NETRA\\reports (or ~/NETRA/reports)."""
+    """Return (and create) user reports directory."""
     p = _data_root() / "reports"
     p.mkdir(parents=True, exist_ok=True)
     return p
 
 
 def logs_dir() -> Path:
-    """Return (and create) %APPDATA%\\NETRA\\logs."""
+    """Return (and create) user logs directory."""
     p = _data_root() / "logs"
     p.mkdir(parents=True, exist_ok=True)
     return p
 
 
 def plugins_dir() -> Path:
-    """Return (and create) %APPDATA%\\NETRA\\plugins."""
+    """Return (and create) user plugins directory."""
     p = _data_root() / "plugins"
     p.mkdir(parents=True, exist_ok=True)
     return p
+
+
+def open_reports_folder(folder: Path | str | None = None) -> None:
+    """
+    Open the reports folder (or specified folder) in the native file manager:
+      * Windows: os.startfile
+      * macOS:   open <path>
+      * Linux:   xdg-open <path>
+    """
+    target = Path(folder) if folder is not None else reports_dir()
+    target.mkdir(parents=True, exist_ok=True)
+    target_str = str(target)
+
+    if sys.platform == "win32":
+        os.startfile(target_str)  # type: ignore[attr-defined]
+    elif sys.platform == "darwin":
+        import subprocess
+        subprocess.Popen(["open", target_str])
+    else:
+        import subprocess
+        subprocess.Popen(["xdg-open", target_str])
+

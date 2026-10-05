@@ -55,7 +55,10 @@ datas = [
 ]
 
 # Platform-specific icon and version settings
-icon_file = 'assets/netra.ico'
+if sys.platform == 'darwin':
+    icon_file = 'assets/netra.icns' if Path('assets/netra.icns').exists() else 'assets/netra.ico'
+else:
+    icon_file = 'assets/netra.ico'
 version_file = 'version_info.txt' if sys.platform == 'win32' else None
 
 a = Analysis(
@@ -140,3 +143,25 @@ coll = COLLECT(
     upx_exclude=[],
     name='NETRA',
 )
+
+if sys.platform == 'darwin':
+    try:
+        from fsoc.__version__ import VERSION as _APP_VERSION
+    except Exception:
+        _APP_VERSION = '1.0.0'
+
+    app = BUNDLE(
+        coll,
+        name='NETRA.app',
+        icon='assets/netra.icns' if Path('assets/netra.icns').exists() else None,
+        bundle_identifier='com.teamnetra.netra',
+        version=_APP_VERSION,
+        info_plist={
+            'NSHighResolutionCapable': 'True',
+            'CFBundleShortVersionString': _APP_VERSION,
+            'CFBundleVersion': _APP_VERSION,
+            'CFBundleName': 'NETRA',
+            'CFBundleDisplayName': 'NETRA',
+        },
+    )
+
