@@ -1625,9 +1625,9 @@ select {
   position: absolute;
   left: 14px;
   top: 66px;
-  width: min(300px, 22vw);
-  bottom: calc(var(--dock-h, 290px) + 16px);
-  max-height: calc(100vh - 66px - var(--dock-h, 290px) - 16px);
+  width: min(320px, 24vw);
+  bottom: calc(var(--dock-h, 290px) + 14px);
+  max-height: calc(100vh - 66px - var(--dock-h, 290px) - 14px);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1641,7 +1641,7 @@ select {
   position: relative;
   width: 100%;
   overflow: hidden;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -1675,10 +1675,8 @@ select {
   position: relative;
   background: #000;
   width: 100%;
-  flex: 0 1 auto;
-  height: clamp(95px, calc(100vh - 540px), 165px);
-  min-height: 85px;
-  max-height: 165px;
+  flex: 1 1 auto;
+  min-height: 140px;
 }
 
 .sensor-canvas-wrap canvas {
@@ -2782,9 +2780,8 @@ select {
   }
 
   .sensor-canvas-wrap {
-    height: clamp(80px, calc(100vh - 560px), 130px);
-    min-height: 75px;
-    max-height: 130px;
+    flex: 1 1 auto;
+    min-height: 110px;
   }
 
   .tl-reason {
