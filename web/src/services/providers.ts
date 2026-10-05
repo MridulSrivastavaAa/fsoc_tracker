@@ -77,7 +77,7 @@ export class RemoteEngineProvider implements TelemetryProvider {
           try { ws.close(); } catch {}
           reject(new Error(`Timeout connecting to ${wsUrl}`));
         }
-      }, 5000);
+      }, 2000);
 
       ws.onopen = () => {
         if (!settled) {
@@ -91,14 +91,18 @@ export class RemoteEngineProvider implements TelemetryProvider {
         if (!settled) {
           settled = true;
           clearTimeout(timeout);
-          reject(new Error(`WebSocket error for ${wsUrl}`));
+          reject(new Error(`WebSocket connection failed: ${wsUrl}`));
         } else {
           listener({ type: 'error', message: 'WebSocket communication error' });
         }
       };
 
-      ws.onclose = () => {
-        if (settled && this.shouldReconnect) {
+      ws.onclose = (ev) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          reject(new Error(`WebSocket closed before connecting: ${wsUrl} (code ${ev.code})`));
+        } else if (this.shouldReconnect) {
           listener({ type: 'error', message: 'Remote engine disconnected — auto-reconnecting…' });
           this.scheduleReconnect();
         }
@@ -124,12 +128,25 @@ export class RemoteEngineProvider implements TelemetryProvider {
     this.shouldReconnect = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
 
-    // Primary candidate + automatic fallback candidate (8000 <-> 8001)
-    const candidates = [this.baseUrl];
-    if (this.baseUrl.includes(':8000')) {
-      candidates.push(this.baseUrl.replace(':8000', ':8001'));
-    } else if (this.baseUrl.includes(':8001')) {
-      candidates.push(this.baseUrl.replace(':8001', ':8000'));
+    // Robust candidates: primary + IP alternate + port alternate (8000 <-> 8001)
+    const candidates: string[] = [];
+    const addCandidate = (url: string) => {
+      const clean = url.trim().replace(/\/$/, '');
+      if (clean && !candidates.includes(clean)) candidates.push(clean);
+    };
+
+    addCandidate(this.baseUrl);
+    if (this.baseUrl.includes('localhost')) {
+      addCandidate(this.baseUrl.replace('localhost', '127.0.0.1'));
+    } else if (this.baseUrl.includes('127.0.0.1')) {
+      addCandidate(this.baseUrl.replace('127.0.0.1', 'localhost'));
+    }
+
+    const currentLen = candidates.length;
+    for (let i = 0; i < currentLen; i++) {
+      const c = candidates[i];
+      if (c.includes(':8000')) addCandidate(c.replace(':8000', ':8001'));
+      else if (c.includes(':8001')) addCandidate(c.replace(':8001', ':8000'));
     }
 
     let lastErr: Error | null = null;
@@ -145,6 +162,8 @@ export class RemoteEngineProvider implements TelemetryProvider {
       }
     }
 
+    // Schedule auto-reconnect attempt if initial connection fails
+    this.scheduleReconnect();
     throw lastErr ?? new Error(`Could not connect to FastAPI server at ${this.baseUrl} or alternate ports`);
   }
 
@@ -156,10 +175,11 @@ export class RemoteEngineProvider implements TelemetryProvider {
       try {
         await this.connect(this.listener);
         this.listener({ type: 'status', running: true, demo: false, fps: 30, timeScale: 1 });
+        this.send({ type: 'start' });
       } catch {
         this.scheduleReconnect();
       }
-    }, 2000);
+    }, 1500);
   }
 
   send(cmd: EngineCommand) {

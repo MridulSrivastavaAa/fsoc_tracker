@@ -34,7 +34,7 @@ function useKeyboard() {
       else if (e.key === 'd' || e.key === 'D') st.send({ type: 'demo', on: !st.demo });
       else if (e.key === 'a' || e.key === 'A') st.set({ analysisOpen: !st.analysisOpen });
       else if (e.key === '?') st.set({ helpOpen: !st.helpOpen });
-      else if (e.key === 'Escape') st.set({ helpOpen: false, themeOpen: false, videoOpen: false });
+      else if (e.key === 'Escape') st.set({ helpOpen: false, themeOpen: false, videoOpen: false, drawer: null });
       else if (e.key === '+' || e.key === '=') cameraApi.zoom(0.6);
       else if (e.key === '-' || e.key === '_') cameraApi.zoom(1.66);
       else if (e.key === 'v' || e.key === 'V') st.set({ videoOpen: !st.videoOpen });

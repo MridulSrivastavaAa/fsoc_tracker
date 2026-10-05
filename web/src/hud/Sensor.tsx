@@ -24,7 +24,7 @@ function drawOverlay(ctx: CanvasRenderingContext2D, s: Snapshot, W: number, H: n
   const Y = (y: number) => y * sc;
   const col = STATE_HEX[s.state];
   ctx.lineWidth = 1;
-  ctx.font = `${Math.max(10, 10.5 * Math.min(1.4, sc))}px "IBM Plex Mono", monospace`;
+  ctx.font = `${Math.max(10, 10.5 * Math.min(1.4, sc))}px "JetBrains Mono", monospace`;
   ctx.textBaseline = 'top';
 
   // Calibration grid: gnomonic degree lines from the camera model (x = cx + fx·tan u).
@@ -279,7 +279,7 @@ function ScreenCanvas() {
       ctx.fillRect(ox, oy, side, side);
       ctx.strokeStyle = 'rgba(170,214,255,0.07)';
       ctx.lineWidth = 1;
-      ctx.font = `${9 * dpr}px "IBM Plex Mono", monospace`;
+      ctx.font = `${9 * dpr}px "JetBrains Mono", monospace`;
       ctx.fillStyle = 'rgba(170,214,255,0.45)';
       for (let p = 0; p <= N; p += 250) {
         ctx.beginPath();
@@ -302,7 +302,7 @@ function ScreenCanvas() {
       };
 
       const tagText = `SCREEN ${N}×${N} px · ${ifov.toFixed(5)}°/px`;
-      ctx.font = `600 ${8.5 * dpr}px "IBM Plex Mono", monospace`;
+      ctx.font = `600 ${8.5 * dpr}px "JetBrains Mono", monospace`;
       const tagW = ctx.measureText(tagText).width + 12 * dpr;
       const tagH = 15 * dpr;
       const tagY = Math.max(2 * dpr, oy - 16 * dpr);
@@ -377,7 +377,7 @@ function ScreenCanvas() {
 
       // Viewport Label with dedicated dark glass pill to prevent text collisions
       const camText = `CAM FOV ${Math.round(vw)}×${Math.round(vh)}`;
-      ctx.font = `700 ${8.5 * dpr}px "IBM Plex Mono", monospace`;
+      ctx.font = `700 ${8.5 * dpr}px "JetBrains Mono", monospace`;
       const camW = ctx.measureText(camText).width + 10 * dpr;
       const camH = 14 * dpr;
       const camX = Math.max(ox + 3 * dpr, Math.min(ox + side - camW - 3 * dpr, boxLeft + 3 * dpr));
@@ -405,7 +405,7 @@ function ScreenCanvas() {
       // Clean telemetry pill in bottom-right corner (never overlaps camera or grid)
       const errPx = Math.hypot(tx - bx, ty - by);
       const statText = `BEACON ${tx.toFixed(0)},${ty.toFixed(0)} · ERR ${errPx.toFixed(1)} px${s.disturbance.occluded ? ' · OUTAGE' : ''}`;
-      ctx.font = `500 ${8 * dpr}px "IBM Plex Mono", monospace`;
+      ctx.font = `500 ${8 * dpr}px "JetBrains Mono", monospace`;
       const statW = ctx.measureText(statText).width + 10 * dpr;
       const statH = 14 * dpr;
       const statX = ox + side - statW - 4 * dpr;
@@ -494,7 +494,7 @@ export function SensorView() {
         ctx.drawImage(off.current!, 0, 0, W, H);
       } else {
         ctx.fillStyle = 'rgba(232,240,247,0.5)';
-        ctx.font = `${12 * dpr}px "IBM Plex Mono", monospace`;
+        ctx.font = `${12 * dpr}px "JetBrains Mono", monospace`;
         ctx.textAlign = 'center';
         ctx.fillText(useApp.getState().providerKind === 'replay' ? 'REPLAY · images are not recorded — overlays only' : 'NO SIGNAL', W / 2, H / 2 - 20);
         ctx.textAlign = 'left';

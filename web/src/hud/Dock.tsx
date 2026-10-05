@@ -40,7 +40,7 @@ function Spark({ isLocked = false }: { isLocked?: boolean }) {
       const y = (e: number) => h - 2 - (Math.log10(1 + Math.min(max, e)) / Math.log10(1 + max)) * (h - 4);
       
       // Lock threshold line
-      ctx.strokeStyle = 'rgba(63, 185, 80, 0.4)';
+      ctx.strokeStyle = (cssVar('--lock') || '#2DD36F') + '66';
       ctx.setLineDash([2, 3]);
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -49,8 +49,10 @@ function Spark({ isLocked = false }: { isLocked?: boolean }) {
       ctx.stroke();
       ctx.setLineDash([]);
 
-      // Error curve - transitions to emerald green when locked
-      ctx.strokeStyle = isLocked ? '#3fb950' : cssVar('--ser-a');
+      // Error curve - transitions to theme lock color when locked
+      const lockCol = cssVar('--lock') || '#2DD36F';
+      const serACol = cssVar('--ser-a') || '#FF8C1A';
+      ctx.strokeStyle = isLocked ? lockCol : serACol;
       ctx.lineWidth = 1.6;
       ctx.beginPath();
       let started = false;
@@ -73,11 +75,11 @@ function Spark({ isLocked = false }: { isLocked?: boolean }) {
       if (points.length > 1) {
         const grad = ctx.createLinearGradient(0, 0, 0, h);
         if (isLocked) {
-          grad.addColorStop(0, 'rgba(63, 185, 80, 0.28)');
-          grad.addColorStop(1, 'rgba(63, 185, 80, 0)');
+          grad.addColorStop(0, lockCol + '47');
+          grad.addColorStop(1, lockCol + '00');
         } else {
-          grad.addColorStop(0, 'rgba(245, 185, 66, 0.22)');
-          grad.addColorStop(1, 'rgba(245, 185, 66, 0)');
+          grad.addColorStop(0, serACol + '38');
+          grad.addColorStop(1, serACol + '00');
         }
         ctx.fillStyle = grad;
         ctx.beginPath();
@@ -276,32 +278,19 @@ export function Dock() {
           </div>
         </section>
 
-        {/* Panel 2: Error Analysis & Metric Options (replaces Camera) */}
+        {/* Panel 2: Error Analysis & Key Metrics */}
         <section className="telemetry-panel analysis-opt-panel">
           <div className="tp-header">
             <div className="tp-title-group">
               <span className="tp-dot analysis-dot" />
-              <h4 className="tp-title">ERROR ANALYSIS · OPTIONS</h4>
+              <h4 className="tp-title">ERROR ANALYSIS</h4>
             </div>
             <div className="tp-badge badge-active">
               <span className="tp-badge-dot" />
               <span>RMS {fmt(m?.errRmsPx, 2)} px</span>
             </div>
           </div>
-          <div className="tp-body analysis-opt-body">
-            {/* Chart Selection Buttons */}
-            <div className="analysis-tabs-row">
-              {TABS.map((t) => (
-                <button
-                  key={t.id}
-                  className={`analysis-tab-chip ${currentTab.id === t.id ? 'active' : ''}`}
-                  onClick={() => set({ analysisTab: t.id })}
-                  title={t.label}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
+          <div className="tp-body">
             {/* Key Error Metrics */}
             <div className="tp-grid analysis-metrics-grid">
               <div className="tp-cell">
@@ -336,7 +325,7 @@ export function Dock() {
           </div>
         </section>
 
-        {/* Panel 3: Live Interactive Telemetry Chart (replaces Optical Link + Actions) */}
+        {/* Panel 3: Live Interactive Telemetry Chart */}
         <section className="telemetry-panel analysis-chart-panel">
           <div className="tp-header">
             <div className="tp-title-group">
@@ -357,6 +346,24 @@ export function Dock() {
                 </span>
               )}
             </div>
+          </div>
+          {/* Chart Selection Tabs: all 6 horizontal on top of graph */}
+          <div className="analysis-tabs-row chart-tabs-bar" role="tablist" aria-label="Telemetry Chart Selection">
+            {TABS.map((t) => {
+              const label = t.id === 'rates' ? 'PAN / TILT' : t.label.toUpperCase();
+              return (
+                <button
+                  key={t.id}
+                  className={`analysis-tab-chip ${currentTab.id === t.id ? 'active' : ''}`}
+                  onClick={() => set({ analysisTab: t.id })}
+                  title={t.label}
+                  role="tab"
+                  aria-selected={currentTab.id === t.id}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
           <div className="tp-body chart-panel-body">
             <div className="tp-chart-canvas-wrap">

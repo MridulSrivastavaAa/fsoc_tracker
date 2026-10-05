@@ -848,7 +848,10 @@ async def websocket_telemetry(websocket: WebSocket):
                         # Reinitialize engine with new config from UI
                         new_cfg_dict = cmd.get("config", {})
                         if new_cfg_dict:
-                            cfg = AppConfig.model_validate(new_cfg_dict)
+                            try:
+                                cfg = AppConfig.model_validate(new_cfg_dict)
+                            except Exception:
+                                pass
                             if "scene" in new_cfg_dict:
                                 p_sc = new_cfg_dict["scene"]
                                 if "losAzDeg" in p_sc: state["refAz"] = float(p_sc["losAzDeg"])

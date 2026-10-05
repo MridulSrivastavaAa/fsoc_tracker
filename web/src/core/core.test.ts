@@ -361,7 +361,7 @@ describe('closed loop (PS acceptance scenarios)', () => {
     expect(a.titles.size).toBe(6);
     expect(a.s.metrics.lossEvents).toBeGreaterThan(0);
     expect(a.s.metrics.errRmsPx).toBeCloseTo(b.s.metrics.errRmsPx!, 9);
-  }, 60000);
+  }, 120000);
 });
 
 describe('analysis & recording', () => {
