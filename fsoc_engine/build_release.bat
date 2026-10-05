@@ -57,7 +57,7 @@ if errorlevel 1 (
 :: Step 5/5: Checksums
 echo.
 echo [5/5] Generating SHA-256 release checksums...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path release\*.exe, release\*.zip | ForEach-Object { (Get-FileHash $_.FullName -Algorithm SHA256).Hash + '  ' + $_.Name } | Set-Content release\checksums.txt -Encoding ascii"
+python make_checksums.py
 if errorlevel 1 goto :fail_hash
 
 echo.

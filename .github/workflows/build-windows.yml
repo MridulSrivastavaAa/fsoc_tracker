@@ -104,7 +104,7 @@ jobs:
 
       - name: Generate Checksums
         run: |
-          powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path release\*.exe, release\*.zip -ErrorAction SilentlyContinue | ForEach-Object { (Get-FileHash $_.FullName -Algorithm SHA256).Hash + '  ' + $_.Name } | Set-Content release\checksums.txt -Encoding ascii"
+          python make_checksums.py
         working-directory: fsoc_engine
 
       - name: Upload Artifacts
