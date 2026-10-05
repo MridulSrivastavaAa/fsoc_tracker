@@ -387,50 +387,53 @@ button {
   border-radius: 6px;
 }
 
-/* ─── view switch card (compact sightline presets) ─── */
-.viewswitch-card {
-  position: relative;
-  width: 100%;
+/* ─── floating viewswitch toolbar (relocated outside leftcol) ─── */
+.viewswitch-bar {
+  position: absolute;
+  top: 66px;
+  left: calc(min(320px, 24vw) + 22px);
+  z-index: 25;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 3px 8px;
   border-radius: var(--r);
   border: 1px solid var(--border);
   background: var(--glass);
   backdrop-filter: var(--blur);
   -webkit-backdrop-filter: var(--blur);
-  padding: 4px 6px;
-  gap: 3px;
-  z-index: 15;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
-  flex: none;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.28);
+  user-select: none;
+  transition: all 0.2s ease;
 }
 
-.vs-card-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  padding-bottom: 3px;
-  border-bottom: 1px solid var(--line);
+.viewswitch-bar.collapsed {
+  padding: 3px 8px;
 }
 
-.vs-card-title {
+.vs-bar-head {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  cursor: pointer;
+}
+
+.vs-bar-head svg {
+  color: var(--accent);
+}
+
+.vs-bar-title {
   font-family: var(--f-cond);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: var(--text-strong);
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
-.vs-card-title svg {
-  color: var(--accent);
-}
-
-.vs-active-tag {
+.vs-active-pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -443,6 +446,7 @@ button {
   padding: 1px 5px;
   border-radius: 4px;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .vs-live-dot {
@@ -453,17 +457,29 @@ button {
   box-shadow: 0 0 5px var(--accent);
 }
 
-.vs-card-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+.vs-bar-body {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vs-bar-divider {
+  width: 1px;
+  height: 16px;
+  background: var(--line);
+}
+
+.vs-bar-btns {
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .vs-card-btn {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 2px 6px;
+  gap: 4px;
+  padding: 2px 7px;
   border-radius: 5px;
   border: 1px solid rgba(var(--line-rgb), 0.35);
   background: rgba(var(--panel-sec-rgb), 0.40);
@@ -473,6 +489,7 @@ button {
   -webkit-backdrop-filter: var(--blur);
   transition: background 0.15s, border-color 0.15s, transform 0.1s;
   height: 23px;
+  white-space: nowrap;
 }
 
 .vs-card-btn:hover {
@@ -494,12 +511,9 @@ button {
 
 .vs-btn-title {
   font-family: var(--f-sans);
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--text-strong);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .vs-card-btn.on .vs-btn-title {
@@ -516,7 +530,6 @@ button {
   background: rgba(0, 0, 0, 0.4);
   border: 1px solid var(--line);
   color: var(--text-3);
-  margin-left: 2px;
 }
 
 .vs-card-btn.on .vs-kbd {
@@ -534,36 +547,18 @@ button {
   opacity: 1;
 }
 
-.vs-card-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-  padding-top: 3px;
-  border-top: 1px solid var(--line);
-}
-
 .vs-zoom-controls {
   display: flex;
   align-items: center;
   gap: 2px;
 }
 
-.vs-zoom-label {
-  font-family: var(--f-cond);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-3);
-  margin-right: 2px;
-}
-
 .vs-zoom-act {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 19px;
-  height: 19px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border-radius: 4px;
   border: 1px solid var(--border);
@@ -577,22 +572,6 @@ button {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.2);
   color: var(--text-strong);
-}
-
-.vs-hint-text {
-  font-family: var(--f-mono);
-  font-size: 8.5px;
-  color: var(--text-3);
-}
-
-.vs-hint-text kbd {
-  font-family: var(--f-mono);
-  font-size: 8px;
-  padding: 0 2px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--line);
-  border-radius: 2px;
-  color: var(--text-2);
 }
 
 /* ─── scene labels ─────────────────────────────────── */
@@ -1626,15 +1605,13 @@ select {
   left: 14px;
   top: 66px;
   width: min(320px, 24vw);
-  bottom: calc(var(--dock-h, 175px) + 14px);
-  max-height: calc(100vh - 66px - var(--dock-h, 175px) - 14px);
+  bottom: calc(var(--dock-h, 175px) + 16px);
+  max-height: calc(100vh - 66px - var(--dock-h, 175px) - 16px);
   display: flex;
   flex-direction: column;
   gap: 6px;
   z-index: 16;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
+  overflow: hidden;
 }
 
 .sensor {

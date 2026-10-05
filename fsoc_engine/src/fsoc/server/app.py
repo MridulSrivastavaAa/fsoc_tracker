@@ -592,6 +592,7 @@ async def websocket_telemetry(websocket: WebSocket):
         "manual_tilt": 0.0,
         "refAz": 212.0,
         "refEl": 40.0,
+        "proc_times": [],
     }
 
     # Helper to build a complete Snapshot object
@@ -672,6 +673,43 @@ async def websocket_telemetry(websocket: WebSocket):
         sm_lock_pct = round(engine.state_machine.lock_retention_pct, 1)
         sm_loss_pct = round(engine.state_machine.target_loss_pct, 1)
 
+        # Real dynamic slew rate and transverse velocity from actual beacon motion
+        prev_az = state.get("_prev_az", tgt_az)
+        prev_el = state.get("_prev_el", tgt_el)
+        prev_t = state.get("_prev_t", t_now - (1.0 / cfg.pipeline.fps))
+        dt_ang = max(1e-4, t_now - prev_t)
+        state["_prev_az"] = tgt_az
+        state["_prev_el"] = tgt_el
+        state["_prev_t"] = t_now
+        inst_ang_rate = math.hypot(tgt_az - prev_az, tgt_el - prev_el) / dt_ang
+        filt_rate = 0.85 * state.get("_filt_ang_rate", inst_ang_rate) + 0.15 * inst_ang_rate
+        state["_filt_ang_rate"] = filt_rate
+        ang_rate_deg_s = round(float(filt_rate), 3)
+        transverse_km_s = round(float(range_km * math.radians(filt_rate)), 2)
+
+        # Real 95th percentile error from active metrics history
+        err_p95_px = round(float(np.percentile(recent_errs, 95)), 2) if len(recent_errs) >= 5 else round(rms_err * 1.35, 2)
+
+        # Real centroid error
+        recent_centroid_errs = [
+            math.hypot(m.detection_x - m.gt_vp_x, m.detection_y - m.gt_vp_y)
+            for m in recent_metrics
+            if hasattr(m, "detection_x") and m.detection_x is not None and hasattr(m, "gt_vp_x") and m.gt_vp_x is not None
+        ]
+        centroid_rms_px = round(float(np.sqrt(np.mean(np.square(recent_centroid_errs)))), 2) if recent_centroid_errs else round(rms_err * 0.45, 2)
+
+        # Real disturbances from physical disturbance engine
+        dist_eng = getattr(engine, "disturbances", None)
+        d_pan = round(float(getattr(dist_eng, "_last_d_pan", 0.0) or 0.0), 3)
+        d_tilt = round(float(getattr(dist_eng, "_last_d_tilt", 0.0) or 0.0), 3)
+        transmission = round(float(getattr(dist_eng, "last_transmission", 0.94) or 0.94), 2)
+        scint_sigma = round(float(engine.last_turbulence_diag.get("scintillation_sigma", 0.04) or 0.04), 3)
+        dropout = bool(getattr(dist_eng, "_last_dropout", False))
+
+        # Real computation times
+        proc_mean_ms = round(float(np.mean(state["proc_times"])), 1) if state.get("proc_times") else round(metrics.proc_ms if metrics else 4.5, 1)
+        proc_max_ms = round(float(np.max(state["proc_times"])), 1) if state.get("proc_times") else round((metrics.proc_ms if metrics else 4.5) * 1.5, 1)
+
         return {
             "t": round(t_now, 4),
             "frame": frame_idx,
@@ -691,8 +729,8 @@ async def websocket_telemetry(websocket: WebSocket):
                 ],
                 "u": round(tgt_az, 3),
                 "v": round(tgt_el, 3),
-                "angRateDegS": 0.85,
-                "transverseKmS": 7.2,
+                "angRateDegS": ang_rate_deg_s,
+                "transverseKmS": transverse_km_s,
                 # inFov: true if beacon is inside the 640×480 viewport crop
                 "inFov": (0.0 <= gt_vp_x <= cfg.camera.res_x) and (0.0 <= gt_vp_y <= cfg.camera.res_y),
                 # truthPx: viewport pixel coord of the beacon (used by 2D sensor view)
@@ -773,11 +811,11 @@ async def websocket_telemetry(websocket: WebSocket):
                 "ff": [round(pan_rate, 3), round(tilt_rate, 3)],
             },
             "disturbance": {
-                "dPanDeg": 0.01,
-                "dTiltDeg": 0.01,
-                "transmission": 0.92,
-                "scint": 0.05,
-                "dropout": False,
+                "dPanDeg": d_pan,
+                "dTiltDeg": d_tilt,
+                "transmission": transmission,
+                "scint": scint_sigma,
+                "dropout": dropout,
                 "occluded": False,
             },
             "metrics": {
@@ -789,16 +827,16 @@ async def websocket_telemetry(websocket: WebSocket):
                 "errMeanPx": round(mean_err, 2),
                 "errRmsPx": round(rms_err, 2),
                 "errMaxPx": round(max_err_val, 2),
-                "errP95Px": round(rms_err * 1.4, 2),
-                "centroidRmsPx": round(rms_err * 0.8, 2),
+                "errP95Px": err_p95_px,
+                "centroidRmsPx": centroid_rms_px,
                 "falseDetections": 0,
                 "lossPct": sm_loss_pct,
                 "lossEvents": len(engine.state_machine.reacquisition_times),
                 "reacqMeanS": sm_reacq_s,
                 "reacqMaxS": sm_reacq_s,
                 "lockRetentionPct": sm_lock_pct,
-                "procMeanMs": 4.8,
-                "procMaxMs": 8.2,
+                "procMeanMs": proc_mean_ms,
+                "procMaxMs": proc_max_ms,
                 "aqs": max(0.0, min(100.0, round(
                     100.0 * (
                         0.45 * (math.exp(-rms_err / 25.0) if rms_err < 500.0 else 0.0) +
@@ -1018,8 +1056,10 @@ async def websocket_telemetry(websocket: WebSocket):
                             raw_bytes = vp_img.tobytes()
                             try:
                                 await websocket.send_bytes(header + raw_bytes)
+                            except (WebSocketDisconnect, ConnectionResetError):
+                                raise
                             except Exception:
-                                break
+                                pass
 
                     now = time.perf_counter()
                     dt_frame = max(1e-4, now - t_last_frame)
@@ -1041,6 +1081,10 @@ async def websocket_telemetry(websocket: WebSocket):
 
                 # Yield to event loop with async sleep pacing based on frame duration
                 compute_dur = time.perf_counter() - t_iter_start
+                state["proc_times"].append(compute_dur * 1000.0)
+                if len(state["proc_times"]) > 60:
+                    state["proc_times"].pop(0)
+
                 target_dt = frame_interval / max(0.1, state["timeScale"])
                 sleep_time = target_dt - compute_dur
                 if sleep_time > 0.002:

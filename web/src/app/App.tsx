@@ -109,8 +109,8 @@ export default function App() {
       <RightNavbar />
       <div className="leftcol">
         <SensorView />
-        <ViewSwitch />
       </div>
+      <ViewSwitch />
       <Analysis />
       <Dock />
       <Help />

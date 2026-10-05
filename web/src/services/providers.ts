@@ -163,6 +163,9 @@ export class RemoteEngineProvider implements TelemetryProvider {
   async connect(listener: Listener): Promise<void> {
     this.listener = listener;
     this.shouldReconnect = true;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      return;
+    }
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
 
     // Robust candidates: prioritize 127.0.0.1 to avoid Windows IPv6 resolution latency

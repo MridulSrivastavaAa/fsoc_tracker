@@ -148,18 +148,16 @@ export function ViewSwitch() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className={`viewswitch-card glass compact ${collapsed ? 'collapsed' : ''}`} aria-label="Camera sightline and viewport control">
+    <div className={`viewswitch-bar glass ${collapsed ? 'collapsed' : ''}`} aria-label="Camera sightline presets">
       <div 
-        className="vs-card-head" 
+        className="vs-bar-head" 
         onClick={() => setCollapsed(!collapsed)} 
         style={{ cursor: 'pointer', userSelect: 'none' }}
-        title={collapsed ? 'Expand sightline presets' : 'Collapse sightline presets'}
+        title={collapsed ? 'Expand Sightline Presets' : 'Collapse Sightline Presets'}
       >
-        <div className="vs-card-title">
-          <Icon name="crosshair" size={12} />
-          <span>SIGHTLINE PRESETS</span>
-        </div>
-        <div className="vs-active-tag">
+        <Icon name="crosshair" size={13} />
+        <span className="vs-bar-title">SIGHTLINE</span>
+        <div className="vs-active-pill">
           <span className="vs-live-dot" />
           <span>{activeView.name.toUpperCase()}</span>
           <span style={{ fontSize: 9, opacity: 0.6, marginLeft: 2 }}>{collapsed ? '▼' : '▲'}</span>
@@ -167,8 +165,9 @@ export function ViewSwitch() {
       </div>
 
       {!collapsed && (
-        <>
-          <div className="vs-card-grid">
+        <div className="vs-bar-body">
+          <div className="vs-bar-divider" />
+          <div className="vs-bar-btns">
             {VIEWS.map((v) => {
               const isSel = view === v.v;
               return (
@@ -197,21 +196,17 @@ export function ViewSwitch() {
             </button>
           </div>
 
-          <div className="vs-card-foot">
-            <div className="vs-zoom-controls">
-              <span className="vs-zoom-label">ZOOM</span>
-              <button className="vs-zoom-act" onClick={() => cameraApi.zoom(1.6)} title="Zoom out (−)" aria-label="Zoom out">
-                <Icon name="minus" size={11} />
-              </button>
-              <button className="vs-zoom-act" onClick={() => cameraApi.zoom(0.62)} title="Zoom in (+)" aria-label="Zoom in">
-                <Icon name="plus" size={11} />
-              </button>
-            </div>
-            <div className="vs-hint-text">
-              <span><kbd>1</kbd>–<kbd>5</kbd> VIEW · <kbd>+</kbd>/<kbd>−</kbd> ZOOM</span>
-            </div>
+          <div className="vs-bar-divider" />
+
+          <div className="vs-zoom-controls">
+            <button className="vs-zoom-act" onClick={() => cameraApi.zoom(1.6)} title="Zoom out (−)" aria-label="Zoom out">
+              <Icon name="minus" size={11} />
+            </button>
+            <button className="vs-zoom-act" onClick={() => cameraApi.zoom(0.62)} title="Zoom in (+)" aria-label="Zoom in">
+              <Icon name="plus" size={11} />
+            </button>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
