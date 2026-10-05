@@ -65,20 +65,56 @@ def _launch_app_window(url: str, title: str = "NETRA — Next-Generation Emulati
     import shutil
     import webbrowser
 
-    edge_candidates = [
-        Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
-        Path(r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
-        Path(r"C:\Users") / Path.home().name / r"AppData\Local\Microsoft\Edge\Application\msedge.exe",
-    ]
-    which_edge = shutil.which("msedge")
-    if which_edge:
-        edge_candidates.insert(0, Path(which_edge))
+    # macOS candidates: look for Google Chrome, Microsoft Edge, or Chromium under /Applications
+    if sys.platform == "darwin":
+        mac_candidates = [
+            Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
+            Path.home() / "Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+            Path("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"),
+            Path.home() / "Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+            Path("/Applications/Chromium.app/Contents/MacOS/Chromium"),
+            Path.home() / "Applications/Chromium.app/Contents/MacOS/Chromium",
+        ]
+        for p in mac_candidates:
+            if p.exists():
+                try:
+                    subprocess.Popen(
+                        [str(p), f"--app={url}", "--window-size=1400,860"],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    return True
+                except Exception:
+                    pass
 
-    for p in edge_candidates:
-        if p.exists():
+    # Windows candidates
+    elif sys.platform == "win32":
+        edge_candidates = [
+            Path(r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"),
+            Path(r"C:\Program Files\Microsoft\Edge\Application\msedge.exe"),
+            Path(r"C:\Users") / Path.home().name / r"AppData\Local\Microsoft\Edge\Application\msedge.exe",
+        ]
+        which_edge = shutil.which("msedge")
+        if which_edge:
+            edge_candidates.insert(0, Path(which_edge))
+
+        for p in edge_candidates:
+            if p.exists():
+                try:
+                    subprocess.Popen(
+                        [str(p), f"--app={url}", "--window-size=1400,860", "--start-maximized"],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    return True
+                except Exception:
+                    pass
+
+        chrome_which = shutil.which("chrome")
+        if chrome_which:
             try:
                 subprocess.Popen(
-                    [str(p), f"--app={url}", "--window-size=1400,860", "--start-maximized"],
+                    [chrome_which, f"--app={url}", "--window-size=1400,860"],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
@@ -86,17 +122,20 @@ def _launch_app_window(url: str, title: str = "NETRA — Next-Generation Emulati
             except Exception:
                 pass
 
-    chrome_which = shutil.which("chrome")
-    if chrome_which:
-        try:
-            subprocess.Popen(
-                [chrome_which, f"--app={url}", "--window-size=1400,860"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            return True
-        except Exception:
-            pass
+    else:
+        # Linux fallback
+        for cmd in ["google-chrome", "chromium", "microsoft-edge"]:
+            which_cmd = shutil.which(cmd)
+            if which_cmd:
+                try:
+                    subprocess.Popen(
+                        [which_cmd, f"--app={url}", "--window-size=1400,860"],
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    return True
+                except Exception:
+                    pass
 
     # Fallback to system default browser
     webbrowser.open(url)

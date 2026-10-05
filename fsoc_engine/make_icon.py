@@ -318,6 +318,61 @@ def make_version_info():
     print(f"[ASSETS] Saved: {vinfo_path}")
 
 
+def make_icns():
+    """
+    Generate assets/netra.icns on macOS using iconutil and netra_1024.png.
+    Builds a temporary .iconset directory and runs iconutil -c icns.
+    Skips with a clear message if iconutil is unavailable.
+    """
+    import shutil
+    import subprocess
+    import tempfile
+
+    if sys.platform != "darwin":
+        print("[ASSETS] Not on macOS; skipping .icns generation.")
+        return
+
+    iconutil_bin = shutil.which("iconutil")
+    if not iconutil_bin:
+        print("[ASSETS] iconutil command not found; skipping .icns generation.")
+        return
+
+    master_path = ASSETS_DIR / "netra_1024.png"
+    if not master_path.exists():
+        make_master_png_and_ico()
+
+    master_img = Image.open(master_path).convert("RGBA")
+    icns_path = ASSETS_DIR / "netra.icns"
+
+    sizes = [
+        ("icon_16x16.png", 16),
+        ("icon_16x16@2x.png", 32),
+        ("icon_32x32.png", 32),
+        ("icon_32x32@2x.png", 64),
+        ("icon_128x128.png", 128),
+        ("icon_128x128@2x.png", 256),
+        ("icon_256x256.png", 256),
+        ("icon_256x256@2x.png", 512),
+        ("icon_512x512.png", 512),
+        ("icon_512x512@2x.png", 1024),
+    ]
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        iconset_dir = Path(tmpdir) / "netra.iconset"
+        iconset_dir.mkdir(parents=True, exist_ok=True)
+        for fname, dim in sizes:
+            resized = master_img.resize((dim, dim), Image.Resampling.LANCZOS)
+            resized.save(iconset_dir / fname, format="PNG")
+
+        cmd = [iconutil_bin, "-c", "icns", str(iconset_dir), "-o", str(icns_path)]
+        res = subprocess.run(cmd, capture_output=True, text=True)
+        if res.returncode == 0 and icns_path.exists():
+            print(f"[ASSETS] Saved macOS ICNS: {icns_path} ({icns_path.stat().st_size} bytes)")
+        else:
+            err_msg = res.stderr.strip() if res.stderr else "unknown error"
+            print(f"[ASSETS] iconutil failed ({err_msg}); skipping .icns")
+
+
 def main():
     print("=" * 60)
     print("NETRA Branding Asset Generator")
@@ -325,6 +380,7 @@ def main():
     make_master_png_and_ico()
     make_splash()
     make_inno_bitmaps()
+    make_icns()
     make_version_info()
     print("=" * 60)
     print("All branding assets generated successfully.")

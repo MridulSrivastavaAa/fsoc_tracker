@@ -11,24 +11,40 @@ NETRA (Next-Generation Emulation for Tracking & Real-Time Alignment) is an advan
 |---|---|---|
 | **Windows Installer** | [`NETRA-Setup.exe`](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-Setup.exe) | Recommended: Full guided installer with desktop/start menu shortcuts and runtime checks. |
 | **Portable ZIP** | [`NETRA-Portable.zip`](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-Portable.zip) | Standalone portable archive. Unpack and launch `NETRA.exe` directly without installation. |
-| **Integrity Checksums** | [`checksums.txt`](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/checksums.txt) | Cryptographic SHA-256 hashes for all release artifacts. |
+| **macOS Disk Image** | [`NETRA-macOS.dmg`](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-macOS.dmg) | Standalone macOS application bundle (.dmg). Apple Silicon (M1 or later) only. |
+| **Integrity Checksums** | [`checksums.txt`](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/checksums.txt) • [`checksums-macos.txt`](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/checksums-macos.txt) | Cryptographic SHA-256 hashes for all release artifacts. |
 
 ---
 
 ## System Requirements
 
-- **Operating System:** Microsoft Windows 10 (version 1809+) or Windows 11 (64-bit).
-- **Architecture:** x86_64 (64-bit).
+- **Operating System:** 
+  - Microsoft Windows 10 (version 1809+) or Windows 11 (64-bit).
+  - macOS 12 (Monterey) or later (Apple Silicon M1 or later only).
+- **Architecture:** x86_64 (Windows), arm64 (macOS).
 - **Dependencies:** **None.** Python is not required. All runtimes, ONNX models, and computer vision libraries are self-contained.
+- **Browser:** Google Chrome or Microsoft Edge is recommended for dedicated app-window mode.
 - **Network:** 100% Offline operation supported. No internet connection is needed.
 
 ---
 
-## 3-Step Quick Start
+## Quick Start & Installation
 
+### Windows
 1. **Install or Extract:** Run `NETRA-Setup.exe` (or extract `NETRA-Portable.zip`).
 2. **Launch:** Open `NETRA` from your Desktop or Start Menu.
 3. **Execute & Analyze:** Choose an atmospheric scenario, start the simulation loop, and monitor real-time closed-loop beam telemetry.
+
+### macOS (Apple Silicon M1 or later)
+1. **Open Disk Image:** Double-click `NETRA-macOS.dmg` to mount the image.
+2. **Install:** Drag `NETRA.app` into your `/Applications` folder.
+3. **First Launch (Gatekeeper):** Because this build is distributed directly without an Apple Developer ID certificate:
+   - Either right-click `NETRA.app` in `/Applications` ➔ click **Open** ➔ confirm **Open**;
+   - Or open Terminal and run:
+     ```bash
+     xattr -dr com.apple.quarantine /Applications/NETRA.app
+     ```
+4. **Browser Mode:** Google Chrome or Microsoft Edge is recommended for native app-window mode. Reports and logs are saved to `~/Library/Application Support/NETRA/`.
 
 ---
 

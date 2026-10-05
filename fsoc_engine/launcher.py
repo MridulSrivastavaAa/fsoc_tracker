@@ -40,11 +40,16 @@ _LOG_FILE: Path | None = None
 
 def _get_log_dir() -> Path:
     """Resolve writable log directory outside of read-only install directory."""
-    if sys.platform == "win32":
+    override = os.environ.get("NETRA_DATA_DIR", "").strip()
+    if override:
+        base = Path(override)
+    elif sys.platform == "win32":
         appdata = os.environ.get("APPDATA")
         base = Path(appdata) / "NETRA" if appdata else Path.home() / "AppData" / "Roaming" / "NETRA"
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support" / "NETRA"
     else:
-        base = Path.home() / "NETRA"
+        base = Path.home() / ".local" / "share" / "NETRA"
     log_dir = base / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     return log_dir
