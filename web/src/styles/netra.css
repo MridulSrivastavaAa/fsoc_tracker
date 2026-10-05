@@ -1634,13 +1634,13 @@ select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
+  padding: 8px 10px 7px 12px;
   flex: none;
 }
 
 .sensor-head .eyebrow {
   color: var(--text-2);
-  font-size: 9px;
+  font-size: 9.5px;
 }
 
 .sensor-canvas-wrap {
@@ -1668,12 +1668,12 @@ select {
 }
 
 .sensor-foot>div {
-  background: rgba(var(--panel-rgb), 0.60);
-  padding: 4px 8px;
+  background: rgba(var(--panel-rgb), 0.75);
+  padding: 6px 10px;
 }
 
 .sensor-foot .eyebrow {
-  font-size: 9px;
+  font-size: 9.5px;
   letter-spacing: 0.08em;
 }
 
@@ -2741,7 +2741,12 @@ select {
 
 @media (max-height: 860px) {
 
-  .leftcol,
+  .leftcol {
+    top: 66px;
+    width: 350px;
+    gap: 8px;
+  }
+
   .rightcol {
     top: 66px;
     width: 320px;
