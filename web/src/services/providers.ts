@@ -67,9 +67,30 @@ export class RemoteEngineProvider implements TelemetryProvider {
   private shouldReconnect = false;
   private listener: Listener | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(private baseUrl: string) {
     this.label = `Remote engine (${baseUrl})`;
+  }
+
+  private startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        try {
+          this.ws.send(JSON.stringify({ type: 'ping' }));
+        } catch {
+          /* ignore */
+        }
+      }
+    }, 4000);
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
   }
 
   private tryConnectUrl(targetUrl: string, listener: Listener): Promise<WebSocket> {
@@ -85,7 +106,7 @@ export class RemoteEngineProvider implements TelemetryProvider {
           try { ws.close(); } catch {}
           reject(new Error(`Timeout connecting to ${wsUrl}`));
         }
-      }, 2500);
+      }, 4000);
 
       ws.onopen = () => {
         if (!settled) {
@@ -108,6 +129,7 @@ export class RemoteEngineProvider implements TelemetryProvider {
 
       ws.onclose = (ev) => {
         clearTimeout(timeout);
+        this.stopHeartbeat();
         if (!settled) {
           settled = true;
           reject(new Error(`WebSocket closed before connecting: ${wsUrl} (code ${ev.code})`));
@@ -122,7 +144,11 @@ export class RemoteEngineProvider implements TelemetryProvider {
         if (this.ws && this.ws !== ws) return;
         if (typeof e.data === 'string') {
           try {
-            listener(JSON.parse(e.data) as EngineMessage);
+            const parsed = JSON.parse(e.data);
+            if (parsed && parsed.type === 'pong') {
+              return;
+            }
+            listener(parsed as EngineMessage);
           } catch {
             /* ignore malformed */
           }
@@ -170,6 +196,7 @@ export class RemoteEngineProvider implements TelemetryProvider {
         this.ws = ws;
         this.baseUrl = url;
         this.label = `Remote engine (${url})`;
+        this.startHeartbeat();
         return;
       } catch (e) {
         lastErr = e as Error;
@@ -202,6 +229,7 @@ export class RemoteEngineProvider implements TelemetryProvider {
 
   disconnect() {
     this.shouldReconnect = false;
+    this.stopHeartbeat();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;

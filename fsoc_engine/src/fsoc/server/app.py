@@ -33,6 +33,31 @@ if sys.platform == "win32":
     except Exception:
         pass
 
+# Prevent uvicorn/websockets keepalive ping timeouts from dropping active connections
+try:
+    import uvicorn.config
+    _orig_uvicorn_config_init = uvicorn.config.Config.__init__
+    def _patched_uvicorn_config_init(self, *args, **kwargs):
+        kwargs["ws_ping_interval"] = None
+        kwargs["ws_ping_timeout"] = None
+        return _orig_uvicorn_config_init(self, *args, **kwargs)
+    uvicorn.config.Config.__init__ = _patched_uvicorn_config_init
+except Exception:
+    pass
+
+try:
+    from websockets.legacy.protocol import WebSocketCommonProtocol
+    _orig_ws_init = WebSocketCommonProtocol.__init__
+    def _patched_ws_init(self, *args, **kwargs):
+        kwargs["ping_interval"] = None
+        kwargs["ping_timeout"] = None
+        _orig_ws_init(self, *args, **kwargs)
+        self.ping_interval = None
+        self.ping_timeout = None
+    WebSocketCommonProtocol.__init__ = _patched_ws_init
+except Exception:
+    pass
+
 # Module-level registry of active WebSocket telemetry handlers' background tasks.
 # Tasks are tracked here so they are never garbage-collected while the parent
 # coroutine runs, and cancelled on disconnect.
@@ -828,7 +853,13 @@ async def websocket_telemetry(websocket: WebSocket):
                 try:
                     cmd = json.loads(msg_text)
                     c_type = cmd.get("type")
-                    if c_type == "start":
+                    if c_type == "ping":
+                        try:
+                            await websocket.send_text(json.dumps({"type": "pong"}))
+                        except Exception:
+                            pass
+                        continue
+                    elif c_type == "start":
                         state["running"] = True
                     elif c_type == "pause":
                         state["running"] = False
@@ -1121,3 +1152,7 @@ async def serve_static(file_name: str):
         if index.is_file():
             return FileResponse(str(index))
     raise HTTPException(status_code=404, detail="Not found")
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("fsoc.server.app:app", host="0.0.0.0", port=8000, ws_ping_interval=None, ws_ping_timeout=None)

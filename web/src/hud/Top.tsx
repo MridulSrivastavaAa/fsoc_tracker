@@ -14,6 +14,7 @@ export function TopBar() {
   const fps = useApp((s) => s.engineFps);
   const rec = useApp((s) => s.recording);
   const themeOpen = useApp((s) => s.themeOpen);
+  const currentDrawer = useApp((s) => s.drawer);
   const { send, setDrawer, startRecording, stopRecording, set } = useApp.getState();
   const preset = SCENARIO_PRESETS.find((p) => p.id === cfg.scenarioId);
   const state = hud?.state ?? 'IDLE';
@@ -42,7 +43,18 @@ export function TopBar() {
         <span className="chip mono" title="Mission elapsed time">
           T+ <b>{fmtClock(hud?.t ?? 0)}</b>
         </span>
-        <span className="chip opt" title="Where the simulation is running">
+        <span
+          className="chip opt"
+          title="Telemetry Engine & Connection Status (Click to reconnect or open Plugin Architecture)"
+          onClick={() => {
+            if (status !== 'online') {
+              useApp.getState().connect('remote');
+            } else {
+              setDrawer(currentDrawer === 'plugin' ? null : 'plugin');
+            }
+          }}
+          style={{ cursor: 'pointer' }}
+        >
           <span
             className="dot"
             style={{
@@ -52,7 +64,7 @@ export function TopBar() {
           />
           <b>{src}</b>
           <span className="mono dim">
-            {status === 'online' ? `${fmt(fps, 0)} fps · ${fmt(hud?.procMs, 1)} ms` : status === 'error' ? 'OFFLINE' : 'CONNECTING…'}
+            {status === 'online' ? `${fmt(fps, 0)} fps · ${fmt(hud?.procMs, 1)} ms` : status === 'error' ? 'RECONNECT ↻' : 'CONNECTING…'}
           </span>
         </span>
       </div>

@@ -8,6 +8,11 @@ import { isRecording } from '../core/telemetry/recorder';
 import type { BatchMessage, BatchRunResult } from '../engine/batch.worker';
 import { Icon, Section, Seg, Slider, Toggle, fmt } from './ui';
 
+export const getApiBase = () => {
+  const s = useApp.getState().serverUrl;
+  return s ? s.replace(/\/$/, '') : 'http://127.0.0.1:8000';
+};
+
 export interface ToolDef {
   id: Exclude<DrawerId, null>;
   num: string;
@@ -121,7 +126,7 @@ export function ToolRail() {
       </button>
       <button
         className="rail-btn bench-btn"
-        onClick={() => window.open('http://localhost:8000/api/plugins/playground', '_blank')}
+        onClick={() => window.open(`${getApiBase()}/api/plugins/playground`, '_blank')}
         aria-label="Plugin Playground"
       >
         <Icon name="code" />
@@ -925,7 +930,7 @@ export function RightNavbar() {
         </button>
         <button
           className="rail-btn bench-btn"
-          onClick={() => window.open('http://localhost:8000/api/plugins/playground', '_blank')}
+          onClick={() => window.open(`${getApiBase()}/api/plugins/playground`, '_blank')}
           aria-label="Plugin Playground"
         >
           <Icon name="code" />
@@ -1565,7 +1570,7 @@ function PluginDrawer() {
     setStatus('applying');
     try {
       if (strategy === 'default') {
-        const res = await fetch('/api/plugins/reset', {
+        const res = await fetch(`${getApiBase()}/api/plugins/reset`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ slot })
@@ -1580,7 +1585,7 @@ function PluginDrawer() {
         const activeCode = strategy === 'preset' ? (activePreset?.code || DEFAULT_CODE[slot]) : code;
         const activeLabel = strategy === 'preset' ? (activePreset?.name || 'Selected Preset') : 'Custom Algorithm Plugin';
 
-        const res = await fetch('/api/plugins/apply_code', {
+        const res = await fetch(`${getApiBase()}/api/plugins/apply_code`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ slot, code: activeCode, params, label: activeLabel })
@@ -1608,7 +1613,7 @@ function PluginDrawer() {
   const openComparativeReport = async () => {
     try {
       setStatus('applying');
-      const res = await fetch('/api/plugins/report');
+      const res = await fetch(`${getApiBase()}/api/plugins/report`);
       const data = await res.json();
       setStatus('idle');
       if (data.report) {
@@ -1883,7 +1888,7 @@ function PluginDrawer() {
             </button>
             <button 
                className="ghost" 
-               onClick={() => window.open('/api/plugins/report?format=html', '_blank')}
+               onClick={() => window.open(`${getApiBase()}/api/plugins/report?format=html`, '_blank')}
                style={{ width: '100%', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--amber)' }}
                title="Open full standalone Comparative Report in a new browser tab"
             >
@@ -1933,7 +1938,7 @@ function PluginDrawer() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <button 
-                  onClick={() => window.open('/api/plugins/report?format=html', '_blank')}
+                  onClick={() => window.open(`${getApiBase()}/api/plugins/report?format=html`, '_blank')}
                   style={{ background: '#0284c7', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 12px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
                   title="Open standalone HTML report in a new tab"
                 >
