@@ -16,7 +16,8 @@ from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 block_cipher = None
 
 # Ensure fsoc package is discoverable when running pyinstaller from fsoc_engine/
-_src = Path(__file__).parent / 'src'
+# NOTE: __file__ is NOT available in spec files (exec'd context); use SPECPATH instead.
+_src = Path(SPECPATH) / 'src'
 if str(_src) not in sys.path:
     sys.path.insert(0, str(_src))
 
