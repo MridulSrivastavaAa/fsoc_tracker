@@ -928,21 +928,7 @@ export function RightNavbar() {
             <div className="tip-desc">Feed video (.mp4) directly into the detector to benchmark centroid error against truth.</div>
           </div>
         </button>
-        <button
-          className="rail-btn bench-btn"
-          onClick={() => window.open(`${getApiBase()}/api/plugins/playground`, '_blank')}
-          aria-label="Plugin Playground"
-        >
-          <Icon name="code" />
-          <div className="tip">
-            <div className="tip-header">
-              <span className="tip-code">ALGO</span>
-              <span className="tip-tag">GUI</span>
-            </div>
-            <div className="tip-label">Plugin Playground</div>
-            <div className="tip-desc">Open the standalone Algorithm Plugin Playground GUI in a new tab.</div>
-          </div>
-        </button>
+
       </nav>
     </div>
   );
@@ -1678,8 +1664,12 @@ function PluginDrawer() {
                setCode(DEFAULT_CODE[slot]);
              }
           }} style={{ width: '100%', marginBottom: 12, background: '#1a1d24', color: '#fff', border: '1px solid #333', padding: 5, borderRadius: 4 }}>
-            <option value="default">NETRA Default (IMM Kalman Filter + Cascaded PID)</option>
-            <option value="preset">Preset Baseline Library (RL-PID / Kalman / PSF)</option>
+            <option value="default">
+              NETRA Default ({slot === 'tracking' ? 'IMM Kalman Filter' : slot === 'control' ? 'Cascaded PID' : 'Intensity Centroiding'})
+            </option>
+            <option value="preset">
+              Preset Baseline Library ({slot === 'tracking' ? 'CV Kalman / Alpha-Beta' : slot === 'control' ? 'RL-PID / Ziegler-Nichols PID' : 'Sub-pixel Centroiding'})
+            </option>
             <option value="custom">Custom Algorithm Function Injection</option>
           </select>
 
@@ -1879,20 +1869,27 @@ function PluginDrawer() {
           
           <div style={{ marginTop: 18, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button 
-               className="outline" 
+               className="btn primary" 
                onClick={openComparativeReport} 
                disabled={status === 'applying'}
-               style={{ width: '100%', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+               style={{ 
+                 width: '100%', 
+                 fontSize: 12, 
+                 display: 'flex', 
+                 alignItems: 'center', 
+                 justifyContent: 'center', 
+                 gap: 8, 
+                 background: 'linear-gradient(135deg, #0284c7, #2563eb)', 
+                 border: 'none', 
+                 color: 'white', 
+                 fontWeight: 'bold',
+                 padding: '10px 16px',
+                 borderRadius: 6,
+                 boxShadow: '0 4px 12px rgba(37,99,235,0.3)',
+                 textShadow: '0 1px 2px rgba(0,0,0,0.2)'
+               }}
             >
-              <Icon name="report" size={14} /> COMPARATIVE REPORT (NETRA vs CUSTOM)
-            </button>
-            <button 
-               className="ghost" 
-               onClick={() => window.open(`${getApiBase()}/api/plugins/report?format=html`, '_blank')}
-               style={{ width: '100%', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, color: 'var(--amber)' }}
-               title="Open full standalone Comparative Report in a new browser tab"
-            >
-              🌐 OPEN STANDALONE HTML REPORT (NEW TAB)
+              <Icon name="report" size={16} /> GENERATE COMPARATIVE REPORT
             </button>
           </div>
         </div>

@@ -170,24 +170,18 @@ _bootstrap_paths()
 # ---------------------------------------------------------------------------
 
 def _splash(msg: str) -> None:
-    if "_PYI_SPLASH_IPC" not in os.environ:
-        return
     try:
         import pyi_splash  # type: ignore[import]
-        if pyi_splash.is_alive():
-            pyi_splash.update_text(msg)
-    except BaseException:
+        pyi_splash.update_text(msg)
+    except Exception:
         pass
 
 
 def _close_splash() -> None:
-    if "_PYI_SPLASH_IPC" not in os.environ:
-        return
     try:
         import pyi_splash  # type: ignore[import]
-        if pyi_splash.is_alive():
-            pyi_splash.close()
-    except BaseException:
+        pyi_splash.close()
+    except Exception:
         pass
 
 
