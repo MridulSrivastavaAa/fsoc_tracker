@@ -7,16 +7,9 @@ echo =====================================================================
 echo.
 
 :: 1. Read Version from fsoc/__version__.py
-for /f "tokens=2 delims='" %%a in ('python -c "from fsoc.__version__ import VERSION; print(VERSION)" 2^>nul') do (
+set VERSION=1.0.0
+for /f "delims=" %%a in ('python -c "exec(open('src/fsoc/__version__.py').read()); print(VERSION)" 2^>nul') do (
     set VERSION=%%a
-)
-if "%VERSION%"=="" (
-    for /f "tokens=2 delims=\"" %%a in ('python -c "from fsoc.__version__ import VERSION; print(VERSION)" 2^>nul') do (
-        set VERSION=%%a
-    )
-)
-if "%VERSION%"=="" (
-    set VERSION=1.0.0
 )
 echo Target Release Version: %VERSION%
 echo.
