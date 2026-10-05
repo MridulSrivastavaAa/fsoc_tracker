@@ -1,4 +1,4 @@
-/** Theme picker: a small palette popover in the top bar and a section in the View drawer. */
+/** Theme picker: a curated palette popover in the top bar and a section in the View drawer. */
 import { THEMES, useApp } from '../state/store';
 
 export function ThemeList() {
@@ -14,6 +14,7 @@ export function ThemeList() {
             ))}
           </span>
           <b style={{ fontWeight: 600 }}>{t.name}</b>
+          <span style={{ fontSize: '10px', color: 'var(--text-3)', lineHeight: 1.2 }}>{t.sub}</span>
         </button>
       ))}
     </div>
@@ -27,13 +28,14 @@ export function ThemePopover() {
   return (
     <div className="theme-pop glass" onMouseLeave={() => set({ themeOpen: false })}>
       <div className="eyebrow" style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
-        <span>Theme</span>
-        <span className="dim">saved on this device</span>
+        <span>Telemetry Palettes</span>
+        <span className="dim">4 profiles</span>
       </div>
       <ThemeList />
-      <p className="note" style={{ marginBottom: 0 }}>
-        Changes the interface colours only. The 3D scene, the camera image and the laser stay physically coloured.
+      <p className="note" style={{ marginBottom: 0, marginTop: 8 }}>
+        Synchronizes HUD telemetry panels, 3D space background, predicted orbital vectors, and spatial reference axes.
       </p>
     </div>
   );
 }
+

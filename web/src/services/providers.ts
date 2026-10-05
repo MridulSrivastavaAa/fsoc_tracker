@@ -53,6 +53,13 @@ function decodeBinaryFrame(buf: ArrayBuffer): EngineMessage | null {
   return { type: 'frame', width, height, frame, data };
 }
 
+export const DEFAULT_SERVER_URL =
+  typeof window !== 'undefined'
+    ? (window.location.port === '8000'
+        ? window.location.origin
+        : 'http://127.0.0.1:8000')
+    : 'http://127.0.0.1:8000';
+
 export class RemoteEngineProvider implements TelemetryProvider {
   readonly kind = 'remote' as const;
   public label: string;
@@ -60,15 +67,37 @@ export class RemoteEngineProvider implements TelemetryProvider {
   private shouldReconnect = false;
   private listener: Listener | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(private baseUrl: string) {
     this.label = `Remote engine (${baseUrl})`;
+  }
+
+  private startHeartbeat() {
+    this.stopHeartbeat();
+    this.heartbeatTimer = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        try {
+          this.ws.send(JSON.stringify({ type: 'ping' }));
+        } catch {
+          /* ignore */
+        }
+      }
+    }, 4000);
+  }
+
+  private stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
   }
 
   private tryConnectUrl(targetUrl: string, listener: Listener): Promise<WebSocket> {
     const wsUrl = targetUrl.replace(/^http/, 'ws').replace(/\/$/, '') + '/ws/telemetry';
     return new Promise((resolve, reject) => {
       let settled = false;
+      let connected = false;
       const ws = new WebSocket(wsUrl);
       ws.binaryType = 'arraybuffer';
       const timeout = setTimeout(() => {
@@ -77,11 +106,12 @@ export class RemoteEngineProvider implements TelemetryProvider {
           try { ws.close(); } catch {}
           reject(new Error(`Timeout connecting to ${wsUrl}`));
         }
-      }, 5000);
+      }, 4000);
 
       ws.onopen = () => {
         if (!settled) {
           settled = true;
+          connected = true;
           clearTimeout(timeout);
           resolve(ws);
         }
@@ -91,23 +121,34 @@ export class RemoteEngineProvider implements TelemetryProvider {
         if (!settled) {
           settled = true;
           clearTimeout(timeout);
-          reject(new Error(`WebSocket error for ${wsUrl}`));
-        } else {
+          reject(new Error(`WebSocket connection failed: ${wsUrl}`));
+        } else if (connected && this.ws === ws) {
           listener({ type: 'error', message: 'WebSocket communication error' });
         }
       };
 
-      ws.onclose = () => {
-        if (settled && this.shouldReconnect) {
+      ws.onclose = (ev) => {
+        clearTimeout(timeout);
+        this.stopHeartbeat();
+        if (!settled) {
+          settled = true;
+          reject(new Error(`WebSocket closed before connecting: ${wsUrl} (code ${ev.code})`));
+        } else if (connected && this.shouldReconnect && this.ws === ws) {
+          this.ws = null;
           listener({ type: 'error', message: 'Remote engine disconnected — auto-reconnecting…' });
           this.scheduleReconnect();
         }
       };
 
       ws.onmessage = (e) => {
+        if (this.ws && this.ws !== ws) return;
         if (typeof e.data === 'string') {
           try {
-            listener(JSON.parse(e.data) as EngineMessage);
+            const parsed = JSON.parse(e.data);
+            if (parsed && parsed.type === 'pong') {
+              return;
+            }
+            listener(parsed as EngineMessage);
           } catch {
             /* ignore malformed */
           }
@@ -122,14 +163,33 @@ export class RemoteEngineProvider implements TelemetryProvider {
   async connect(listener: Listener): Promise<void> {
     this.listener = listener;
     this.shouldReconnect = true;
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      return;
+    }
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
 
-    // Primary candidate + automatic fallback candidate (8000 <-> 8001)
-    const candidates = [this.baseUrl];
-    if (this.baseUrl.includes(':8000')) {
-      candidates.push(this.baseUrl.replace(':8000', ':8001'));
-    } else if (this.baseUrl.includes(':8001')) {
-      candidates.push(this.baseUrl.replace(':8001', ':8000'));
+    // Robust candidates: prioritize 127.0.0.1 to avoid Windows IPv6 resolution latency
+    const candidates: string[] = [];
+    const addCandidate = (url: string) => {
+      const clean = url.trim().replace(/\/$/, '');
+      if (clean && !candidates.includes(clean)) candidates.push(clean);
+    };
+
+    if (this.baseUrl.includes('localhost')) {
+      addCandidate(this.baseUrl.replace('localhost', '127.0.0.1'));
+      addCandidate(this.baseUrl);
+    } else if (this.baseUrl.includes('127.0.0.1')) {
+      addCandidate(this.baseUrl);
+      addCandidate(this.baseUrl.replace('127.0.0.1', 'localhost'));
+    } else {
+      addCandidate(this.baseUrl);
+    }
+
+    const currentLen = candidates.length;
+    for (let i = 0; i < currentLen; i++) {
+      const c = candidates[i];
+      if (c.includes(':8000')) addCandidate(c.replace(':8000', ':8001'));
+      else if (c.includes(':8001')) addCandidate(c.replace(':8001', ':8000'));
     }
 
     let lastErr: Error | null = null;
@@ -139,12 +199,15 @@ export class RemoteEngineProvider implements TelemetryProvider {
         this.ws = ws;
         this.baseUrl = url;
         this.label = `Remote engine (${url})`;
+        this.startHeartbeat();
         return;
       } catch (e) {
         lastErr = e as Error;
       }
     }
 
+    // Schedule auto-reconnect attempt if initial connection fails
+    this.scheduleReconnect();
     throw lastErr ?? new Error(`Could not connect to FastAPI server at ${this.baseUrl} or alternate ports`);
   }
 
@@ -156,10 +219,11 @@ export class RemoteEngineProvider implements TelemetryProvider {
       try {
         await this.connect(this.listener);
         this.listener({ type: 'status', running: true, demo: false, fps: 30, timeScale: 1 });
+        this.send({ type: 'start' });
       } catch {
         this.scheduleReconnect();
       }
-    }, 2000);
+    }, 1500);
   }
 
   send(cmd: EngineCommand) {
@@ -168,6 +232,7 @@ export class RemoteEngineProvider implements TelemetryProvider {
 
   disconnect() {
     this.shouldReconnect = false;
+    this.stopHeartbeat();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -255,6 +320,3 @@ export class ReplayProvider implements TelemetryProvider {
     this.listener = null;
   }
 }
-
-export const DEFAULT_SERVER_URL: string =
-  (import.meta.env.VITE_NETRA_SERVER as string | undefined) ?? 'http://localhost:8000';
