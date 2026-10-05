@@ -10,6 +10,15 @@ from typing import Literal, Optional
 import yaml
 from pydantic import BaseModel, Field, model_validator
 
+# Lazy import to avoid circular dependency; used only for the model_path default.
+def _default_model_path() -> str:
+    """Return the absolute path to the bundled ONNX model, resolved at import time."""
+    try:
+        from ..paths import resource_path
+        return str(resource_path("models/beacon_verifier.onnx"))
+    except Exception:
+        return "models/beacon_verifier.onnx"  # safe CWD-relative fallback
+
 
 # ---------------------------------------------------------------------------
 # Sub-models for each section
@@ -157,7 +166,8 @@ class WideSearchConfig(BaseModel):
 
 class CNNVerifierConfig(BaseModel):
     enabled: bool = True
-    model_path: str = "models/beacon_verifier.onnx"
+    # Resolved at class definition time so frozen and source builds both find the model.
+    model_path: str = Field(default_factory=_default_model_path)
     patch_size: int = Field(32, ge=8)
     min_confidence: float = Field(0.5, ge=0.0, le=1.0)
 

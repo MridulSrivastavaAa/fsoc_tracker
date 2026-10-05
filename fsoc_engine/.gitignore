@@ -17,7 +17,14 @@ __pycache__/
 *.egg-info/
 dist/
 build/
-*.spec
+release/*.exe
+release/*.zip
+release/checksums.txt
+!release/RELEASE_NOTES.md
+!release/START_HERE.txt
+*.spec.bak
+*.spec~
+!NETRA.spec
 eggs/
 .eggs/
 
