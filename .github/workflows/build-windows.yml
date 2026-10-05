@@ -3,6 +3,9 @@ name: Build Standalone Windows Release
 env:
   ACTIONS_ALLOW_USE_UNSECURE_NODE20: 'true'
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
     inputs:
@@ -10,7 +13,7 @@ on:
         description: 'Publish as GitHub Release?'
         required: false
         type: boolean
-        default: false
+        default: true
       tag_name:
         description: 'Release Tag (e.g. v1.0.0)'
         required: false
@@ -51,6 +54,15 @@ jobs:
         working-directory: fsoc_engine
         env:
           PYTHONPATH: src
+
+      - name: Verify Web Dist Assets
+        run: |
+          python -c "
+          from pathlib import Path
+          p = Path('fsoc_engine/web_dist/index.html')
+          assert p.exists(), f'CRITICAL: {p} does not exist!'
+          print('Web dist verification OK: index.html found (size:', p.stat().st_size, 'bytes)')
+          "
 
       - name: Run Smoke Selftest (source, pre-freeze)
         run: |
@@ -119,14 +131,14 @@ jobs:
           retention-days: 14
 
       - name: Publish to GitHub Releases
-        if: ${{ github.event.inputs.publish_release == 'true' || startsWith(github.ref, 'refs/tags/v') }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
-          name: "🚀 NETRA ${{ github.event.inputs.tag_name || github.ref_name }} - Stable Windows Release"
+          tag_name: ${{ github.event.inputs.tag_name || (startsWith(github.ref, 'refs/tags/v') && github.ref_name) || 'v1.0.0' }}
+          name: "🚀 NETRA v1.0.0 - Next-Generation Emulation for Tracking & Real-Time Alignment"
           body_path: fsoc_engine/release/RELEASE_NOTES.md
           draft: false
           prerelease: false
+          make_latest: true
           files: |
             fsoc_engine/release/NETRA-Setup.exe
             fsoc_engine/release/NETRA-Portable.zip

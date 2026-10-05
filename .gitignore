@@ -9,6 +9,8 @@ FINAL_TECHNICAL_REPORT.html
 00_PROJECT_ROADMAP.html
 *.html
 !web/index.html
+!fsoc_engine/web_dist/**
+!fsoc_engine/web_dist/index.html
 
 # Problem Statement & Raw Reference PDFs
 Problem Statement ID.txt

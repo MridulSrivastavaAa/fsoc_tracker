@@ -3,13 +3,13 @@ VSVersionInfo(
                     OS=0x40004, fileType=0x1, subtype=0x0, date=(0, 0)),
   kids=[
     StringFileInfo([StringTable('040904B0', [
-      StringStruct('CompanyName', 'Team NETRA'),
-      StringStruct('FileDescription', 'NETRA FSOC PAT Workstation'),
+      StringStruct('CompanyName', 'Team NavDrishti1'),
+      StringStruct('FileDescription', 'NETRA - Next-Generation Emulation for Tracking & Real-Time Alignment'),
       StringStruct('FileVersion', '1.0.0.0'),
       StringStruct('InternalName', 'NETRA'),
-      StringStruct('LegalCopyright', 'Copyright (c) 2026 Team NETRA'),
+      StringStruct('LegalCopyright', 'Copyright (c) 2026 Team NavDrishti1'),
       StringStruct('OriginalFilename', 'NETRA.exe'),
-      StringStruct('ProductName', 'NETRA'),
+      StringStruct('ProductName', 'NETRA (Next-Generation Emulation for Tracking & Real-Time Alignment)'),
       StringStruct('ProductVersion', '1.0.0.0')])]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
   ]

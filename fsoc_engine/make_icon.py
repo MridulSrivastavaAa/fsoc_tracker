@@ -212,16 +212,21 @@ def make_splash():
     text_x = 280
 
     # Title: NETRA
-    draw.text((text_x, 70), "NETRA", font=font_title, fill=COLOR_CYAN)
+    draw.text((text_x, 60), "NETRA", font=font_title, fill=COLOR_CYAN)
 
-    # Subtitle: FSOC PAT Workstation
-    draw.text((text_x, 130), "FSOC PAT Workstation", font=font_sub, fill=COLOR_WHITE)
+    # Full form subtitle
+    font_full = get_font(12, bold=True)
+    draw.text((text_x, 118), "Next-Generation Emulation for Tracking & Real-Time Alignment", font=font_full, fill=COLOR_WHITE)
 
-    # Caption: Pointing, Acquisition & Tracking Simulator
-    draw.text((text_x, 165), "Pointing, Acquisition & Tracking Simulator", font=font_caption, fill=COLOR_MUTED)
+    # Subtitle: Team NavDrishti1
+    font_team = get_font(16, bold=True)
+    draw.text((text_x, 142), "Team NavDrishti1", font=font_team, fill=COLOR_CYAN)
 
-    # System badges / tags
-    draw.text((text_x, 205), f"Version {VERSION}  |  Virtual Camera PAT  |  ISRO PS", font=font_caption, fill=COLOR_CYAN_DIM)
+    # Caption: Pointing, Acquisition & Tracking Workstation
+    draw.text((text_x, 172), "Pointing, Acquisition & Tracking (PAT) Workstation", font=font_caption, fill=COLOR_MUTED)
+
+    # System badges / tags (Removed ISRO PS, using Team NavDrishti1)
+    draw.text((text_x, 210), f"Version {VERSION}  |  Virtual Camera PAT  |  Team NavDrishti1", font=font_caption, fill=COLOR_CYAN_DIM)
 
     # Thin divider line near the bottom (y=305)
     draw.line([30, 305, w - 30, 305], fill=COLOR_DIVIDER, width=1)
@@ -256,8 +261,8 @@ def make_inno_bitmaps():
     font_bold = get_font(18, bold=True)
     font_small = get_font(10, bold=False)
     side_draw.text((45, 175), "NETRA", font=font_bold, fill=(0, 229, 255))
-    side_draw.text((25, 202), "FSOC PAT Workstation", font=font_small, fill=(240, 246, 252))
-    side_draw.text((32, 260), "ISRO Problem Statement", font=font_small, fill=(139, 148, 158))
+    side_draw.text((25, 202), "Team NavDrishti1", font=font_small, fill=(240, 246, 252))
+    side_draw.text((10, 260), "Tracking & Real-Time Alignment", font=font_small, fill=(139, 148, 158))
     side_draw.text((45, 280), "Closed-Loop PAT", font=font_small, fill=(0, 229, 255))
 
     side_path = ASSETS_DIR / "wizard_side.bmp"
@@ -295,13 +300,13 @@ def make_version_info():
                     OS=0x40004, fileType=0x1, subtype=0x0, date=(0, 0)),
   kids=[
     StringFileInfo([StringTable('040904B0', [
-      StringStruct('CompanyName', 'Team NETRA'),
-      StringStruct('FileDescription', 'NETRA FSOC PAT Workstation'),
+      StringStruct('CompanyName', 'Team NavDrishti1'),
+      StringStruct('FileDescription', 'NETRA - Next-Generation Emulation for Tracking & Real-Time Alignment'),
       StringStruct('FileVersion', '{v_str}'),
       StringStruct('InternalName', 'NETRA'),
-      StringStruct('LegalCopyright', 'Copyright (c) 2026 Team NETRA'),
+      StringStruct('LegalCopyright', 'Copyright (c) 2026 Team NavDrishti1'),
       StringStruct('OriginalFilename', 'NETRA.exe'),
-      StringStruct('ProductName', 'NETRA'),
+      StringStruct('ProductName', 'NETRA (Next-Generation Emulation for Tracking & Real-Time Alignment)'),
       StringStruct('ProductVersion', '{v_str}')])]),
     VarFileInfo([VarStruct('Translation', [1033, 1200])])
   ]

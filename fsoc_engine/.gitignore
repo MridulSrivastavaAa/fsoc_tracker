@@ -5,8 +5,9 @@
 # Reports (HTML reports generated during phases)
 *REPORT*.html
 PHASE*_REPORT.html
-FINAL_TECHNICAL_REPORT.html
 *.html
+!web_dist/**
+!web_dist/index.html
 
 # Python Cache & Bytecode
 __pycache__/

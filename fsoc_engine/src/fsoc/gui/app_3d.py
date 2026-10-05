@@ -37,6 +37,12 @@ def _find_web_dist_dir() -> Optional[Path]:
             if sub.exists() and (sub / "index.html").exists():
                 return sub
 
+    # 1b. Frozen executable directory candidate
+    exe_dir = Path(sys.executable).resolve().parent
+    for sub in [exe_dir / "_internal" / "web_dist", exe_dir / "web_dist", exe_dir / "dist" / "NETRA" / "_internal" / "web_dist"]:
+        if sub.exists() and (sub / "index.html").exists():
+            return sub
+
     # 2. Development candidates
     candidates = [
         Path(__file__).resolve().parents[3] / "web_dist",
@@ -53,7 +59,7 @@ def _find_web_dist_dir() -> Optional[Path]:
     return None
 
 
-def _launch_app_window(url: str, title: str = "ISRO FSOC 3D Workstation") -> bool:
+def _launch_app_window(url: str, title: str = "NETRA — Next-Generation Emulation for Tracking & Real-Time Alignment | Team NavDrishti1") -> bool:
     """Launch clean dedicated application window via native browser app mode."""
     import subprocess
     import shutil
@@ -108,6 +114,7 @@ def _is_port_in_use(port: int) -> bool:
 def _start_fastapi_server(port: int = 8000) -> bool:
     """Start uvicorn FastAPI backend server in a background daemon thread."""
     try:
+        from fsoc.server.app import app
         import uvicorn
         config = uvicorn.Config(
             app=app,
@@ -126,7 +133,7 @@ def _start_fastapi_server(port: int = 8000) -> bool:
         return False
 
 
-def launch_3d_desktop(title: str = "ISRO / SAC PS 26169 — FSOC 3D Virtual Camera Tracking Workstation") -> None:
+def launch_3d_desktop(title: str = "NETRA — Next-Generation Emulation for Tracking & Real-Time Alignment | Team NavDrishti1") -> None:
     """
     Launch the native 3D desktop application window with embedded FastAPI server.
     """

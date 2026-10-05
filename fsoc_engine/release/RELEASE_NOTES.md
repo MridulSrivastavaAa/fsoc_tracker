@@ -1,6 +1,7 @@
-# NETRA FSOC PAT Workstation - Release v1.0.0
+# NETRA v1.0.0 — Next-Generation Emulation for Tracking & Real-Time Alignment
+**By Team NavDrishti1**
 
-NETRA (Neural Enhanced Tracking & Real-Time Acquisition) is an advanced, high-performance Free-Space Optical Communications (FSOC) Pointing, Acquisition, and Tracking (PAT) simulation and control workstation built to fulfill the ISRO virtual camera tracking system problem statement. It integrates multi-model closed-loop Kalman & IMM estimation, optical flow motion compensation, and deep CNN verification for reliable sub-pixel beam steering under heavy atmospheric scintillation and cloud occlusions.
+NETRA (Next-Generation Emulation for Tracking & Real-Time Alignment) is an advanced, high-performance Free-Space Optical Communications (FSOC) Pointing, Acquisition, and Tracking (PAT) simulation and control workstation. It integrates multi-model closed-loop Kalman & IMM estimation, optical flow motion compensation, and deep CNN verification for reliable sub-pixel beam steering under heavy atmospheric scintillation and cloud occlusions.
 
 ---
 

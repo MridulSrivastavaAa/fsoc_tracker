@@ -6,9 +6,9 @@
 ;   ISCC.exe installer.iss
 ; or via build_release.bat
 
-#define AppName    "NETRA FSOC PAT Workstation"
+#define AppName    "NETRA - Next-Generation Emulation for Tracking & Real-Time Alignment"
 #define AppVersion "1.0.0"
-#define Publisher  "Team NETRA"
+#define Publisher  "Team NavDrishti1"
 #define AppURL     "https://github.com/MridulSrivastavaAa/fsoc_tracker"
 #define AppExeName "NETRA.exe"
 
