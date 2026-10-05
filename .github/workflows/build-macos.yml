@@ -1,0 +1,110 @@
+name: Build Standalone macOS Release
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag to attach DMG to (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+
+jobs:
+  build-macos-arm64:
+    name: Build macOS DMG (Apple Silicon)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install System & Build Dependencies
+        run: |
+          brew install create-dmg
+          python -m pip install --upgrade pip wheel
+          pip install -r fsoc_engine/requirements.txt
+          pip install pyinstaller pillow
+
+      - name: Build macOS Application Bundle & DMG
+        working-directory: fsoc_engine
+        run: |
+          chmod +x build_dmg.sh
+          ./build_dmg.sh
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: NETRA-macOS-ARM64-Release
+          path: |
+            fsoc_engine/release/NETRA-macOS.dmg
+            fsoc_engine/release/checksums-macos.txt
+          if-no-files-found: error
+
+      - name: Publish macOS DMG to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || 'v1.0.0' }}
+          files: |
+            fsoc_engine/release/NETRA-macOS.dmg
+            fsoc_engine/release/checksums-macos.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # =========================================================================
+  # Optional: Intel x86_64 Build Job (macos-13 runner)
+  # -------------------------------------------------------------------------
+  # GitHub Actions macos-latest runs on Apple Silicon (arm64). To support
+  # legacy Intel Macs (pre-2020), this separate job runs on macos-13 (x86_64).
+  #
+  # Trade-offs & Notes:
+  #   - macos-13 is nearing end-of-life on GitHub-hosted runners.
+  #   - Intel CI runners are slower and consume higher GitHub Actions minutes.
+  #   - Almost all active developer and lab workstations are now Apple Silicon.
+  #   - If Intel support is needed, uncomment this job block and update
+  #     the output name to NETRA-macOS-Intel.dmg in the build script.
+  # =========================================================================
+  # build-macos-intel:
+  #   name: Build macOS DMG (Intel x86_64)
+  #   runs-on: macos-13
+  #
+  #   steps:
+  #     - name: Checkout Repository
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Set up Python 3.12
+  #       uses: actions/setup-python@v5
+  #       with:
+  #         python-version: '3.12'
+  #         cache: 'pip'
+  #
+  #     - name: Install System & Build Dependencies
+  #       run: |
+  #         brew install create-dmg
+  #         python -m pip install --upgrade pip wheel
+  #         pip install -r fsoc_engine/requirements.txt
+  #         pip install pyinstaller pillow
+  #
+  #     - name: Build macOS Application Bundle & DMG
+  #       working-directory: fsoc_engine
+  #       run: |
+  #         chmod +x build_dmg.sh
+  #         ./build_dmg.sh
+  #         mv release/NETRA-macOS.dmg release/NETRA-macOS-Intel.dmg
+  #         shasum -a 256 release/NETRA-macOS-Intel.dmg > release/checksums-macos-intel.txt
+  #
+  #     - name: Upload Intel Artifacts
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: NETRA-macOS-Intel-Release
+  #         path: |
+  #           fsoc_engine/release/NETRA-macOS-Intel.dmg
+  #           fsoc_engine/release/checksums-macos-intel.txt
+  #         if-no-files-found: error

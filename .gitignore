@@ -32,7 +32,8 @@ dist/
 build/
 release/*.exe
 release/*.zip
-release/checksums.txt
+release/*.dmg
+release/checksums*.txt
 !release/RELEASE_NOTES.md
 !release/START_HERE.txt
 *.spec.bak
