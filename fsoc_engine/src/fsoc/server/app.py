@@ -1135,7 +1135,11 @@ def _find_dist():
         for sub in [meipass / "web_dist", meipass / "web" / "dist", meipass]:
             if sub.exists() and (sub / "index.html").exists():
                 return sub
+    exe_dir = Path(sys.executable).resolve().parent
     candidates = [
+        exe_dir / "_internal" / "web_dist",
+        exe_dir / "web_dist",
+        exe_dir / "dist" / "NETRA" / "_internal" / "web_dist",
         Path(__file__).resolve().parents[3] / "web" / "dist",
         Path(__file__).resolve().parents[3] / "web_dist",
         Path(__file__).resolve().parents[4] / "web" / "dist",
@@ -1143,6 +1147,7 @@ def _find_dist():
         Path.cwd() / "web" / "dist",
         Path.cwd() / "web_dist",
         Path.cwd() / "dist" / "FSOCTracker" / "_internal" / "web_dist",
+        Path.cwd() / "dist" / "NETRA" / "_internal" / "web_dist",
     ]
     for c in candidates:
         if c.exists() and (c / "index.html").exists():
