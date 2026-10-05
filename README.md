@@ -6,12 +6,19 @@
 
 ---
 
-## 💾 Download Standalone Release for Windows
+## 💾 Download Standalone Releases
 
-[Download NETRA for Windows](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-Setup.exe)  
-*(Alternative formats: [Portable ZIP](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-Portable.zip) • [Latest GitHub Release Page](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest))*
+| Platform | Package | Download Link | Notes |
+| :--- | :--- | :--- | :--- |
+| **Windows (x64)** | Setup Wizard | [Download NETRA for Windows](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-Setup.exe) | *(Alternative: [Portable ZIP](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-Portable.zip) • [Release Page](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest))* |
+| **macOS (arm64)** | Disk Image | [Download NETRA-macOS.dmg](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-macOS.dmg) | Apple Silicon (M1 or later) only • Standalone .dmg |
 
-> **Zero Dependencies:** Fully self-contained Windows executable and installer. Runs offline with no Python or third-party packages required. Conforms to all ISRO PS deliverables with automated performance report generation.
+> **Zero Dependencies:** Fully self-contained Windows and macOS executables and installers. Runs offline with no Python or third-party packages required. Conforms to all ISRO PS deliverables with automated performance report generation.
+
+### macOS Installation Steps
+1. Open `NETRA-macOS.dmg` and drag `NETRA.app` to `/Applications`.
+2. On first launch, right-click `NETRA.app` in `/Applications` and select **Open** (or run `xattr -dr com.apple.quarantine /Applications/NETRA.app` in Terminal).
+3. **Apple Silicon (M1 or later) only.** Google Chrome or Microsoft Edge is recommended for native app-window mode.
 
 ---
 
@@ -202,16 +209,18 @@ Test coverage encompasses:
 
 ---
 
-## 📦 8. Building the Standalone Windows Release
+## 📦 8. Building Standalone Releases
+
+### 8.1 Windows Release Build
 
 NETRA includes an automated, one-command release build pipeline producing a standalone PyInstaller onedir distribution, Inno Setup wizard installer, and portable ZIP.
 
-### Prerequisites (Windows Build System)
+#### Prerequisites (Windows Build System)
 - **Python 3.11 or 3.12 (x64)**
 - **PyInstaller**: `pip install pyinstaller`
 - **Inno Setup 6.3+**: [Download Inno Setup](https://jrsoftware.org/isdl.php) (adds `ISCC.exe` to PATH or Program Files)
 
-### One-Command Release Build
+#### One-Command Release Build
 From the `fsoc_engine/` directory on a Windows machine:
 ```bat
 build_release.bat
@@ -224,10 +233,26 @@ This single command automatically:
 4. Compiles the modern Inno Setup installer wizard [`release/NETRA-Setup.exe`](fsoc_engine/release/NETRA-Setup.exe).
 5. Computes SHA-256 release integrity hashes into [`release/checksums.txt`](fsoc_engine/release/checksums.txt).
 
-### Standalone Build Verification (Smoke Test)
+#### Standalone Build Verification (Smoke Test)
 Verify the frozen build without launching the GUI:
 ```bat
 dist\NETRA\NETRA.exe --selftest
 ```
 Exits with returncode `0` on PASS and saves an auto-generated compliance performance report to `%APPDATA%\NETRA\reports\`.
+
+---
+
+### 8.2 macOS Release Build (Apple Silicon .dmg)
+
+From the `fsoc_engine/` directory on a Mac:
+```bash
+./build_dmg.sh
+```
+
+This single script:
+1. Compiles `assets/netra.icns` from `assets/netra_1024.png` using native `iconutil`.
+2. Freezes the application into `dist/NETRA.app` via PyInstaller.
+3. Runs the automated headless smoke test (`dist/NETRA.app/Contents/MacOS/NETRA --selftest`) and fails on non-zero exit.
+4. Packages `release/NETRA-macOS.dmg` with `/Applications` drag-and-drop link.
+5. Computes SHA-256 checksum into `release/checksums-macos.txt`.
 
