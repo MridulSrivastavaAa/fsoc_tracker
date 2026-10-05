@@ -13,7 +13,7 @@ import * as THREE from 'three';
 import { feature } from 'topojson-client';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import { EARTH_CENTER, EARTH_R, earthQuaternion } from '../world';
-import { useApp } from '../../state/store';
+import { useApp, THEME_CONFIGS, ThemeMeta } from '../../state/store';
 
 type Ring = [number, number][];
 
@@ -200,10 +200,10 @@ async function buildGlobeTexture(width = 2048): Promise<THREE.CanvasTexture> {
     ctx.stroke();
 
     // Marker label
-    ctx.font = 'bold 12px "IBM Plex Sans", sans-serif';
+    ctx.font = 'bold 12px "Space Grotesk", sans-serif';
     ctx.fillStyle = '#FFD166';
     ctx.fillText('BENGALURU, KA (ISRO)', cx + 18, by + 4);
-    ctx.font = '10px "IBM Plex Mono", monospace';
+    ctx.font = '10px "JetBrains Mono", monospace';
     ctx.fillStyle = '#E6E9EC';
     ctx.fillText('13.03°N, 77.51°E', cx + 18, by + 16);
   }
@@ -274,6 +274,8 @@ export function Earth({ sunDir: _sunDir }: { sunDir?: THREE.Vector3 }) {
  */
 export function GroundSite() {
   const quality = useApp((s) => s.quality);
+  const theme = useApp((s) => s.theme);
+  const themeCfg = THEME_CONFIGS[theme] ?? THEME_CONFIGS['mission-control'];
   const { geo, mat, padMat } = useMemo(() => {
     const R = 3.0; // km radius ground apron
     const refined = new THREE.RingGeometry(0.0005, R, 120, 32);
@@ -297,14 +299,14 @@ export function GroundSite() {
     });
 
     const pm = new THREE.MeshStandardMaterial({
-      map: makeBengaluruPadTexture(),
+      map: makeBengaluruPadTexture(themeCfg),
       roughness: 0.85,
       metalness: 0.08,
       color: '#d4d8dc',
     });
 
     return { geo: refined, mat: m, padMat: pm };
-  }, []);
+  }, [themeCfg]);
 
   return (
     <group>
@@ -335,31 +337,31 @@ function makeGrassTexture(): THREE.CanvasTexture {
   return tex;
 }
 
-function makeBengaluruPadTexture(): THREE.CanvasTexture {
+function makeBengaluruPadTexture(themeCfg?: ThemeMeta): THREE.CanvasTexture {
   const c = document.createElement('canvas');
   c.width = c.height = 1024;
   const ctx = c.getContext('2d')!;
 
   // Concrete foundation
-  ctx.fillStyle = '#1e262f';
+  ctx.fillStyle = themeCfg?.panelSurface ?? '#1e262f';
   ctx.fillRect(0, 0, 1024, 1024);
 
   // Concentric radar & azimuth calibration rings
-  ctx.strokeStyle = 'rgba(245, 185, 66, 0.6)';
+  ctx.strokeStyle = themeCfg?.orangeHighlight ?? 'rgba(245, 185, 66, 0.6)';
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.arc(512, 512, 450, 0, Math.PI * 2);
   ctx.stroke();
 
-  ctx.strokeStyle = 'rgba(53, 64, 74, 0.8)';
+  ctx.strokeStyle = themeCfg?.borderDivider ?? 'rgba(53, 64, 74, 0.8)';
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.arc(512, 512, 300, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Crosshairs & Compass Cardinal Marks
-  ctx.strokeStyle = 'rgba(245, 185, 66, 0.4)';
-  ctx.lineWidth = 2;
+  // Crosshairs & Compass Cardinal Marks (3D Scene Axis reference lines)
+  ctx.strokeStyle = themeCfg?.axisColor ?? 'rgba(245, 185, 66, 0.4)';
+  ctx.lineWidth = 2.5;
   ctx.beginPath();
   ctx.moveTo(512, 60);
   ctx.lineTo(512, 964);
@@ -368,25 +370,25 @@ function makeBengaluruPadTexture(): THREE.CanvasTexture {
   ctx.stroke();
 
   // North Arrow
-  ctx.fillStyle = '#F5B942';
+  ctx.fillStyle = themeCfg?.isroOrange ?? '#F5B942';
   ctx.beginPath();
   ctx.moveTo(512, 100);
   ctx.lineTo(480, 170);
   ctx.lineTo(544, 170);
   ctx.fill();
 
-  ctx.font = 'bold 44px "IBM Plex Sans", sans-serif';
-  ctx.fillStyle = '#FFD166';
+  ctx.font = 'bold 44px "Space Grotesk", sans-serif';
+  ctx.fillStyle = themeCfg?.orangeHighlight ?? '#FFD166';
   ctx.textAlign = 'center';
   ctx.fillText('N', 512, 85);
 
   // Station Label
-  ctx.font = 'bold 30px "IBM Plex Sans", sans-serif';
-  ctx.fillStyle = '#E6E9EC';
+  ctx.font = 'bold 30px "Space Grotesk", sans-serif';
+  ctx.fillStyle = themeCfg?.primaryText ?? '#E6E9EC';
   ctx.fillText('ISRO GROUND STATION · BENGALURU', 512, 500);
 
-  ctx.font = '22px "IBM Plex Mono", monospace';
-  ctx.fillStyle = '#89939D';
+  ctx.font = '22px "JetBrains Mono", monospace';
+  ctx.fillStyle = themeCfg?.secondaryText ?? '#89939D';
   ctx.fillText('13.03° N · 77.51° E · KARNATAKA', 512, 540);
 
   const tex = new THREE.CanvasTexture(c);

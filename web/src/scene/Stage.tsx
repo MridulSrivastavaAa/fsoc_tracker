@@ -4,11 +4,11 @@
  */
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { Canvas, ThreeEvent, useFrame, useThree } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Environment, Lightformer } from '@react-three/drei';
 import { Bloom, EffectComposer, SMAA, Vignette } from '@react-three/postprocessing';
 import { Earth, GroundSite } from './earth/Earth';
-import { Sky, Moon, MOON_AZ, MOON_EL } from './sky/Sky';
+import { Sky, Moon } from './sky/Sky';
 import { GroundTerminal } from './models/GroundTerminal';
 import { Satellite, SUN_DIR } from './models/Satellite';
 import { Optics } from './overlays/Optics';
@@ -16,8 +16,8 @@ import { SpaceEnvironment } from './space/SpaceObjects';
 import { LabelProjector } from './Labels';
 import { CameraRig } from './CameraRig';
 import { VisBus } from './VisBus';
-import { live, useApp } from '../state/store';
-import { azElVec, MOON_DISTANCE_KM } from './world';
+import { useApp, THEME_CONFIGS } from '../state/store';
+import { azElVec } from './world';
 
 function Lights({ sunDir }: { sunDir: THREE.Vector3 }) {
   const quality = useApp((s) => s.quality);
@@ -159,22 +159,10 @@ function dprFor(quality: string): [number, number] {
   return [1, cap];
 }
 
-function Picker() {
-  const measure = useApp((s) => s.measure);
-  const gl = useThree((s) => s.gl);
-  gl.domElement.style.cursor = measure.enabled ? 'crosshair' : '';
-  return null;
-}
-
-function addPick(id: string, name: string, pos: [number, number, number]) {
-  const st = useApp.getState();
-  if (!st.measure.enabled) return;
-  const picks = [...st.measure.picks, { id, name, pos }].slice(-2);
-  st.set({ measure: { ...st.measure, picks } });
-}
-
 export function Stage() {
   const quality = useApp((s) => s.quality);
+  const theme = useApp((s) => s.theme);
+  const spaceBg = THEME_CONFIGS[theme]?.viewport ?? '#050912';
   // The 3D view is hidden behind the video-benchmark panel: stop rendering it so the
   // analysis gets the whole CPU/GPU budget.
   const paused = useApp((s) => s.videoOpen);
@@ -201,23 +189,6 @@ export function Stage() {
     );
   };
 
-  const onPick = (e: ThreeEvent<MouseEvent>) => {
-    if (!useApp.getState().measure.enabled) return;
-    e.stopPropagation();
-    let o: THREE.Object3D | null = e.object;
-    while (o && !o.userData.measure) o = o.parent;
-    const id = o?.userData.measure as string | undefined;
-    if (o && id?.startsWith('obj:')) {
-      const p = o.getWorldPosition(new THREE.Vector3());
-      addPick(id, (o.userData.measureName as string) ?? id, [p.x, p.y, p.z]);
-    } else if (id === 'terminal') addPick('terminal', 'Ground terminal', [0, 0, 0]);
-    else if (id === 'satellite') addPick('satellite', 'Remote terminal', (live.snap?.target.posKm ?? [0, 0, 0]) as [number, number, number]);
-    else if (id === 'moon') {
-      const p = azElVec(MOON_AZ, MOON_EL, MOON_DISTANCE_KM);
-      addPick('moon', 'Moon', [p.x, p.y, p.z]);
-    } else addPick(`ground-${Date.now()}`, 'Surface point', [e.point.x, e.point.y, e.point.z]);
-  };
-
   return (
     <Canvas
       key={epoch}
@@ -229,15 +200,14 @@ export function Stage() {
       camera={{ fov: 42, near: 0.0002, far: 3e6, position: [300, 250, 200] }}
       onCreated={({ gl }) => onCreated(gl)}
     >
-      <color attach="background" args={['#020409']} />
+      <color attach="background" args={[spaceBg]} />
       <VisBus />
-      <Picker />
       <Suspense fallback={null}>
         <Env />
       </Suspense>
       <Lights sunDir={sunDir} />
       <Sky sunDir={sunDir} />
-      <group onClick={onPick}>
+      <group>
         <Earth sunDir={sunDir} />
         <Moon sunDir={sunDir} />
         <GroundSite />

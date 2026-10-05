@@ -89,28 +89,184 @@ export function historySlice(key: SeriesKey, seconds: number): { t: Float32Array
 }
 
 // ───────────────────────── React-facing store ─────────────────────────
-export type DrawerId = 'scenario' | 'target' | 'disturbance' | 'tracking' | 'experiment' | 'optics' | 'view' | null;
+export type DrawerId = 'scenario' | 'target' | 'disturbance' | 'tracking' | 'experiment' | 'optics' | null;
 export type ViewPreset = 'overview' | 'terminal' | 'link' | 'sensor' | 'orbit' | 'free' | 'follow';
 export type FollowKey = 'sat3';
 export type Quality = 'low' | 'medium' | 'high';
-export type ThemeId = 'deep-space' | 'laser' | 'aurora' | 'solar' | 'daylight';
-export const THEMES: { id: ThemeId; name: string; note: string; swatch: string[] }[] = [
-  { id: 'deep-space', name: 'Deep Space', note: 'Navy + ice cyan (default)', swatch: ['#070b12', '#8fdcff', '#ffb547', '#9cf5c8'] },
-  { id: 'laser', name: 'Laser Red', note: 'Charcoal + crimson', swatch: ['#0f0a0e', '#ff6b6b', '#ffb547', '#9cf5c8'] },
-  { id: 'aurora', name: 'Aurora', note: 'Deep teal + mint', swatch: ['#06110f', '#5ef2c2', '#ffb547', '#b7f58c'] },
-  { id: 'solar', name: 'Solar Gold', note: 'Graphite + amber', swatch: ['#110f0b', '#ffc861', '#8fdcff', '#9cf5c8'] },
-  { id: 'daylight', name: 'Daylight', note: 'Light panels for bright rooms and projectors', swatch: ['#f4f7fa', '#0b6fb8', '#c07400', '#0e9f63'] },
-];
+export type ThemeId = 'mission-control' | 'orbital-graphite' | 'aerospace-smoked-cream' | 'dusky-solar-cream';
+
+export interface ThemeMeta {
+  id: ThemeId;
+  name: string;
+  paletteNumber: string;
+  subtitle: string;
+  note: string;
+  swatch: string[];
+  viewport: string;
+  spaceSecondary: string;
+  panelSurface: string;
+  elevatedSurface: string;
+  borderDivider: string;
+  primaryText: string;
+  secondaryText: string;
+  tertiaryText: string;
+  strongText: string;
+  isroOrange: string;
+  orangeHighlight: string;
+  successLock: string;
+  alertLost: string;
+  spatialBlue: string;
+  axisColor: string;
+}
+
+export const THEME_CONFIGS: Record<ThemeId, ThemeMeta> = {
+  'mission-control': {
+    id: 'mission-control',
+    name: 'Mission Control',
+    paletteNumber: 'Palette 01',
+    subtitle: 'Deep Space Navy',
+    note: 'Default mission operations palette with midnight cosmic navy and starlight readouts',
+    swatch: ['#050912', '#0B1320', '#FF8C1A', '#2DD36F'],
+    viewport: '#050912',
+    spaceSecondary: '#050912',
+    panelSurface: '#0B1320',
+    elevatedSurface: '#111D30',
+    borderDivider: '#1D2F4A',
+    primaryText: '#F4F8FD',
+    secondaryText: '#A5BCD7',
+    tertiaryText: '#8AA4C2',
+    strongText: '#FFFFFF',
+    isroOrange: '#FF8C1A',
+    orangeHighlight: '#FFA347',
+    successLock: '#2DD36F',
+    alertLost: '#FF4D4D',
+    spatialBlue: '#1E90FF',
+    axisColor: '#F4F8FD',
+  },
+  'orbital-graphite': {
+    id: 'orbital-graphite',
+    name: 'Orbital Graphite',
+    paletteNumber: 'Palette 02',
+    subtitle: 'Smoked Cream',
+    note: 'Deep orbital carbon chassis paired with high-contrast smoked cream instrumentation',
+    swatch: ['#0B0D0F', '#202428', '#E4D7BD', '#E97824'],
+    viewport: '#0B0D0F',
+    spaceSecondary: '#15181B',
+    panelSurface: '#202428',
+    elevatedSurface: '#2B3034',
+    borderDivider: '#41474C',
+    primaryText: '#E4D7BD',
+    secondaryText: '#C4B594',
+    tertiaryText: '#A59678',
+    strongText: '#F5EAD4',
+    isroOrange: '#E97824',
+    orangeHighlight: '#F28E42',
+    successLock: '#3BA35C',
+    alertLost: '#D9534F',
+    spatialBlue: '#3B7189',
+    axisColor: '#F5EAD4',
+  },
+  'aerospace-smoked-cream': {
+    id: 'aerospace-smoked-cream',
+    name: 'Aerospace Smoked Cream',
+    paletteNumber: 'Palette 03',
+    subtitle: 'Black-Side Cream',
+    note: 'Deep smoked bronze-black chassis complementing deep space with warm cream readouts',
+    swatch: ['#0B1117', '#24211B', '#E6D8BE', '#E87522'],
+    viewport: '#0B1117',
+    spaceSecondary: '#111B23',
+    panelSurface: '#24211B',
+    elevatedSurface: '#2F2B23',
+    borderDivider: '#4A4234',
+    primaryText: '#E6D8BE',
+    secondaryText: '#C5B697',
+    tertiaryText: '#A6977A',
+    strongText: '#F6ECD6',
+    isroOrange: '#E87522',
+    orangeHighlight: '#F28C38',
+    successLock: '#299653',
+    alertLost: '#D84D45',
+    spatialBlue: '#3B7189',
+    axisColor: '#F6ECD6',
+  },
+  'dusky-solar-cream': {
+    id: 'dusky-solar-cream',
+    name: 'Dusky Solar Cream',
+    paletteNumber: 'Palette 04',
+    subtitle: 'Weathered Khaki-Cream',
+    note: 'Weathered dusky cream surfaces shaded with black, paired with deep blue-black space',
+    swatch: ['#BCAE88', '#D0C39E', '#100E0A', '#E87522'],
+    viewport: '#0B1117',
+    spaceSecondary: '#111B23',
+    panelSurface: '#D0C39E',
+    elevatedSurface: '#A89872',
+    borderDivider: '#6E6041',
+    primaryText: '#100E0A',
+    secondaryText: '#262014',
+    tertiaryText: '#3D3422',
+    strongText: '#050403',
+    isroOrange: '#E87522',
+    orangeHighlight: '#F28C38',
+    successLock: '#299653',
+    alertLost: '#D84D45',
+    spatialBlue: '#3B7189',
+    axisColor: '#050403',
+  },
+};
+
+export const THEMES: { id: ThemeId; name: string; sub: string; note: string; swatch: string[] }[] = Object.values(THEME_CONFIGS).map((c) => ({
+  id: c.id,
+  name: c.name,
+  sub: c.subtitle,
+  note: `${c.paletteNumber}: ${c.name} (${c.subtitle}) — ${c.note}`,
+  swatch: c.swatch,
+}));
+
+function localStorageGet(k: string): string | null {
+  try {
+    return typeof localStorage !== 'undefined' ? localStorage.getItem(k) : null;
+  } catch {
+    return null;
+  }
+}
+function localStorageSet(k: string, v: string) {
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(k, v);
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+export const STATE_HEX: Record<TrackState, string> = {
+  IDLE: '#8AA4C2',
+  SEARCHING: '#FF8C1A',
+  DETECTED: '#FFA347',
+  ACQUIRING: '#FFA347',
+  TRACKING: '#1E90FF',
+  LOCKED: '#2DD36F',
+  LOST: '#FF4D4D',
+  REACQUIRING: '#FFA347',
+};
+
 export function applyTheme(t: ThemeId) {
   if (typeof document === 'undefined') return;
-  if (t === 'deep-space') delete document.documentElement.dataset.theme;
-  else document.documentElement.dataset.theme = t;
+  document.documentElement.dataset.theme = t;
+  const cfg = THEME_CONFIGS[t] ?? THEME_CONFIGS['mission-control'];
+  STATE_HEX.SEARCHING = cfg.isroOrange;
+  STATE_HEX.DETECTED = cfg.orangeHighlight;
+  STATE_HEX.ACQUIRING = cfg.orangeHighlight;
+  STATE_HEX.TRACKING = cfg.spatialBlue;
+  STATE_HEX.LOCKED = cfg.successLock;
+  STATE_HEX.LOST = cfg.alertLost;
+  STATE_HEX.REACQUIRING = cfg.orangeHighlight;
+  STATE_HEX.IDLE = cfg.tertiaryText;
 }
-export interface MeasureTarget {
-  id: string;
-  name: string;
-  /** True position, km, site ENU frame. */
-  pos: [number, number, number];
+
+function initialTheme(): ThemeId {
+  const t = localStorageGet('netra.theme') as ThemeId | null;
+  const ok = THEMES.some((x) => x.id === t) ? (t as ThemeId) : 'mission-control';
+  applyTheme(ok);
+  return ok;
 }
 
 interface AppState {
@@ -141,7 +297,6 @@ interface AppState {
   analysisOpen: boolean;
   analysisTab: string;
   helpOpen: boolean;
-  measure: { enabled: boolean; picks: MeasureTarget[] };
   recording: { active: boolean; frames: number };
   replay: { name: string; length: number; position: number; playing: boolean } | null;
   toast: string | null;
@@ -259,7 +414,7 @@ export const useApp = create<AppState>((set, get) => {
     engineFps: 0,
     timeScale: 1,
     events: [],
-    drawer: 'scenario',
+    drawer: null,
     view: 'overview',
     viewNonce: 0,
     followKey: 'sat3',
@@ -274,7 +429,6 @@ export const useApp = create<AppState>((set, get) => {
     analysisOpen: false,
     analysisTab: 'error',
     helpOpen: false,
-    measure: { enabled: false, picks: [] },
     recording: { active: false, frames: 0 },
     replay: null,
     toast: null,
@@ -299,6 +453,8 @@ export const useApp = create<AppState>((set, get) => {
         set({ providerStatus: 'online', ...(opts?.url ? { serverUrl: opts.url } : {}) });
         if (kind === 'remote') {
           p.send({ type: 'replaceConfig', config: get().config });
+          p.send({ type: 'start' });
+        } else if (kind === 'local') {
           p.send({ type: 'start' });
         }
         if (kind === 'replay' && opts?.recording) {
@@ -331,7 +487,7 @@ export const useApp = create<AppState>((set, get) => {
       provider?.send({ type: 'replaceConfig', config: cfg });
     },
 
-    setDrawer: (d) => set({ drawer: d || 'scenario' }),
+    setDrawer: (d) => set({ drawer: get().drawer === d ? null : d }),
     setView: (v) => set({ view: v, viewNonce: get().viewNonce + 1 }),
     flyTo: (k) => set({ view: 'follow', followKey: k, viewNonce: get().viewNonce + 1, overlays: { ...get().overlays, space: true } }),
     setQuality: (q) => {
@@ -418,35 +574,3 @@ export const stateColor = (s: TrackState | undefined): string => {
   }
 };
 
-export const STATE_HEX: Record<TrackState, string> = {
-  IDLE: '#5b6b7d',
-  SEARCHING: '#ffb547',
-  DETECTED: '#ffd08a',
-  ACQUIRING: '#ffd08a',
-  TRACKING: '#8fdcff',
-  LOCKED: '#9cf5c8',
-  LOST: '#ff6b5e',
-  REACQUIRING: '#ff9a4d',
-};
-
-function initialTheme(): ThemeId {
-  const t = localStorageGet('netra.theme') as ThemeId | null;
-  const ok = THEMES.some((x) => x.id === t) ? (t as ThemeId) : 'deep-space';
-  applyTheme(ok);
-  return ok;
-}
-
-function localStorageGet(k: string): string | null {
-  try {
-    return localStorage.getItem(k);
-  } catch {
-    return null;
-  }
-}
-function localStorageSet(k: string, v: string) {
-  try {
-    localStorage.setItem(k, v);
-  } catch {
-    /* storage unavailable */
-  }
-}
