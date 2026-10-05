@@ -30,28 +30,76 @@ jobs:
           python-version: '3.12'
           cache: 'pip'
 
-      - name: Install Dependencies
+      - name: Install Build Dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip wheel
           pip install -r fsoc_engine/requirements.txt
-          pip install pyinstaller pillow fastapi uvicorn websockets
+          pip install pyinstaller pyinstaller-hooks-contrib
+
+      - name: Verify Core Imports
+        run: |
+          python -c "import fsoc; print('fsoc OK')"
+          python -c "import fastapi; print('fastapi OK')"
+          python -c "import uvicorn; print('uvicorn OK')"
+          python -c "import cv2; print('cv2 OK')"
+          python -c "import onnxruntime; print('onnxruntime OK')"
+        working-directory: fsoc_engine/src
+
+      - name: Run Smoke Selftest (source, pre-freeze)
+        run: |
+          python launcher.py --selftest
+        working-directory: fsoc_engine
 
       - name: Install Inno Setup 6
         run: |
           choco install innosetup --no-progress -y
-          echo "C:\Program Files (x86)\Inno Setup 6" >> $env:GITHUB_PATH
+          echo "C:\Program Files (x86)\Inno Setup 6" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Build Release (PyInstaller + Inno Setup + Portable ZIP)
-        working-directory: fsoc_engine
+      - name: Generate Branding Assets
         run: |
-          cmd.exe /c build_release.bat
-
-      - name: Verify Standalone Executable (--selftest)
+          python make_icon.py
         working-directory: fsoc_engine
-        run: |
-          dist\NETRA\NETRA.exe --selftest
 
-      - name: Upload Artifacts to Workflow Run
+      - name: Build PyInstaller Executable
+        run: |
+          pyinstaller NETRA.spec --noconfirm --clean
+        working-directory: fsoc_engine
+
+      - name: Verify Frozen Executable (--selftest)
+        run: |
+          python -c "
+          import subprocess, sys
+          result = subprocess.run(
+              ['dist/NETRA/NETRA.exe', '--selftest'],
+              capture_output=True, text=True, timeout=120
+          )
+          print('EXIT CODE:', result.returncode)
+          print('STDOUT:', result.stdout)
+          print('STDERR:', result.stderr)
+          sys.exit(result.returncode)
+          "
+        working-directory: fsoc_engine
+
+      - name: Package Portable ZIP
+        run: |
+          if not exist release mkdir release
+          if exist release\NETRA-Portable.zip del /f /q release\NETRA-Portable.zip
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "Compress-Archive -Path dist\NETRA\* -DestinationPath release\NETRA-Portable.zip -Force"
+        working-directory: fsoc_engine
+        shell: cmd
+
+      - name: Compile Inno Setup Installer
+        run: |
+          & "ISCC.exe" /DAppVersion=1.0.0 installer.iss
+        working-directory: fsoc_engine
+        continue-on-error: true
+
+      - name: Generate Checksums
+        run: |
+          powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-ChildItem -Path release\*.exe, release\*.zip -ErrorAction SilentlyContinue | ForEach-Object { (Get-FileHash $_.FullName -Algorithm SHA256).Hash + '  ' + $_.Name } | Set-Content release\checksums.txt -Encoding ascii"
+        working-directory: fsoc_engine
+
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: NETRA-Windows-Release
@@ -59,6 +107,7 @@ jobs:
             fsoc_engine/release/NETRA-Setup.exe
             fsoc_engine/release/NETRA-Portable.zip
             fsoc_engine/release/checksums.txt
+          if-no-files-found: warn
           retention-days: 14
 
       - name: Publish to GitHub Releases
