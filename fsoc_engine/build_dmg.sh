@@ -81,8 +81,14 @@ mkdir -p release
 DMG_PATH="release/NETRA-macOS.dmg"
 rm -f "$DMG_PATH"
 
+DMG_CREATED=0
+
 if command -v create-dmg >/dev/null 2>&1; then
     echo "Building DMG using create-dmg..."
+    STAGING_DIR="$(mktemp -d /tmp/netra_dmg_staging.XXXXXX)"
+    cp -R "$APP_PATH" "$STAGING_DIR/"
+
+    set +e
     create-dmg \
         --volname "NETRA" \
         --volicon "assets/netra.icns" \
@@ -92,11 +98,23 @@ if command -v create-dmg >/dev/null 2>&1; then
         --icon "NETRA.app" 175 140 \
         --hide-extension "NETRA.app" \
         --app-drop-link 425 140 \
-        --no-strip \
         "$DMG_PATH" \
-        "$APP_PATH"
-else
-    echo "create-dmg not found; using hdiutil fallback with Applications link..."
+        "$STAGING_DIR"
+    CREATE_DMG_STATUS=$?
+    set -e
+
+    rm -rf "$STAGING_DIR"
+
+    if [ $CREATE_DMG_STATUS -eq 0 ] && [ -f "$DMG_PATH" ]; then
+        DMG_CREATED=1
+    else
+        echo "create-dmg exited with code $CREATE_DMG_STATUS (common in headless CI without Finder GUI). Falling back to native hdiutil..."
+        rm -f "$DMG_PATH"
+    fi
+fi
+
+if [ $DMG_CREATED -eq 0 ]; then
+    echo "Packaging DMG using native macOS hdiutil with Applications drop link..."
     STAGING_DIR="$(mktemp -d /tmp/netra_dmg_staging.XXXXXX)"
     cp -R "$APP_PATH" "$STAGING_DIR/"
     ln -s /Applications "$STAGING_DIR/Applications"
