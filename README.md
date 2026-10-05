@@ -6,6 +6,15 @@
 
 ---
 
+## 💾 Download Standalone Release for Windows
+
+[Download NETRA for Windows](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-Setup.exe)  
+*(Alternative formats: [Portable ZIP](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-Portable.zip) • [Latest GitHub Release Page](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest))*
+
+> **Zero Dependencies:** Fully self-contained Windows executable and installer. Runs offline with no Python or third-party packages required. Conforms to all ISRO PS deliverables with automated performance report generation.
+
+---
+
 ## 🛰️ 1. Executive Summary
 
 Free Space Optical Communication (FSOC) provides multi-gigabit wireless data links for satellite-to-ground, inter-satellite, and mobile airborne terminals. Due to narrow laser beam divergence (< 1 mrad), maintaining stable optical link alignment under platform motion, high-frequency mechanical vibrations, and severe atmospheric disturbances is a critical mission challenge.
@@ -190,3 +199,35 @@ Test coverage encompasses:
 - IMM multi-model probability transitions and particle filter re-acquisition (`test_imm.py`, `test_particle_filter.py`).
 - PID closed-loop control and feed-forward compensation (`test_tracking_control.py`).
 - Automated benchmark execution and compliance reporting (`test_benchmarks.py`).
+
+---
+
+## 📦 8. Building the Standalone Windows Release
+
+NETRA includes an automated, one-command release build pipeline producing a standalone PyInstaller onedir distribution, Inno Setup wizard installer, and portable ZIP.
+
+### Prerequisites (Windows Build System)
+- **Python 3.11 or 3.12 (x64)**
+- **PyInstaller**: `pip install pyinstaller`
+- **Inno Setup 6.3+**: [Download Inno Setup](https://jrsoftware.org/isdl.php) (adds `ISCC.exe` to PATH or Program Files)
+
+### One-Command Release Build
+From the `fsoc_engine/` directory on a Windows machine:
+```bat
+build_release.bat
+```
+
+This single command automatically:
+1. Generates multi-size Windows icon (`assets/netra.ico`), branded startup splash (`assets/splash.png`), and Inno Setup artwork (`wizard_side.bmp`, `wizard_small.bmp`).
+2. Freezes the application with PyInstaller using [`NETRA.spec`](fsoc_engine/NETRA.spec) into `dist/NETRA/`.
+3. Creates the standalone portable archive [`release/NETRA-Portable.zip`](fsoc_engine/release/NETRA-Portable.zip).
+4. Compiles the modern Inno Setup installer wizard [`release/NETRA-Setup.exe`](fsoc_engine/release/NETRA-Setup.exe).
+5. Computes SHA-256 release integrity hashes into [`release/checksums.txt`](fsoc_engine/release/checksums.txt).
+
+### Standalone Build Verification (Smoke Test)
+Verify the frozen build without launching the GUI:
+```bat
+dist\NETRA\NETRA.exe --selftest
+```
+Exits with returncode `0` on PASS and saves an auto-generated compliance performance report to `%APPDATA%\NETRA\reports\`.
+

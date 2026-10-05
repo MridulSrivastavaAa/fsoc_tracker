@@ -1,0 +1,50 @@
+NETRA FSOC PAT Workstation - Getting Started
+=============================================
+
+Thank you for choosing NETRA (Neural Enhanced Tracking & Real-Time Acquisition)
+for Free-Space Optical Communications (FSOC) Pointing, Acquisition, and Tracking (PAT).
+
+How to Install & Run
+--------------------
+You have two delivery options:
+
+Option A: Standard Windows Installer (Recommended)
+  1. Double-click "NETRA-Setup.exe".
+  2. Follow the modern wizard setup steps (per-user install by default).
+  3. Check "Create a desktop shortcut".
+  4. Launch "NETRA" from your Start Menu or Desktop.
+
+Option B: Portable Standalone ZIP (No Installation Required)
+  1. Extract "NETRA-Portable.zip" to any folder of your choice (e.g., Desktop or Documents).
+  2. Open the extracted "NETRA" folder.
+  3. Double-click "NETRA.exe" to start the workstation directly.
+
+Windows Defender SmartScreen Note
+---------------------------------
+Because NETRA is a new specialized scientific release without an expensive EV code signing
+certificate, Windows SmartScreen may show:
+  "Windows protected your PC"
+This is normal. To proceed:
+  1. Click "More info".
+  2. Click "Run anyway".
+
+Where Reports & Data Are Saved
+------------------------------
+All performance reports, benchmark logs, and custom user plugins are saved to:
+  %APPDATA%\NETRA\
+    ├── reports\    (HTML, CSV, and JSON session performance reports)
+    ├── logs\       (Diagnostic logs and engine traces)
+    └── plugins\    (User-authored algorithm plugins)
+
+Uninstalling
+------------
+If installed via Option A:
+  - Open Windows Settings -> Apps & Features -> Select "NETRA FSOC PAT Workstation" -> Uninstall.
+  - Or use the "Uninstall NETRA" shortcut in the Start Menu.
+  - Note: Your saved reports in %APPDATA%\NETRA\ will remain untouched.
+
+Verification / Smoke Test
+-------------------------
+To verify the engine from a Command Prompt or PowerShell:
+  NETRA.exe --selftest
+This runs 60 frames in headless mode and outputs PASS/FAIL with sub-pixel telemetry.

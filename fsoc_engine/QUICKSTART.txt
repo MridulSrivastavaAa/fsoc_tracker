@@ -1,0 +1,30 @@
+NETRA FSOC PAT Workstation - Quick Start Guide
+===============================================
+
+Step 1: Install & Launch
+------------------------
+Option A (Installer): Run NETRA-Setup.exe and follow the wizard.
+                      Check "Create Desktop Shortcut", then launch from Start Menu or Desktop.
+Option B (Portable):  Extract NETRA-Portable.zip to any folder and double-click NETRA.exe.
+
+* Note for Windows SmartScreen: If prompted with "Windows protected your PC",
+  click "More info" and then "Run anyway".
+
+Step 2: Run a Tracking Scenario
+-------------------------------
+Once the workstation opens:
+1. Select an atmospheric disturbance profile (Clear, Haze, or Heavy Cloud Occlusion).
+2. Choose a tracking algorithm (IMM with Optical Flow & CNN Verifier recommended).
+3. Click "Start Simulation" to initiate autonomous acquisition, tracking, and closed-loop beam steering.
+
+Step 3: Export & Review Performance Reports
+-------------------------------------------
+At the end of each session or benchmark run:
+- Auto-generated reports (HTML, CSV, JSON) are stored in:
+    %APPDATA%\NETRA\reports\
+- To run a fast self-test from Command Prompt:
+    NETRA.exe --selftest
+  This validates 20+ FPS, sub-pixel error tolerances, and prints PASS/FAIL with exit code 0/1.
+
+For technical documentation and developer guides, visit:
+https://github.com/MridulSrivastavaAa/fsoc_tracker

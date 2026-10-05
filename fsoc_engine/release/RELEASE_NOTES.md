@@ -1,0 +1,69 @@
+# NETRA FSOC PAT Workstation - Release v1.0.0
+
+NETRA (Neural Enhanced Tracking & Real-Time Acquisition) is an advanced, high-performance Free-Space Optical Communications (FSOC) Pointing, Acquisition, and Tracking (PAT) simulation and control workstation built to fulfill the ISRO virtual camera tracking system problem statement. It integrates multi-model closed-loop Kalman & IMM estimation, optical flow motion compensation, and deep CNN verification for reliable sub-pixel beam steering under heavy atmospheric scintillation and cloud occlusions.
+
+---
+
+## Downloads
+
+| Package | File | Description |
+|---|---|---|
+| **Windows Installer** | [`NETRA-Setup.exe`](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-Setup.exe) | Recommended: Full guided installer with desktop/start menu shortcuts and runtime checks. |
+| **Portable ZIP** | [`NETRA-Portable.zip`](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/NETRA-Portable.zip) | Standalone portable archive. Unpack and launch `NETRA.exe` directly without installation. |
+| **Integrity Checksums** | [`checksums.txt`](https://github.com/MridulSrivastavaAa/fsoc_tracker/releases/latest/download/checksums.txt) | Cryptographic SHA-256 hashes for all release artifacts. |
+
+---
+
+## System Requirements
+
+- **Operating System:** Microsoft Windows 10 (version 1809+) or Windows 11 (64-bit).
+- **Architecture:** x86_64 (64-bit).
+- **Dependencies:** **None.** Python is not required. All runtimes, ONNX models, and computer vision libraries are self-contained.
+- **Network:** 100% Offline operation supported. No internet connection is needed.
+
+---
+
+## 3-Step Quick Start
+
+1. **Install or Extract:** Run `NETRA-Setup.exe` (or extract `NETRA-Portable.zip`).
+2. **Launch:** Open `NETRA` from your Desktop or Start Menu.
+3. **Execute & Analyze:** Choose an atmospheric scenario, start the simulation loop, and monitor real-time closed-loop beam telemetry.
+
+---
+
+## Windows SmartScreen Notice
+
+Since this is a fresh release without an enterprise EV certificate, Windows SmartScreen may present a warning dialog stating *"Windows protected your PC"*.
+- Click **"More info"**
+- Click **"Run anyway"** to launch.
+
+---
+
+## Performance Reports & Data Storage
+
+All auto-generated performance metrics, CSV runs, JSON logs, and benchmark reports are safely stored outside the read-only installation directory at:
+```text
+%APPDATA%\NETRA\reports\
+```
+To run the automated verification suite from the terminal:
+```powershell
+.\NETRA.exe --selftest
+```
+
+---
+
+## Checksums (SHA-256)
+
+```text
+[SHA-256 Checksums will be generated automatically upon running build_release.bat]
+NETRA-Setup.exe:     <BUILD_ARTIFACT_SHA256>
+NETRA-Portable.zip:  <BUILD_ARTIFACT_SHA256>
+```
+
+---
+
+## Documentation & Resources
+
+- [User Manual & Documentation](https://github.com/MridulSrivastavaAa/fsoc_tracker#readme)
+- [Video Demonstration](https://github.com/MridulSrivastavaAa/fsoc_tracker/blob/main/docs/demo.mp4) (Placeholder)
+- [Clean-Machine Verification Checklist](https://github.com/MridulSrivastavaAa/fsoc_tracker/blob/main/docs/RELEASE_CHECKLIST.md)

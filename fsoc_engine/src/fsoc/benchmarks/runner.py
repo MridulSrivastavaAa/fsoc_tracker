@@ -32,14 +32,27 @@ from ..tracking.state_machine import TrackingStateMachine
 from ..core.types import FrameMetrics
 from .metrics import MetricsEvaluator, ScenarioKPIs
 from .logger import PerformanceLogger
+from ..paths import reports_dir as _reports_dir
+
+
+def _default_output_dir() -> str:
+    """Return the canonical user-writable reports directory."""
+    try:
+        return str(_reports_dir())
+    except Exception:
+        return "benchmark_results"  # safe CWD-relative fallback
 
 
 class BenchmarkRunner:
     """
     Automated benchmark harness for FSOC tracker evaluation.
     All benchmark runs automatically save mandatory ISRO deliverable files to disk.
+    Output goes to %APPDATA%\\NETRA\\reports by default (writable in frozen builds).
+    Pass output_dir="benchmark_results" explicitly to write relative to CWD.
     """
-    def __init__(self, output_dir: str = "benchmark_results") -> None:
+    def __init__(self, output_dir: str | None = None) -> None:
+        if output_dir is None:
+            output_dir = _default_output_dir()
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.logger = PerformanceLogger(str(self.output_dir))

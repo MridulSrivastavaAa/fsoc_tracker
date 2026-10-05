@@ -54,10 +54,19 @@ class FSOCTrackerApp:
     """
     def __init__(self, root: tk.Tk, cfg: Optional[AppConfig] = None) -> None:
         self.root = root
-        self.root.title("ISRO FSOC Virtual Camera Tracking Telemetry & Control Workstation")
+        self.root.title("NETRA FSOC PAT Workstation")
         self.root.geometry("1180x820")
         self.root.configure(bg=THEME_BG)
         self.root.minsize(1050, 750)
+
+        # Set window icon if the asset exists (created in Phase 2 by make_icon.py)
+        try:
+            from ..paths import resource_path
+            ico = resource_path("assets/netra.ico")
+            if ico.exists():
+                self.root.iconbitmap(str(ico))
+        except Exception:
+            pass  # Icon not yet generated — safe to ignore
 
         self.cfg = cfg or default_config()
         self.engine = ClosedLoopEngine(self.cfg)

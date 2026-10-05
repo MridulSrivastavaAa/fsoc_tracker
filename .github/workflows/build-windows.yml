@@ -1,0 +1,78 @@
+name: Build Standalone Windows Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: 'Publish as GitHub Release?'
+        required: false
+        type: boolean
+        default: false
+      tag_name:
+        description: 'Release Tag (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12 (x64)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r fsoc_engine/requirements.txt
+          pip install pyinstaller pillow fastapi uvicorn websockets
+
+      - name: Install Inno Setup 6
+        run: |
+          choco install innosetup --no-progress -y
+          echo "C:\Program Files (x86)\Inno Setup 6" >> $env:GITHUB_PATH
+
+      - name: Build Release (PyInstaller + Inno Setup + Portable ZIP)
+        working-directory: fsoc_engine
+        run: |
+          cmd.exe /c build_release.bat
+
+      - name: Verify Standalone Executable (--selftest)
+        working-directory: fsoc_engine
+        run: |
+          dist\NETRA\NETRA.exe --selftest
+
+      - name: Upload Artifacts to Workflow Run
+        uses: actions/upload-artifact@v4
+        with:
+          name: NETRA-Windows-Release
+          path: |
+            fsoc_engine/release/NETRA-Setup.exe
+            fsoc_engine/release/NETRA-Portable.zip
+            fsoc_engine/release/checksums.txt
+          retention-days: 14
+
+      - name: Publish to GitHub Releases
+        if: ${{ github.event.inputs.publish_release == 'true' || startsWith(github.ref, 'refs/tags/v') }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          name: "🚀 NETRA ${{ github.event.inputs.tag_name || github.ref_name }} - Stable Windows Release"
+          body_path: fsoc_engine/release/RELEASE_NOTES.md
+          draft: false
+          prerelease: false
+          files: |
+            fsoc_engine/release/NETRA-Setup.exe
+            fsoc_engine/release/NETRA-Portable.zip
+            fsoc_engine/release/checksums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

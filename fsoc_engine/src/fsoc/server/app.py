@@ -77,6 +77,7 @@ from ..vision.cnn_verifier import BeaconVerifierCNN
 from ..tracking.kalman import KalmanTracker
 from ..tracking.state_machine import TrackingStateMachine, State
 from ..video.video_source import VideoFileSource
+from ..paths import reports_dir, resource_path
 
 # Create application
 app = FastAPI(
@@ -94,21 +95,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Download & reports storage directory
-REPORTS_DIR = Path(tempfile.gettempdir()) / "fsoc_reports"
-REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+# Download & reports storage directory — always writable, visible to user
+REPORTS_DIR = reports_dir()
 
 @app.get("/api/plugins/playground")
 def launch_plugin_playground_endpoint() -> JSONResponse:
     import subprocess
     import sys
-    from pathlib import Path
-    # Use the dedicated launcher that sets up sys.path properly
-    launcher = Path(__file__).resolve().parents[1] / "gui" / "launch_playground.py"
-    proc = subprocess.Popen(
-        [sys.executable, str(launcher)],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
+    # When frozen (PyInstaller), sys.executable is NETRA.exe — pass --playground flag
+    # so the exe detects it and opens the Tkinter window without relaunching a .py script.
+    # When running from source, fall back to launching launch_playground.py directly.
+    if getattr(sys, "frozen", False):
+        cmd = [sys.executable, "--playground"]
+    else:
+        from pathlib import Path
+        launcher = Path(__file__).resolve().parents[1] / "gui" / "launch_playground.py"
+        cmd = [sys.executable, str(launcher)]
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     # Give it a moment to see if it crashes immediately
     import time; time.sleep(0.3)
     if proc.poll() is not None:
@@ -185,8 +188,11 @@ def get_plugin_report(format: Optional[str] = None) -> Any:
 
     baseline_label = "NETRA Default (IMM Kalman Filter + Cascaded PID)"
 
+    engine_instance = globals().get("engine")
+    cfg = getattr(engine_instance, "cfg", None) if engine_instance is not None else None
+
     report = run_ab_comparison(
-        cfg=engine.cfg if 'engine' in globals() else None,
+        cfg=cfg,
         slot=active_slot,
         custom_func=custom_func,
         custom_params=custom_params,
