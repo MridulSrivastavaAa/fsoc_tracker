@@ -48,7 +48,7 @@ echo [4/5] Compiling Inno Setup installer wizard...
 %ISCC% /DAppVersion=%VERSION% installer.iss
 if errorlevel 1 (
     echo.
-    echo [WARNING] Inno Setup compiler (ISCC.exe) failed or was not found.
+    echo [WARNING] Inno Setup compiler ^(ISCC.exe^) failed or was not found.
     echo If Inno Setup 6 is not installed, download it from https://jrsoftware.org/isdl.php
     echo and compile installer.iss manually.
     goto :fail_iscc
