@@ -53,6 +53,13 @@ function decodeBinaryFrame(buf: ArrayBuffer): EngineMessage | null {
   return { type: 'frame', width, height, frame, data };
 }
 
+export const DEFAULT_SERVER_URL =
+  typeof window !== 'undefined'
+    ? (window.location.port === '8000'
+        ? window.location.origin
+        : 'http://127.0.0.1:8000')
+    : 'http://127.0.0.1:8000';
+
 export class RemoteEngineProvider implements TelemetryProvider {
   readonly kind = 'remote' as const;
   public label: string;
@@ -69,6 +76,7 @@ export class RemoteEngineProvider implements TelemetryProvider {
     const wsUrl = targetUrl.replace(/^http/, 'ws').replace(/\/$/, '') + '/ws/telemetry';
     return new Promise((resolve, reject) => {
       let settled = false;
+      let connected = false;
       const ws = new WebSocket(wsUrl);
       ws.binaryType = 'arraybuffer';
       const timeout = setTimeout(() => {
@@ -77,11 +85,12 @@ export class RemoteEngineProvider implements TelemetryProvider {
           try { ws.close(); } catch {}
           reject(new Error(`Timeout connecting to ${wsUrl}`));
         }
-      }, 2000);
+      }, 2500);
 
       ws.onopen = () => {
         if (!settled) {
           settled = true;
+          connected = true;
           clearTimeout(timeout);
           resolve(ws);
         }
@@ -92,23 +101,25 @@ export class RemoteEngineProvider implements TelemetryProvider {
           settled = true;
           clearTimeout(timeout);
           reject(new Error(`WebSocket connection failed: ${wsUrl}`));
-        } else {
+        } else if (connected && this.ws === ws) {
           listener({ type: 'error', message: 'WebSocket communication error' });
         }
       };
 
       ws.onclose = (ev) => {
+        clearTimeout(timeout);
         if (!settled) {
           settled = true;
-          clearTimeout(timeout);
           reject(new Error(`WebSocket closed before connecting: ${wsUrl} (code ${ev.code})`));
-        } else if (this.shouldReconnect) {
+        } else if (connected && this.shouldReconnect && this.ws === ws) {
+          this.ws = null;
           listener({ type: 'error', message: 'Remote engine disconnected — auto-reconnecting…' });
           this.scheduleReconnect();
         }
       };
 
       ws.onmessage = (e) => {
+        if (this.ws && this.ws !== ws) return;
         if (typeof e.data === 'string') {
           try {
             listener(JSON.parse(e.data) as EngineMessage);
@@ -128,18 +139,21 @@ export class RemoteEngineProvider implements TelemetryProvider {
     this.shouldReconnect = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
 
-    // Robust candidates: primary + IP alternate + port alternate (8000 <-> 8001)
+    // Robust candidates: prioritize 127.0.0.1 to avoid Windows IPv6 resolution latency
     const candidates: string[] = [];
     const addCandidate = (url: string) => {
       const clean = url.trim().replace(/\/$/, '');
       if (clean && !candidates.includes(clean)) candidates.push(clean);
     };
 
-    addCandidate(this.baseUrl);
     if (this.baseUrl.includes('localhost')) {
       addCandidate(this.baseUrl.replace('localhost', '127.0.0.1'));
+      addCandidate(this.baseUrl);
     } else if (this.baseUrl.includes('127.0.0.1')) {
+      addCandidate(this.baseUrl);
       addCandidate(this.baseUrl.replace('127.0.0.1', 'localhost'));
+    } else {
+      addCandidate(this.baseUrl);
     }
 
     const currentLen = candidates.length;
@@ -275,6 +289,3 @@ export class ReplayProvider implements TelemetryProvider {
     this.listener = null;
   }
 }
-
-export const DEFAULT_SERVER_URL: string =
-  (import.meta.env.VITE_NETRA_SERVER as string | undefined) ?? 'http://localhost:8000';

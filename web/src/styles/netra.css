@@ -9,7 +9,7 @@
   --line-2: #21252D;
   --hair: rgba(28, 33, 42, 0.55);
   --border: #16191F;
-  --dock-h: 260px;
+  --dock-h: 290px;
   --text: #F4F8FD;
   --text-2: #A5BCD7;
   --text-3: #8AA4C2;
@@ -41,7 +41,6 @@
   --lock-rgb: 45, 211, 111;
   --warn: #FFA347;
   --r: 10px;
-  --dock-h: 224px;
   --r-sm: 6px;
   --blur: blur(16px) saturate(1.2);
   --f-ui: 'Space Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -1627,8 +1626,8 @@ select {
   left: 14px;
   top: 66px;
   width: min(300px, 22vw);
-  bottom: calc(var(--dock-h, 260px) + 16px);
-  max-height: calc(100vh - 66px - var(--dock-h, 260px) - 16px);
+  bottom: calc(var(--dock-h, 290px) + 16px);
+  max-height: calc(100vh - 66px - var(--dock-h, 290px) - 16px);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1642,7 +1641,7 @@ select {
   position: relative;
   width: 100%;
   overflow: hidden;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -1675,11 +1674,11 @@ select {
 .sensor-canvas-wrap {
   position: relative;
   background: #000;
-  aspect-ratio: 4 / 3;
   width: 100%;
-  flex: 1 1 auto;
-  min-height: 110px;
-  max-height: clamp(110px, calc(100vh - 540px), 210px);
+  flex: 0 1 auto;
+  height: clamp(95px, calc(100vh - 540px), 165px);
+  min-height: 85px;
+  max-height: 165px;
 }
 
 .sensor-canvas-wrap canvas {
@@ -2777,12 +2776,15 @@ select {
   .rightcol {
     top: 68px;
     width: 305px;
-    gap: 5px;
+    bottom: calc(var(--dock-h, 290px) + 12px);
+    max-height: calc(100vh - 68px - var(--dock-h, 290px) - 12px);
+    gap: 4px;
   }
 
   .sensor-canvas-wrap {
-    min-height: 155px;
-    max-height: clamp(155px, calc(100vh - 480px), 210px);
+    height: clamp(80px, calc(100vh - 560px), 130px);
+    min-height: 75px;
+    max-height: 130px;
   }
 
   .tl-reason {
@@ -2807,9 +2809,6 @@ select {
     display: none;
   }
 
-  :root {
-    --dock-h: 222px;
-  }
 }
 
 @media (max-height: 760px) {

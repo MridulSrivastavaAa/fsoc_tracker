@@ -949,7 +949,6 @@ async def websocket_telemetry(websocket: WebSocket):
         frame_interval = 1.0 / target_fps
         fps_ema = 30.0
         t_last_frame = time.perf_counter()
-        _pending_img_task: Optional[asyncio.Task] = None
         try:
             while True:
                 t_iter_start = time.perf_counter()
@@ -974,19 +973,22 @@ async def websocket_telemetry(websocket: WebSocket):
                     snap = build_snapshot(metrics)
                     await websocket.send_text(json.dumps({"type": "snapshot", "snapshot": snap}))
 
-                    # Stream binary frame if due (guard against task backlog to keep latency minimal)
+                    # Stream binary frame if due (safely serialized on websocket)
                     curr_t = snap["t"]
                     target_img_rate = min(15.0, max(1.0, state.get("imageRate", 15.0)))
                     img_interval = 1.0 / target_img_rate
                     if curr_t - state["lastImageT"] >= img_interval or state["lastImageT"] < 0:
                         state["lastImageT"] = curr_t
                         vp_img = engine.last_viewport
-                        if vp_img is not None and (_pending_img_task is None or _pending_img_task.done()):
+                        if vp_img is not None:
                             h, w = vp_img.shape[:2]
                             f_idx = snap["frame"]
                             header = b"AQF1" + struct.pack("<HHI", w, h, f_idx)
                             raw_bytes = vp_img.tobytes()
-                            _pending_img_task = asyncio.create_task(websocket.send_bytes(header + raw_bytes))
+                            try:
+                                await websocket.send_bytes(header + raw_bytes)
+                            except Exception:
+                                break
 
                     now = time.perf_counter()
                     dt_frame = max(1e-4, now - t_last_frame)

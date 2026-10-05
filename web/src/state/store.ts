@@ -413,7 +413,7 @@ export const useApp = create<AppState>((set, get) => {
     tick: 0,
     hud: null,
     config: DEFAULT_CONFIG,
-    providerKind: 'local',
+    providerKind: 'remote',
     providerStatus: 'connecting',
     providerError: null,
     serverUrl: DEFAULT_SERVER_URL,
