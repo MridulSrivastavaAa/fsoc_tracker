@@ -71,6 +71,14 @@ class VirtualCamera:
         return self._cy
 
     @property
+    def center_x(self) -> float:
+        return self._cx
+
+    @property
+    def center_y(self) -> float:
+        return self._cy
+
+    @property
     def pan_deg(self) -> float:
         """Pan angle in degrees (0 = screen centre)."""
         return (self._cx - self.scene_w / 2.0) / self._scale_x

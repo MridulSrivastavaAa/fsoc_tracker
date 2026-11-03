@@ -8,8 +8,19 @@ echo    Starting FastAPI Backend + React Frontend
 echo =====================================================================
 echo.
 
+where python >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    set PY_EXE=python
+) else (
+    if exist "%USERPROFILE%\python311\python.exe" (
+        set PY_EXE="%USERPROFILE%\python311\python.exe"
+    ) else (
+        set PY_EXE=python
+    )
+)
+
 echo [1/2] Starting FastAPI Backend on http://localhost:8000 ...
-start "FSOC FastAPI Backend" cmd /k "cd /d "%~dp0fsoc_engine\src" && python -m uvicorn fsoc.server.app:app --host 0.0.0.0 --port 8000"
+start "FSOC FastAPI Backend" cmd /k "cd /d "%~dp0fsoc_engine\src" && %PY_EXE% -m uvicorn fsoc.server.app:app --host 0.0.0.0 --port 8000"
 
 echo Waiting for FastAPI to start (5 seconds)...
 timeout /t 5 /nobreak > nul

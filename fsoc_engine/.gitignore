@@ -2,10 +2,18 @@
 # ISRO FSOC Tracker - Git Ignore Rules
 # =============================================================================
 
-# Reports (HTML reports generated during phases)
+# Reports Directories & Artifacts (Full Reports Suites)
+reports/
+tech_reports/
+*/reports/
+*/tech_reports/
+*report*/
 *REPORT*.html
 PHASE*_REPORT.html
+FINAL_TECHNICAL_REPORT.html
+00_PROJECT_ROADMAP.html
 *.html
+*.docx
 !web_dist/**
 !web_dist/index.html
 

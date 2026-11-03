@@ -14,11 +14,18 @@ from __future__ import annotations
 import threading
 import time
 from pathlib import Path
-from typing import Optional
-import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-import numpy as np
-from PIL import Image, ImageTk
+try:
+    import tkinter as tk
+    from tkinter import ttk, filedialog, messagebox
+    from PIL import Image, ImageTk
+    HAS_TKINTER = True
+except (ImportError, ModuleNotFoundError):
+    tk = None  # type: ignore
+    ttk = None  # type: ignore
+    filedialog = None  # type: ignore
+    messagebox = None  # type: ignore
+    HAS_TKINTER = False
+
 import cv2
 
 from ..core.config import AppConfig, default_config
@@ -739,8 +746,101 @@ class FSOCTrackerApp:
         self.root.destroy()
 
 
+def launch_opencv_gui(cfg: Optional[AppConfig] = None) -> None:
+    """
+    High-Performance Native OpenCV Operator Workstation.
+    Renders 640x480 tactical HUD, radar minimap, reticle, and real-time keyboard controls.
+    """
+    config = cfg or default_config()
+    engine = ClosedLoopEngine(config)
+    hud_renderer = HUDOverlayRenderer(res_x=config.camera.res_x, res_y=config.camera.res_y)
+
+    window_name = "ISRO FSOC Tracker - Mission Control Workstation"
+    cv2.namedWindow(window_name, cv2.WINDOW_AUTOSIZE)
+
+    is_paused = False
+    motion_types = ["line", "circle", "figure8", "random", "spiral"]
+    motion_idx = 0
+    noise_modes = [0.0, 0.05, 0.10, 0.15]
+    noise_idx = 0
+
+    print("\n" + "=" * 75)
+    print("  ISRO FSOC VIRTUAL CAMERA TRACKING SYSTEM - LIVE WORKSTATION")
+    print("=" * 75)
+    print("  [SPACE] Pause / Resume Tracking")
+    print("  [R]     Reset Scene & Gimbal")
+    print("  [M]     Cycle Motion Model (Line -> Circle -> Fig8 -> Random -> Spiral)")
+    print("  [N]     Cycle Noise Level (0% -> 5% -> 10% -> 15%)")
+    print("  [Q/ESC] Quit Workstation")
+    print("=" * 75 + "\n")
+
+    metric = engine.step()
+    while True:
+        if not is_paused:
+            metric = engine.step()
+
+        raw_gray = (
+            engine.last_viewport
+            if hasattr(engine, "last_viewport") and engine.last_viewport is not None
+            else np.zeros((config.camera.res_y, config.camera.res_x), dtype=np.uint8)
+        )
+
+        target_pt = (
+            Point(metric.gt_x, metric.gt_y)
+            if metric is not None and metric.gt_x is not None and metric.gt_y is not None
+            else None
+        )
+        rendered_hud = hud_renderer.render_hud(
+            raw_gray,
+            metrics=metric,
+            track_state=engine.kalman.get_state(),
+            cam_cx=engine.camera.cx,
+            cam_cy=engine.camera.cy,
+            target_scene_pt=target_pt,
+        )
+
+        # Bottom tactical HUD status bar
+        footer = np.zeros((36, rendered_hud.shape[1], 3), dtype=np.uint8)
+        status_txt = f"MODE: {'PAUSED' if is_paused else 'AUTO-TRACK'} | [SPACE] Pause | [R] Reset | [M] Motion | [N] Noise | [Q] Exit"
+        cv2.putText(
+            footer, status_txt, (14, 23), cv2.FONT_HERSHEY_SIMPLEX, 0.40, (200, 200, 200), 1, cv2.LINE_AA
+        )
+        full_display = np.vstack([rendered_hud, footer])
+
+        cv2.imshow(window_name, full_display)
+
+        delay_ms = max(1, int(1000.0 / config.pipeline.fps))
+        key = cv2.waitKey(delay_ms) & 0xFF
+        if key in (ord("q"), ord("Q"), 27):
+            break
+        elif key == 32:  # SPACE
+            is_paused = not is_paused
+        elif key in (ord("r"), ord("R")):
+            engine.force_reacquire()
+            metric = engine.step()
+        elif key in (ord("m"), ord("M")):
+            motion_idx = (motion_idx + 1) % len(motion_types)
+            m_type = motion_types[motion_idx]
+            engine.source.scene.target.set_motion(m_type)
+            print(f"[Workstation] Target trajectory changed to: {m_type.upper()}")
+        elif key in (ord("n"), ord("N")):
+            noise_idx = (noise_idx + 1) % len(noise_modes)
+            val = noise_modes[noise_idx]
+            engine.disturbances.set_sp_noise(val)
+            print(f"[Workstation] S&P Noise set to: {val * 100:.0f}%")
+
+    cv2.destroyAllWindows()
+
+
 def launch_gui(cfg: Optional[AppConfig] = None) -> None:
-    """Launch Desktop GUI application."""
-    root = tk.Tk()
-    app = FSOCTrackerApp(root, cfg)
-    root.mainloop()
+    """Launch Desktop GUI application (Tkinter if available, else native OpenCV Workstation)."""
+    if HAS_TKINTER:
+        try:
+            root = tk.Tk()
+            app = FSOCTrackerApp(root, cfg)
+            root.mainloop()
+            return
+        except Exception as e:
+            print(f"[GUI] Tkinter launch failed ({e}), falling back to native OpenCV Workstation...")
+
+    launch_opencv_gui(cfg)

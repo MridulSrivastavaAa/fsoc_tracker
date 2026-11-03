@@ -8,11 +8,22 @@ echo    Starting FastAPI Engine + Interactive 3D Web Visualizer...
 echo =====================================================================
 echo.
 
+where python >nul 2>&1
+if %ERRORLEVEL% EQU 0 (
+    set PY_EXE=python
+) else (
+    if exist "%USERPROFILE%\python311\python.exe" (
+        set PY_EXE="%USERPROFILE%\python311\python.exe"
+    ) else (
+        set PY_EXE=python
+    )
+)
+
 :: Check if port 8000 is already active
 netstat -ano | findstr ":8000 " | findstr "LISTENING" >nul
 if %errorlevel% neq 0 (
     echo [1/2] Starting FastAPI Backend on http://localhost:8000 ...
-    start "NETRA FastAPI Backend" cmd /k "cd /d "%~dp0fsoc_engine\src" && python -m uvicorn fsoc.server.app:app --host 0.0.0.0 --port 8000 --ws-ping-interval 300 --ws-ping-timeout 300"
+    start "NETRA FastAPI Backend" cmd /k "cd /d "%~dp0fsoc_engine\src" && %PY_EXE% -m uvicorn fsoc.server.app:app --host 0.0.0.0 --port 8000 --ws-ping-interval 300 --ws-ping-timeout 300"
     timeout /t 3 /nobreak > nul
 ) else (
     echo [1/2] FastAPI Backend is already running on port 8000.
